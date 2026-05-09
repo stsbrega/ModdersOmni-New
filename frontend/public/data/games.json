@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Skyrim Special Edition",
+    "slug": "skyrimse",
+    "nexus_domain": "skyrimspecialedition",
+    "image_url": null,
+    "versions": [
+      "SE",
+      "AE"
+    ]
+  },
+  {
+    "name": "Fallout 4",
+    "slug": "fallout4",
+    "nexus_domain": "fallout4",
+    "image_url": null,
+    "versions": [
+      "Standard",
+      "Next-Gen"
+    ]
+  }
+]

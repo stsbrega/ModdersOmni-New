@@ -1,0 +1,78 @@
+{
+  "skyrimse": [
+    {
+      "name": "Vanilla+",
+      "slug": "vanilla-plus",
+      "description": "Keep the core Skyrim experience with quality-of-life improvements, bug fixes, and subtle visual upgrades.",
+      "icon": "sparkles"
+    },
+    {
+      "name": "Survival / Hardcore",
+      "slug": "survival",
+      "description": "Hunger, cold, fatigue, and deadly encounters. Transform Skyrim into a harsh survival experience.",
+      "icon": "tent"
+    },
+    {
+      "name": "Combat Overhaul",
+      "slug": "combat",
+      "description": "Revamp melee, archery, and magic combat with new animations, dodge mechanics, and enemy AI.",
+      "icon": "swords"
+    },
+    {
+      "name": "Magic / Spellcaster",
+      "slug": "magic",
+      "description": "Expand the magic system with hundreds of new spells, enchantments, and magical mechanics.",
+      "icon": "wand-2"
+    },
+    {
+      "name": "Visual / Graphics",
+      "slug": "visual",
+      "description": "Push Skyrim's visuals to the limit with ENB presets, texture packs, weather overhauls, and lighting mods.",
+      "icon": "camera"
+    },
+    {
+      "name": "Immersion / Roleplay",
+      "slug": "immersion",
+      "description": "Deep roleplaying with NPC overhauls, dialogue expansion, economy changes, and world-building mods.",
+      "icon": "drama"
+    }
+  ],
+  "fallout4": [
+    {
+      "name": "Vanilla+",
+      "slug": "vanilla-plus",
+      "description": "Improve the base Fallout 4 experience with essential fixes, UI improvements, and balanced tweaks.",
+      "icon": "sparkles"
+    },
+    {
+      "name": "Survival / Hardcore",
+      "slug": "survival",
+      "description": "Real needs, harder combat, scarce resources, and a truly post-apocalyptic survival experience.",
+      "icon": "tent"
+    },
+    {
+      "name": "Settlement Builder",
+      "slug": "settlement",
+      "description": "Supercharge settlement building with expanded objects, snapping, power tools, and city-scale builds.",
+      "icon": "hammer"
+    },
+    {
+      "name": "Combat / Tactical",
+      "slug": "combat",
+      "description": "Realistic ballistics, weapon overhauls, new animations, tactical AI, and cover-based combat.",
+      "icon": "swords"
+    },
+    {
+      "name": "Visual / Graphics",
+      "slug": "visual",
+      "description": "Transform the Commonwealth with high-resolution textures, lighting overhauls, weather, and ENB.",
+      "icon": "camera"
+    },
+    {
+      "name": "Sim Settlements",
+      "slug": "sim-settlements",
+      "description": "Let settlers build their own homes and shops. Cities grow organically with Sim Settlements framework.",
+      "icon": "building-2"
+    }
+  ]
+}
