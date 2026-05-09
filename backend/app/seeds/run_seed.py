@@ -1,0 +1,363 @@
+"""Script to seed the database with initial game data, playstyles, and mods."""
+import asyncio
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import async_session, engine, Base
+from app.models.game import Game
+from app.models.playstyle import Playstyle
+from app.models.mod import Mod
+from app.models.playstyle_mod import PlaystyleMod
+from app.models.compatibility import CompatibilityRule
+from app.models.mod_build_phase import ModBuildPhase
+from app.seeds.seed_data import (
+    GAMES,
+    PLAYSTYLES,
+    SKYRIM_MODS,
+    FALLOUT4_MODS,
+    SKYRIM_COMPATIBILITY,
+    FALLOUT4_COMPATIBILITY,
+    SKYRIM_PLAYSTYLE_MODS,
+    FALLOUT4_PLAYSTYLE_MODS,
+    SKYRIM_BUILD_PHASES,
+    FALLOUT4_BUILD_PHASES,
+)
+
+
+async def seed_games(session: AsyncSession) -> dict[str, int]:
+    """Seed games table, return slug -> id mapping."""
+    game_map = {}
+    for game_data in GAMES:
+        existing = await session.execute(
+            select(Game).where(Game.slug == game_data["slug"])
+        )
+        game = existing.scalar_one_or_none()
+        if not game:
+            game = Game(**game_data)
+            session.add(game)
+            await session.flush()
+        game_map[game.slug] = game.id
+    return game_map
+
+
+async def seed_playstyles(
+    session: AsyncSession, game_map: dict[str, int]
+) -> dict[str, dict[str, int]]:
+    """Seed playstyles table, return game_slug -> {playstyle_slug -> id}."""
+    ps_map: dict[str, dict[str, int]] = {}
+    for game_slug, playstyle_list in PLAYSTYLES.items():
+        game_id = game_map.get(game_slug)
+        if not game_id:
+            continue
+        ps_map[game_slug] = {}
+        for ps_data in playstyle_list:
+            existing = await session.execute(
+                select(Playstyle).where(
+                    Playstyle.game_id == game_id,
+                    Playstyle.slug == ps_data["slug"],
+                )
+            )
+            ps = existing.scalar_one_or_none()
+            if not ps:
+                ps = Playstyle(game_id=game_id, **ps_data)
+                session.add(ps)
+                await session.flush()
+            ps_map[game_slug][ps.slug] = ps.id
+    return ps_map
+
+
+async def seed_mods(
+    session: AsyncSession,
+    mod_list: list[tuple],
+    nexus_game_domain: str,
+) -> dict[str, int]:
+    """Seed mods table, return mod_name -> id mapping."""
+    mod_map = {}
+    for mod_tuple in mod_list:
+        if len(mod_tuple) == 8:
+            nexus_id, name, author, summary, category, impact, vram, version_support = mod_tuple
+        else:
+            nexus_id, name, author, summary, category, impact, vram = mod_tuple
+            version_support = "all"
+        existing = await session.execute(
+            select(Mod).where(
+                Mod.nexus_mod_id == nexus_id,
+                Mod.nexus_game_domain == nexus_game_domain,
+            )
+        )
+        mod = existing.scalar_one_or_none()
+        if not mod:
+            mod = Mod(
+                nexus_mod_id=nexus_id,
+                nexus_game_domain=nexus_game_domain,
+                name=name,
+                author=author,
+                summary=summary,
+                category=category,
+                performance_impact=impact,
+                vram_requirement_mb=vram,
+                game_version_support=version_support,
+                source="nexus",
+                external_url=f"https://www.nexusmods.com/{nexus_game_domain}/mods/{nexus_id}",
+            )
+            session.add(mod)
+            await session.flush()
+        mod_map[name] = mod.id
+    return mod_map
+
+
+async def seed_compatibility(
+    session: AsyncSession,
+    rules: list[tuple],
+    mod_map: dict[str, int],
+):
+    """Seed compatibility rules."""
+    for mod1_name, mod2_name, rule_type, notes in rules:
+        mod1_id = mod_map.get(mod1_name)
+        mod2_id = mod_map.get(mod2_name)
+        if not mod1_id or not mod2_id:
+            print(f"  Warning: Could not find mod for rule: {mod1_name} -> {mod2_name}")
+            continue
+
+        existing = await session.execute(
+            select(CompatibilityRule).where(
+                CompatibilityRule.mod_id == mod1_id,
+                CompatibilityRule.related_mod_id == mod2_id,
+                CompatibilityRule.rule_type == rule_type,
+            )
+        )
+        if not existing.scalar_one_or_none():
+            rule = CompatibilityRule(
+                mod_id=mod1_id,
+                related_mod_id=mod2_id,
+                rule_type=rule_type,
+                notes=notes,
+            )
+            session.add(rule)
+
+
+async def seed_playstyle_mods(
+    session: AsyncSession,
+    playstyle_mod_map: dict[str, list[tuple]],
+    ps_map: dict[str, int],
+    mod_map: dict[str, int],
+):
+    """Seed playstyle_mods junction table."""
+    for ps_slug, mods in playstyle_mod_map.items():
+        ps_id = ps_map.get(ps_slug)
+        if not ps_id:
+            continue
+        for mod_name, priority, tier_min in mods:
+            mod_id = mod_map.get(mod_name)
+            if not mod_id:
+                print(f"  Warning: Could not find mod: {mod_name}")
+                continue
+
+            existing = await session.execute(
+                select(PlaystyleMod).where(
+                    PlaystyleMod.playstyle_id == ps_id,
+                    PlaystyleMod.mod_id == mod_id,
+                )
+            )
+            if not existing.scalar_one_or_none():
+                pm = PlaystyleMod(
+                    playstyle_id=ps_id,
+                    mod_id=mod_id,
+                    priority=priority,
+                    hardware_tier_min=tier_min,
+                )
+                session.add(pm)
+
+
+async def seed_build_phases(
+    session: AsyncSession,
+    phase_list: list[dict],
+    game_id: int | None,
+):
+    """Seed mod build phases for a game."""
+    if not game_id:
+        return
+    for phase_data in phase_list:
+        result = await session.execute(
+            select(ModBuildPhase).where(
+                ModBuildPhase.game_id == game_id,
+                ModBuildPhase.phase_number == phase_data["phase_number"],
+            )
+        )
+        existing = result.scalar_one_or_none()
+        if existing is None:
+            phase = ModBuildPhase(game_id=game_id, **phase_data)
+            session.add(phase)
+        else:
+            # Keep existing rows in sync with the seed source of truth so
+            # newly seeded columns (e.g., scale_weight, sub_pass_guidance)
+            # propagate on subsequent deploys without a manual backfill.
+            for field, value in phase_data.items():
+                setattr(existing, field, value)
+    await session.flush()
+    print(f"  Phases: {len(phase_list)}")
+
+
+async def _apply_migrations(conn) -> None:
+    """Apply schema migrations that create_all can't handle."""
+    # Widen modlists.llm_provider from VARCHAR(20) to VARCHAR(100)
+    try:
+        await conn.execute(text(
+            "ALTER TABLE modlists ALTER COLUMN llm_provider TYPE VARCHAR(100)"
+        ))
+        print("  Migration: widened modlists.llm_provider to VARCHAR(100)")
+    except Exception:
+        pass  # Column already widened or table doesn't exist yet
+
+    # Add notification_prefs JSON column to user_settings
+    try:
+        await conn.execute(text(
+            "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS "
+            "notification_prefs JSONB DEFAULT '{}'"
+        ))
+        print("  Migration: added user_settings.notification_prefs")
+    except Exception:
+        pass  # Column already exists or table doesn't exist yet
+
+    # Add file_id column to modlist_entries (resolved during generation, not on export)
+    try:
+        await conn.execute(text(
+            "ALTER TABLE modlist_entries ADD COLUMN IF NOT EXISTS file_id INTEGER"
+        ))
+        print("  Migration: added modlist_entries.file_id")
+    except Exception:
+        pass
+
+    # Drop orphan columns from user_settings — removed from the ORM model
+    # alongside the Nexus personal-key / legacy LLM key refactor.
+    orphan_columns = [
+        "nexus_api_key",
+        "llm_provider",
+        "ollama_base_url",
+        "ollama_model",
+        "groq_api_key",
+        "groq_model",
+        "together_api_key",
+        "together_model",
+        "huggingface_api_key",
+        "huggingface_model",
+        "custom_source_api_url",
+        "custom_source_api_key",
+    ]
+    for col in orphan_columns:
+        try:
+            await conn.execute(text(
+                f"ALTER TABLE user_settings DROP COLUMN IF EXISTS {col}"
+            ))
+        except Exception:
+            pass
+    print(f"  Migration: dropped {len(orphan_columns)} orphan user_settings columns")
+
+    # Add last_active_at to users for inactivity tracking
+    try:
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP"
+        ))
+        await conn.execute(text(
+            "UPDATE users SET last_active_at = updated_at "
+            "WHERE last_active_at IS NULL"
+        ))
+        print("  Migration: added users.last_active_at")
+    except Exception:
+        pass
+
+    # Add deletion_warning_sent_at to users for cleanup flow
+    try:
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+            "deletion_warning_sent_at TIMESTAMP"
+        ))
+        print("  Migration: added users.deletion_warning_sent_at")
+    except Exception:
+        pass
+
+    # Add debug_log JSON column to modlists for persisted generation logs
+    try:
+        await conn.execute(text(
+            "ALTER TABLE modlists ADD COLUMN IF NOT EXISTS debug_log JSONB"
+        ))
+        print("  Migration: added modlists.debug_log")
+    except Exception:
+        pass
+
+    # Add game_version column to modlists for per-version install guide rendering
+    try:
+        await conn.execute(text(
+            "ALTER TABLE modlists ADD COLUMN IF NOT EXISTS game_version VARCHAR(30)"
+        ))
+        print("  Migration: added modlists.game_version")
+    except Exception:
+        pass
+
+
+async def main():
+    print("Creating database tables...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    print("Applying schema migrations...")
+    async with engine.begin() as conn:
+        await _apply_migrations(conn)
+
+    async with async_session() as session:
+        print("Seeding games...")
+        game_map = await seed_games(session)
+        print(f"  Games: {list(game_map.keys())}")
+
+        print("Seeding playstyles...")
+        ps_map = await seed_playstyles(session, game_map)
+        for game_slug, styles in ps_map.items():
+            print(f"  {game_slug}: {list(styles.keys())}")
+
+        print("Seeding Skyrim mods...")
+        skyrim_mod_map = await seed_mods(
+            session, SKYRIM_MODS, "skyrimspecialedition"
+        )
+        print(f"  Skyrim mods: {len(skyrim_mod_map)}")
+
+        print("Seeding Fallout 4 mods...")
+        fo4_mod_map = await seed_mods(session, FALLOUT4_MODS, "fallout4")
+        print(f"  Fallout 4 mods: {len(fo4_mod_map)}")
+
+        print("Seeding Skyrim compatibility rules...")
+        await seed_compatibility(session, SKYRIM_COMPATIBILITY, skyrim_mod_map)
+
+        print("Seeding Fallout 4 compatibility rules...")
+        await seed_compatibility(session, FALLOUT4_COMPATIBILITY, fo4_mod_map)
+
+        print("Seeding Skyrim playstyle-mod assignments...")
+        await seed_playstyle_mods(
+            session, SKYRIM_PLAYSTYLE_MODS, ps_map.get("skyrimse", {}), skyrim_mod_map
+        )
+
+        print("Seeding Fallout 4 playstyle-mod assignments...")
+        await seed_playstyle_mods(
+            session, FALLOUT4_PLAYSTYLE_MODS, ps_map.get("fallout4", {}), fo4_mod_map
+        )
+
+        print("Seeding Skyrim build phases...")
+        await seed_build_phases(
+            session, SKYRIM_BUILD_PHASES, game_map.get("skyrimse")
+        )
+
+        print("Seeding Fallout 4 build phases...")
+        await seed_build_phases(
+            session, FALLOUT4_BUILD_PHASES, game_map.get("fallout4")
+        )
+
+        await session.commit()
+        print("Seed complete!")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

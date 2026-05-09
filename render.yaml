@@ -1,0 +1,72 @@
+databases:
+  - name: moddersomni-db
+    plan: free
+    databaseName: moddersomni
+    user: omni
+    postgresMajorVersion: 16
+    ipAllowList: [] # Only internal access
+
+services:
+  # ── Backend (Python 3) ──────────────────────────────────
+  - type: web
+    name: moddersomni-api
+    runtime: python
+    plan: starter
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: "sh -c 'export DATABASE_URL=$(echo $DATABASE_URL_RAW | sed s/^postgres:/postgresql+asyncpg:/ | sed s/^postgresql:/postgresql+asyncpg:/) && uvicorn app.main:app --host 0.0.0.0 --port $PORT'"
+    preDeployCommand: "sh -c 'export DATABASE_URL=$(echo $DATABASE_URL_RAW | sed s/^postgres:/postgresql+asyncpg:/ | sed s/^postgresql:/postgresql+asyncpg:/) && alembic upgrade head && python -m app.seeds.run_seed'"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: DATABASE_URL_RAW
+        fromDatabase:
+          name: moddersomni-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        value: "https://moddersomni.com"
+      - key: CORS_ORIGINS
+        value: "https://moddersomni.com,https://www.moddersomni.com"
+
+      # ── Free-tier LLM keys ──────────────────────────────
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OLLAMA_API_KEY
+        sync: false
+
+      # ── OAuth ───────────────────────────────────────────
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: "https://api.moddersomni.com/api/auth/oauth/google/callback"
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: DISCORD_REDIRECT_URI
+        value: "https://api.moddersomni.com/api/auth/oauth/discord/callback"
+
+      # ── Email ───────────────────────────────────────────
+      - key: SMTP_HOST
+        value: "smtp.gmail.com"
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        value: "omni@moddersomni.com"
+      - key: SMTP_FROM_NAME
+        value: "ModdersOmni"
+
+      # ── Custom mod source (optional) ────────────────────
+      - key: CUSTOM_SOURCE_API_URL
+        sync: false
+      - key: CUSTOM_SOURCE_API_KEY
+        sync: false
+

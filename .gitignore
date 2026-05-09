@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+/downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+.venv/
+venv/
+ENV/
+
+# Node / Angular
+node_modules/
+dist/
+tmp/
+.angular/
+.sass-cache/
+*.css.map
+*.js.map
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Claude Code
+.claude/
+.claude.local.md
+memory/
+.playwright-mcp/
+.worktrees/
+
+# Linting cache
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Docker
+*.log
+
+# Database
+*.sql.bak
+
+# Coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+coverage/
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Alembic
+alembic/versions/*.pyc
+
+# Settings (user-specific)
+user_settings.json
+
+# Test databases
+*.db
+test.db
+
+# Backend build
+*.egg-info/
