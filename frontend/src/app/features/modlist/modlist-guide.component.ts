@@ -1,7 +1,9 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
-import { ApiService } from '../../core/services/api.service';
+import { InstallGuideService } from '../../core/services/install-guide.service';
+import { ModlistStore } from '../../core/services/modlist-store.service';
+import { GameDataService } from '../../core/services/game-data.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { InstallGuide, GuideSection, GuideStep } from '../../shared/models/mod.model';
 import {
@@ -483,22 +485,37 @@ export class ModlistGuideComponent implements OnInit {
     return g ? g.modlist_id.slice(0, 8) : '';
   });
 
+  /**
+   * Markdown is generated client-side now — `markdownUrl` becomes a `blob:`
+   * URL we mint on demand. The previous backend endpoint
+   * `/modlist/{id}/guide.md` is gone with the API service.
+   */
   markdownUrl = computed(() => {
     const g = this.guide();
     if (!g) return '#';
-    // Use the same version override the page was loaded with, if any
-    return this.api.getModlistGuideMarkdownUrl(g.modlist_id, this.versionOverride);
+    const md = this.markdownText;
+    if (!md) return '#';
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    return URL.createObjectURL(blob);
   });
 
-  mo2PluginUrl = computed(() => this.api.getMo2PluginDownloadUrl());
+  /**
+   * Static path served from `frontend/public/plugins/`. Plan 3 Task 5
+   * lands the rewritten plugin file there.
+   */
+  mo2PluginUrl = computed(() => '/plugins/moddersomni_import.py');
 
   private modlistId: string | null = null;
   private versionOverride: string | null = null;
+  /** Cached markdown text — populated after the guide builds. */
+  private markdownText = '';
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private api: ApiService,
+    private installGuide: InstallGuideService,
+    private modlistStore: ModlistStore,
+    private gameData: GameDataService,
     private notifications: NotificationService,
   ) {}
 
@@ -510,16 +527,48 @@ export class ModlistGuideComponent implements OnInit {
       return;
     }
 
-    this.api.getModlistGuide(this.modlistId, this.versionOverride).subscribe({
-      next: (guide) => {
-        this.guide.set(guide);
+    void this.loadGuide(this.modlistId, this.versionOverride);
+  }
+
+  /**
+   * Build the install guide entirely client-side from the locally-stored
+   * modlist + the static games.json metadata. Replaces the deleted
+   * `GET /api/modlist/{id}/guide` endpoint.
+   */
+  private async loadGuide(modlistId: string, versionOverride: string | null): Promise<void> {
+    const ml = this.modlistStore.get(modlistId);
+    if (!ml) {
+      this.loading.set(false);
+      this.notifications.error('Modlist not found in local storage.');
+      return;
+    }
+
+    try {
+      const games = await this.gameData.getGames();
+      const game = games.find((g) => g.id === ml.game_id);
+      if (!game) {
         this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.notifications.error('Failed to load install guide');
-      },
-    });
+        this.notifications.error('Game metadata not found.');
+        return;
+      }
+      // Apply optional version override to a clone so we don't mutate the
+      // stored modlist (the user can flip versions without affecting the
+      // canonical record on disk).
+      const effective = versionOverride
+        ? { ...ml, game_version: versionOverride }
+        : ml;
+      const guide = this.installGuide.buildGuide(effective, game);
+      this.guide.set(guide);
+      this.markdownText = this.installGuide.guideToMarkdown(
+        guide,
+        effective.entries,
+        game.nexus_domain,
+      );
+      this.loading.set(false);
+    } catch {
+      this.loading.set(false);
+      this.notifications.error('Failed to build install guide.');
+    }
   }
 
   setTab(tab: TabId): void {
@@ -573,21 +622,15 @@ export class ModlistGuideComponent implements OnInit {
       : (idx === 0 ? 'Standard' : 'Next-Gen');
 
     this.versionOverride = chosenKey;
-    // Reload the guide with the new version
+    // Reload the guide with the new version (client-side rebuild — no API).
     if (this.modlistId) {
       this.loading.set(true);
-      this.api.getModlistGuide(this.modlistId, chosenKey).subscribe({
-        next: (guide) => {
-          this.guide.set(guide);
-          this.loading.set(false);
-          // Reflect the choice in the URL so refresh/share preserves it
-          this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { version: chosenKey },
-            queryParamsHandling: 'merge',
-          });
-        },
-        error: () => this.loading.set(false),
+      void this.loadGuide(this.modlistId, chosenKey);
+      // Reflect the choice in the URL so refresh/share preserves it.
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { version: chosenKey },
+        queryParamsHandling: 'merge',
       });
     }
   }

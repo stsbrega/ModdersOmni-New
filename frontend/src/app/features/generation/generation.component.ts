@@ -39,7 +39,7 @@ import {
   Zap,
 } from 'lucide-angular';
 import { GenerationService } from '../../core/services/generation.service';
-import { ApiService } from '../../core/services/api.service';
+import { LLM_PROVIDERS } from '../../core/services/llm/providers-meta';
 import { NotificationService } from '../../core/services/notification.service';
 import { SettingsStore } from '../../core/services/settings-store.service';
 import {
@@ -157,13 +157,9 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         </div>
       }
 
-      <!-- ── Connection Lost Banner ── -->
-      @if (gen.status() === 'running' && !gen.connected()) {
-        <div class="connection-banner">
-          <span class="conn-spinner"></span>
-          Connection lost — reconnecting...
-        </div>
-      }
+      <!-- The "connection lost" banner is gone with the SSE path the
+           backend used to serve. The pipeline runs in-process now — no
+           transport to lose. -->
 
       <!-- ── Animated Nexus Background ── -->
       @if (gen.status() === 'running') {
@@ -1646,7 +1642,6 @@ export class GenerationComponent implements OnInit, OnDestroy, AfterViewChecked 
 
   constructor(
     public gen: GenerationService,
-    private api: ApiService,
     private notifications: NotificationService,
     private route: ActivatedRoute,
     private router: Router,
@@ -1662,39 +1657,32 @@ export class GenerationComponent implements OnInit, OnDestroy, AfterViewChecked 
       return;
     }
 
-    // If we already have events for this generation, just reconnect
-    if (this.gen.generationId() === id && this.gen.events().length > 0) {
-      this.gen.reconnectIfNeeded(id);
+    // The in-browser pipeline is the only generation path now (the SSE
+    // backend is gone). It runs entirely in `GenerationService`'s memory,
+    // so the only valid arrival into this view is via setup → start();
+    // a refresh or direct hit on /generate/<id> after the tab closed has
+    // nothing to recover. Show "not found" if the route id doesn't match
+    // the active session, AND we don't have a completed modlist to redirect
+    // to either (e.g. the user navigated back to /generate/X after the
+    // pipeline already wrote its modlist out and emitted `complete`).
+    if (this.gen.generationId() === id) {
+      // Already running / paused / complete in this tab — UI binds to
+      // gen.events() / gen.status() directly, nothing else to do.
+      if (this.gen.status() === 'complete' && this.gen.modlistId()) {
+        this.router.navigate(['/modlist', this.gen.modlistId()], { replaceUrl: true });
+      }
     } else {
-      // Verify the generation exists on the backend before connecting
-      this.gen.getStatus(id).subscribe({
-        next: (status) => {
-          if (status.status === 'complete' && status.modlist_id) {
-            // Already done — redirect to the modlist
-            this.router.navigate(['/modlist', status.modlist_id], { replaceUrl: true });
-          } else {
-            this.gen.reconnectIfNeeded(id);
-          }
-        },
-        error: () => {
-          this.generationNotFound.set(true);
-        },
-      });
+      // No matching active session in memory — there's nothing to show.
+      this.generationNotFound.set(true);
     }
 
-    this.api.getLlmProviders().subscribe({
-      next: (p) => this.providers.set(p),
-      error: () => {},
-    });
+    // Static LLM provider metadata for the inline pause-form key entry.
+    this.providers.set(LLM_PROVIDERS);
   }
 
   ngOnDestroy(): void {
-    // Don't disconnect — let the service persist across navigation.
-    // Only disconnect on terminal states to free resources.
-    const status = this.gen.status();
-    if (status === 'complete' || status === 'error') {
-      this.gen.disconnectEvents();
-    }
+    // No-op now that there's no EventSource to close. The service holds
+    // its in-memory event log so the user can navigate away and back.
   }
 
   ngAfterViewChecked(): void {
@@ -1735,38 +1723,35 @@ export class GenerationComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   resume(): void {
+    // Pipeline resume is handled by the in-browser GenerationPipelineService
+    // when present. In the meantime — pause/resume is currently a UI hook
+    // without a wired pipeline call, so just clear the resuming spinner and
+    // surface a notice.
     const id = this.gen.generationId();
     if (!id) return;
-    this.resuming.set(true);
-    this.gen.resumeGeneration(id).subscribe({
-      next: () => {
-        this.resuming.set(false);
-        this.gen.connectToEvents(id);
-      },
-      error: (err) => {
-        this.resuming.set(false);
-        this.notifications.error(err.error?.detail || 'Resume failed');
-      },
-    });
+    this.resuming.set(false);
+    this.notifications.info('Resume from a paused state is not yet wired in v2.0.');
   }
 
   downloadLog(): void {
+    // Generation event log is in-memory on the GenerationService — package
+    // up the current event stream as a JSON blob and download it. Replaces
+    // the deleted /api/generation/{id}/log endpoint.
     const genId = this.gen.generationId();
     if (!genId) return;
-    this.api.getGenerationLog(genId).subscribe({
-      next: (data) => {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `generation-${genId.slice(0, 8)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      error: () => {
-        this.notifications.error('Failed to download generation log');
-      },
-    });
+    const data = {
+      generation_id: genId,
+      status: this.gen.status(),
+      modlist_id: this.gen.modlistId(),
+      events: this.gen.events(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `generation-${genId.slice(0, 8)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   updateKeyAndResume(): void {

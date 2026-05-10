@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import {
@@ -17,7 +17,6 @@ import {
   Folder,
   Tag,
 } from 'lucide-angular';
-import { ApiService } from '../../core/services/api.service';
 import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
 // Import primitives directly (not via the shared/components/ui barrel) so we
 // don't drag in sibling primitives for type-checking. dialog.component.ts and
@@ -1137,8 +1136,6 @@ export class LandingComponent implements OnInit, OnDestroy, AfterViewInit {
     { game: 'Skyrim AE', color: 'blue', provider: 'deepseek', mods: 44, patches: 0, date: 'Feb 18, 2026' },
   ];
 
-  private apiService = inject(ApiService);
-
   constructor() {}
 
   private scrollHandler = () => {
@@ -1151,13 +1148,10 @@ export class LandingComponent implements OnInit, OnDestroy, AfterViewInit {
     window.addEventListener('scroll', this.scrollHandler, { passive: true });
     this.scrollHandler();
 
-    this.apiService.getStats().subscribe({
-      next: (stats) => {
-        this.modlistsGenerated.set(stats.modlists_generated.toLocaleString());
-        this.gamesSupported.set(stats.games_supported.toString());
-      },
-      error: () => {},
-    });
+    // Stats are now hardcoded — the `/api/stats/` endpoint is gone with the
+    // backend. Two games supported, generation-count is fixed since we no
+    // longer have a server tally.
+    this.gamesSupported.set('2');
   }
 
   ngAfterViewInit(): void {

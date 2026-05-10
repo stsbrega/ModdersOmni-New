@@ -13,7 +13,8 @@ import {
   Trash2,
   Settings as SettingsIcon,
 } from 'lucide-angular';
-import { ApiService } from '../../core/services/api.service';
+import { SpecParserService } from '../../core/services/spec-parser.service';
+import { LLM_PROVIDERS } from '../../core/services/llm/providers-meta';
 import { NotificationService } from '../../core/services/notification.service';
 import { HardwareDetectorService } from '../../core/services/hardware-detector.service';
 import { SettingsStore } from '../../core/services/settings-store.service';
@@ -978,7 +979,7 @@ export class SettingsComponent implements OnInit {
   notifyOnComplete = false;
 
   constructor(
-    private api: ApiService,
+    private specParser: SpecParserService,
     private notifications: NotificationService,
     private hardwareDetector: HardwareDetectorService,
     private settingsStore: SettingsStore,
@@ -1033,32 +1034,29 @@ export class SettingsComponent implements OnInit {
 
   testOllamaConnection(): void {
     this.ollamaStatus.set('unknown');
-    this.api.testOllamaConnection(this.ollamaUrl()).subscribe({
-      next: (res) => {
-        if (res.connected) {
-          this.ollamaStatus.set('connected');
-          this.ollamaModels.set(res.models);
-          this.ollamaError.set('');
-          // Auto-select first available model if saved model isn't installed
-          if (res.models.length > 0 && !res.models.includes(this.ollamaSelectedModel())) {
-            this.ollamaSelectedModel.set(res.models[0]);
-          }
-          // Auto-save Ollama URL and selected model to localStorage
-          const model = this.ollamaSelectedModel();
-          this.settingsStore.setOllamaUrl(this.ollamaUrl());
-          this.settingsStore.setOllamaModel(model);
-          this.llmKeys.update(k => ({ ...k, ollama: this.ollamaUrl(), ollama_model: model }));
-          this.notifications.success('Connected to Ollama!');
-        } else {
-          this.ollamaStatus.set('error');
-          this.ollamaError.set(res.error || 'Connection failed');
+    // Direct browser fetch to Ollama's `/api/tags`. Ollama runs locally so
+    // CORS is fine in practice; an unreachable URL falls into the catch.
+    const baseUrl = this.ollamaUrl().replace(/\/v1\/?$/, '').replace(/\/$/, '');
+    fetch(`${baseUrl}/api/tags`)
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .then((data: { models?: { name: string }[] }) => {
+        const models = (data.models ?? []).map((m) => m.name);
+        this.ollamaStatus.set('connected');
+        this.ollamaModels.set(models);
+        this.ollamaError.set('');
+        if (models.length > 0 && !models.includes(this.ollamaSelectedModel())) {
+          this.ollamaSelectedModel.set(models[0]);
         }
-      },
-      error: () => {
+        const model = this.ollamaSelectedModel();
+        this.settingsStore.setOllamaUrl(this.ollamaUrl());
+        this.settingsStore.setOllamaModel(model);
+        this.llmKeys.update(k => ({ ...k, ollama: this.ollamaUrl(), ollama_model: model }));
+        this.notifications.success('Connected to Ollama!');
+      })
+      .catch(() => {
         this.ollamaStatus.set('error');
         this.ollamaError.set('Could not reach the server');
-      },
-    });
+      });
   }
 
   onOllamaModelChange(model: string): void {
@@ -1140,18 +1138,16 @@ export class SettingsComponent implements OnInit {
           'RAM shown as 8 GB — browser privacy limits prevent reading true RAM. Use Paste & Scan for accurate results.',
         );
       }
-      // Send detected text to backend for parsing + tier classification
-      this.api.parseSpecs(detected.formatted).subscribe({
-        next: (response) => {
-          this.scanLoading.set(false);
-          this.applyParsedSpecs(response);
-          this.notifications.success('Hardware detected successfully');
-        },
-        error: () => {
-          this.scanLoading.set(false);
-          this.notifications.error('Hardware detected but failed to classify. You can adjust fields manually.');
-        },
-      });
+      // Pure-client parse + classify — was POST /api/specs/parse.
+      try {
+        const response = this.specParser.parseAndClassify(detected.formatted);
+        this.scanLoading.set(false);
+        this.applyParsedSpecs(response);
+        this.notifications.success('Hardware detected successfully');
+      } catch {
+        this.scanLoading.set(false);
+        this.notifications.error('Hardware detected but failed to classify. You can adjust fields manually.');
+      }
     } catch {
       this.scanLoading.set(false);
       this.notifications.error('Could not detect hardware. Try pasting your specs manually.');
@@ -1168,17 +1164,16 @@ export class SettingsComponent implements OnInit {
   scanHardware(): void {
     if (!this.hardwareRawText.trim()) return;
     this.scanLoading.set(true);
-    this.api.parseSpecs(this.hardwareRawText).subscribe({
-      next: (response) => {
-        this.scanLoading.set(false);
-        this.applyParsedSpecs(response);
-        this.notifications.success('Hardware info scanned successfully');
-      },
-      error: () => {
-        this.scanLoading.set(false);
-        this.notifications.error('Failed to scan hardware info');
-      },
-    });
+    // Pure-client parse + classify — was POST /api/specs/parse.
+    try {
+      const response = this.specParser.parseAndClassify(this.hardwareRawText);
+      this.scanLoading.set(false);
+      this.applyParsedSpecs(response);
+      this.notifications.success('Hardware info scanned successfully');
+    } catch {
+      this.scanLoading.set(false);
+      this.notifications.error('Failed to scan hardware info');
+    }
   }
 
   private applyParsedSpecs(response: any): void {
@@ -1202,13 +1197,28 @@ export class SettingsComponent implements OnInit {
     // notify-on-complete toggle survives the auth strip — the email-coupled
     // toggles went away with the email delivery path.
     this.notifyOnComplete = this.settingsStore.notifyOnComplete();
+
+    // Hardware-spec persistence — replaces the deleted authService get/save
+    // round-trip. Structured fields live in `hardwareSpecs`, raw paste text
+    // in `hardwareSpec`, tier in `hardwareTier`.
+    const savedSpecs = this.settingsStore.hardwareSpecs();
+    if (savedSpecs.gpu) this.gpuModel = savedSpecs.gpu;
+    if (savedSpecs.cpu) this.cpuModel = savedSpecs.cpu;
+    if (savedSpecs.ram_gb) this.ramGb = savedSpecs.ram_gb;
+    if (savedSpecs.vram_mb) this.vramGb = Math.round(savedSpecs.vram_mb / 1024);
+    if (savedSpecs.cpu_cores) this.cpuCores = savedSpecs.cpu_cores;
+    if (savedSpecs.cpu_speed_ghz) this.cpuSpeedGhz = savedSpecs.cpu_speed_ghz;
+    if (savedSpecs.storage_drives) {
+      this.storageDrives = savedSpecs.storage_drives;
+      this.storageDrivesSignal.set(savedSpecs.storage_drives);
+    }
+    this.hardwareRawText = this.settingsStore.hardwareSpec();
+    this.hardwareTier = this.settingsStore.hardwareTier();
   }
 
   private loadLlmProviders(): void {
-    this.api.getLlmProviders().subscribe({
-      next: (providers) => this.llmProviders.set(providers),
-      error: () => {},
-    });
+    // Static registry — no backend lookup needed (was GET /settings/llm-providers).
+    this.llmProviders.set(LLM_PROVIDERS);
   }
 
   private loadLlmKeys(): void {
@@ -1235,6 +1245,22 @@ export class SettingsComponent implements OnInit {
     // Notification prefs — only `notifyOnComplete` survives into the no-auth
     // world (Plan 3 Task 3 stripped the email delivery path).
     this.settingsStore.setNotifyOnComplete(this.notifyOnComplete);
+
+    // Hardware-spec persistence — Task 4 wires this through SettingsStore now
+    // that the backend round-trip (auth.saveHardware) is gone. Structured
+    // fields are stored as a single `HardwareSpecs` object; the raw paste
+    // text and tier label live alongside it for display restoration.
+    this.settingsStore.setHardwareSpecs({
+      gpu: this.gpuModel || undefined,
+      cpu: this.cpuModel || undefined,
+      ram_gb: this.ramGb || undefined,
+      vram_mb: this.vramGb ? this.vramGb * 1024 : undefined,
+      cpu_cores: this.cpuCores ?? undefined,
+      cpu_speed_ghz: this.cpuSpeedGhz ?? undefined,
+      storage_drives: this.storageDrives || undefined,
+    });
+    this.settingsStore.setHardwareSpec(this.hardwareRawText);
+    this.settingsStore.setHardwareTier(this.hardwareTier);
 
     // LLM API keys are written to localStorage on every individual edit
     // (saveDetectedKey / deleteKey / reassignKey / Ollama auto-save); the

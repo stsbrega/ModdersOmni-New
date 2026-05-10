@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService } from '../../../../core/services/api.service';
+import { GameDataService } from '../../../../core/services/game-data.service';
+import { LLM_PROVIDERS } from '../../../../core/services/llm/providers-meta';
 import { GenerationService } from '../../../../core/services/generation.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { SettingsStore } from '../../../../core/services/settings-store.service';
@@ -1002,7 +1003,7 @@ export class PlaystyleSelectComponent implements OnInit {
   private games = signal<Game[]>([]);
 
   constructor(
-    private api: ApiService,
+    private gameData: GameDataService,
     private generationService: GenerationService,
     private notifications: NotificationService,
     private router: Router,
@@ -1018,30 +1019,28 @@ export class PlaystyleSelectComponent implements OnInit {
       this.requestedMods.set(this.initialRequestedMods);
     }
 
-    this.api.getPlaystyles(this.gameId).subscribe({
-      next: (playstyles) => {
+    // Static playstyle data (was: GET /api/games/<id>/playstyles).
+    this.gameData
+      .getPlaystyles(this.gameId)
+      .then((playstyles) => {
         this.playstyles.set(playstyles);
-        // Auto-select playstyle if restored from wizard state
         if (this.initialPlaystyleId && playstyles.some(ps => ps.id === this.initialPlaystyleId)) {
           this.selectedId.set(this.initialPlaystyleId);
         }
-      },
-      error: () => {},
-    });
+      })
+      .catch(() => {});
 
-    // Load provider registry from API
-    this.api.getLlmProviders().subscribe({
-      next: (providers) => this.providers.set(providers),
-      error: () => {},
-    });
+    // Static LLM provider registry — was GET /api/settings/llm-providers,
+    // now derived in-process from `core/services/llm/registry.ts`.
+    this.providers.set(LLM_PROVIDERS);
 
     // Cache the full game list so the client-pipeline branch can resolve
     // the active gameId → Game record without an extra round trip at
     // generate() time. Cheap (~2 entries today) and keeps generate() sync.
-    this.api.getGames().subscribe({
-      next: (games) => this.games.set(games),
-      error: () => {},
-    });
+    this.gameData
+      .getGames()
+      .then((games) => this.games.set(games))
+      .catch(() => {});
 
     // Read saved keys synchronously from SettingsStore (localStorage). No
     // backend call, no auth gate — keys are local-only now (Plan 3 Task 2).
@@ -1140,27 +1139,27 @@ export class PlaystyleSelectComponent implements OnInit {
 
   testOllamaConnection(): void {
     this.ollamaStatus.set('unknown');
-    this.api.testOllamaConnection(this.ollamaUrl()).subscribe({
-      next: (res) => {
-        if (res.connected) {
-          this.ollamaStatus.set('connected');
-          this.ollamaModels.set(res.models);
-          this.ollamaError.set('');
-          // Auto-select first available model if default isn't installed
-          if (res.models.length > 0 && !res.models.includes(this.ollamaSelectedModel())) {
-            this.ollamaSelectedModel.set(res.models[0]);
-          }
-          this.notifications.success('Connected to Ollama!');
-        } else {
-          this.ollamaStatus.set('error');
-          this.ollamaError.set(res.error || 'Connection failed');
+    // Direct browser fetch to Ollama's `/api/tags` (was: backend
+    // /settings/ollama/test proxy). Ollama is local-only so this works
+    // without CORS friction in normal use; an unreachable URL surfaces as
+    // a network error caught below.
+    const baseUrl = this.ollamaUrl().replace(/\/v1\/?$/, '').replace(/\/$/, '');
+    fetch(`${baseUrl}/api/tags`)
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .then((data: { models?: { name: string }[] }) => {
+        const models = (data.models ?? []).map((m) => m.name);
+        this.ollamaStatus.set('connected');
+        this.ollamaModels.set(models);
+        this.ollamaError.set('');
+        if (models.length > 0 && !models.includes(this.ollamaSelectedModel())) {
+          this.ollamaSelectedModel.set(models[0]);
         }
-      },
-      error: () => {
+        this.notifications.success('Connected to Ollama!');
+      })
+      .catch(() => {
         this.ollamaStatus.set('error');
         this.ollamaError.set('Could not reach the server');
-      },
-    });
+      });
   }
 
   private runKeyDetection(key: string): void {

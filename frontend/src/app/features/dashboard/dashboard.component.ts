@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { fadeUp, staggerChildren } from '../../core/motion/animations';
-import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
-import { ApiService } from '../../core/services/api.service';
+import { ModlistStore } from '../../core/services/modlist-store.service';
 import { GenerationService } from '../../core/services/generation.service';
 import { Modlist } from '../../shared/models/mod.model';
 import { GenerationStatusResponse } from '../../shared/models/generation.model';
@@ -482,9 +481,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   deleteTarget = signal<Modlist | null>(null);
   deleting = signal(false);
   activeGenerationId = signal<string | null>(null);
+  /**
+   * Active-generation status snapshot, read from in-memory pipeline state.
+   * Was previously polled from the backend; the in-browser pipeline emits
+   * its own state via signals so we just mirror them on a simple shape.
+   */
   activeStatus = signal<GenerationStatusResponse | null>(null);
-
-  private pollSub: Subscription | null = null;
 
   /** Reference to the delete-confirmation template, opened in a CDK Dialog. */
   @ViewChild('deleteDialogTpl', { static: true }) deleteDialogTpl!: TemplateRef<unknown>;
@@ -497,7 +499,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.modlists().reduce((sum, ml) => sum + ml.entries.length, 0)
   );
 
-  constructor(private api: ApiService, private gen: GenerationService) {}
+  constructor(
+    private modlistStore: ModlistStore,
+    private gen: GenerationService,
+  ) {}
 
   /** Clear any persisted wizard progress so "New Build" always lands on step 1
    * (game selection). Without this, sessionStorage from a prior run makes the
@@ -508,68 +513,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.api.getMyModlists().subscribe({
-      next: (modlists) => {
-        this.modlists.set(modlists);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-      },
-    });
+    // Modlists live in localStorage now via ModlistStore (was: GET /modlist/mine).
+    this.modlists.set(this.modlistStore.list());
+    this.loading.set(false);
 
-    // Check for an in-progress generation (from service memory or sessionStorage)
-    const activeId = this.gen.generationId() || this.gen.getPersistedGenerationId();
-    if (activeId) {
-      this.gen.getStatus(activeId).subscribe({
-        next: (status) => {
-          if (status.status === 'running' || status.status === 'paused') {
-            this.activeGenerationId.set(activeId);
-            this.activeStatus.set(status);
-            this.startStatusPolling(activeId);
-          } else {
-            sessionStorage.removeItem('active_generation_id');
-          }
-        },
-        error: () => {
-          sessionStorage.removeItem('active_generation_id');
-        },
+    // Active-generation badge: pulled from in-memory GenerationService state
+    // (the in-browser pipeline doesn't survive a tab refresh, so there's
+    // nothing to recover from sessionStorage). When present, project the
+    // pipeline's status signal onto the legacy GenerationStatusResponse
+    // shape so the existing badge template binding stays unchanged.
+    const id = this.gen.generationId();
+    const status = this.gen.status();
+    if (id && (status === 'running' || status === 'paused')) {
+      this.activeGenerationId.set(id);
+      this.activeStatus.set({
+        status,
+        generation_id: id,
+        event_count: this.gen.events().length,
       });
     }
   }
 
   ngOnDestroy(): void {
-    this.pollSub?.unsubscribe();
     this.deleteDialogRef?.close();
   }
 
-  /**
-   * Poll /status every 15s while the generation is running/paused.
-   * The plan's version attached a badge per in-progress modlist card, but
-   * this dashboard tracks a single active generation (generations only
-   * become modlist cards after they complete), so we poll the one active
-   * generation and render the badge inside the existing resume-banner.
-   */
-  private startStatusPolling(generationId: string): void {
-    this.pollSub?.unsubscribe();
-    this.pollSub = interval(15_000).pipe(
-      switchMap(() => this.gen.getStatus(generationId)),
-      takeWhile((s) => s.status === 'running' || s.status === 'paused', true),
-    ).subscribe({
-      next: (status) => {
-        this.activeStatus.set(status);
-        if (status.status !== 'running' && status.status !== 'paused') {
-          this.activeGenerationId.set(null);
-          sessionStorage.removeItem('active_generation_id');
-        }
-      },
-      error: () => {
-        // Transient poll error — leave the badge as-is; next tick retries.
-      },
-    });
-  }
-
-  /** Map backend status strings to the badge's status union. */
+  /** Map pipeline status strings to the badge's status union. */
   badgeStatus(status: string): 'running' | 'paused' | 'failed' | 'complete' {
     if (status === 'running') return 'running';
     if (status === 'paused') return 'paused';
@@ -620,16 +589,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!target) return;
 
     this.deleting.set(true);
-    this.api.deleteModlist(target.id).subscribe({
-      next: () => {
-        this.modlists.update(list => list.filter(ml => ml.id !== target.id));
-        this.deleteTarget.set(null);
-        this.deleting.set(false);
-        this.deleteDialogRef?.close();
-      },
-      error: () => {
-        this.deleting.set(false);
-      },
-    });
+    // localStorage delete via ModlistStore — was DELETE /modlist/{id}.
+    this.modlistStore.delete(target.id);
+    this.modlists.update(list => list.filter(ml => ml.id !== target.id));
+    this.deleteTarget.set(null);
+    this.deleting.set(false);
+    this.deleteDialogRef?.close();
   }
 }

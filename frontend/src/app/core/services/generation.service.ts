@@ -1,28 +1,22 @@
 /**
  * Singleton service for managing real-time modlist generation.
  *
- * After Plan 3 Task 3 (auth removal), this service has only ONE active
- * code path: the in-browser pipeline via `GenerationPipelineService`. The
- * legacy backend-SSE methods (`connectToEvents`, `reconnectIfNeeded`,
- * `startGeneration`, `getStatus`, `resumeGeneration`, `connected`,
- * `isConnectedTo`, `disconnectEvents`) are still present because
- * `generation.component.ts` references them — they get deleted in Plan 3
- * Task 4 when the broader backend-API surface goes away. They compile but
- * are functionally dead in the current frontend (no auth means no token,
- * and the backend itself is removed in Task 7).
+ * Plan 3 Task 3 collapsed `start()` to a single in-browser pipeline path.
+ * Plan 3 Task 4 deleted the now-dead SSE methods (`connectToEvents`,
+ * `reconnectIfNeeded`, `startGeneration`, `getStatus`, `resumeGeneration`,
+ * `disconnectEvents`, `connected`, `isConnectedTo`) — the broader API
+ * service that backed them was removed in the same commit, so there's no
+ * backend left to call. Only the pipeline-fed signals remain.
  *
  * Holds state across route navigation — UI components observe these
- * signals regardless of which path produced them.
+ * signals from a single source of truth.
  */
 
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import {
   CompleteEvent,
   GenerationEvent,
-  GenerationStartResponse,
-  GenerationStatusResponse,
   ModAddedEvent,
   PatchAddedEvent,
   PausedEvent,
@@ -34,15 +28,12 @@ import type { StoredSession } from './generation/types';
 
 @Injectable({ providedIn: 'root' })
 export class GenerationService {
-  private baseUrl = window.__env?.API_URL || '/api';
-  private eventSource: EventSource | null = null;
-
   /** Active subscription to the client pipeline's events stream. */
   private pipelineSub: Subscription | null = null;
 
   // The pipeline service is the only injected collaborator now — feature
   // flags + EventSource factory + AuthService all went away with the
-  // auth/dual-pipeline strip.
+  // auth/dual-pipeline strip; the broader ApiService dropped in Task 4.
   private readonly pipeline = inject(GenerationPipelineService);
 
   // ── Observable state ──
@@ -98,8 +89,6 @@ export class GenerationService {
     return null;
   });
 
-  constructor(private http: HttpClient) {}
-
   // ── Unified entry point ──
 
   /**
@@ -147,9 +136,8 @@ export class GenerationService {
   }
 
   /**
-   * Apply an event to the signal API. Pulled out as a private helper so
-   * both the pipeline subscription path AND the still-extant SSE methods
-   * (dead but compiling — see file header) feed the same state shape.
+   * Apply an event to the signal API. Kept private because the only valid
+   * caller is the pipeline subscription wired up in `start()`.
    */
   private applyEvent(data: GenerationEvent): void {
     this.events.update((prev) => [...prev, data]);
@@ -157,17 +145,15 @@ export class GenerationService {
       case 'complete':
         this.status.set('complete');
         this.modlistId.set((data as CompleteEvent).modlist_id);
-        this.disconnectEvents();
-        sessionStorage.removeItem('active_generation_id');
+        this.detachPipeline();
         break;
       case 'error':
         this.status.set('error');
-        this.disconnectEvents();
-        sessionStorage.removeItem('active_generation_id');
+        this.detachPipeline();
         break;
       case 'paused':
         this.status.set('paused');
-        this.disconnectEvents();
+        this.detachPipeline();
         break;
       case 'resumed':
         this.status.set('running');
@@ -181,86 +167,12 @@ export class GenerationService {
     }
   }
 
-  // ── API Methods (legacy backend SSE — dead but compiling; deleted in Task 4) ──
-
-  startGeneration(request: Record<string, unknown>): Observable<GenerationStartResponse> {
-    return this.http.post<GenerationStartResponse>(
-      `${this.baseUrl}/generation/start`,
-      request,
-    );
-  }
-
-  getStatus(generationId: string): Observable<GenerationStatusResponse> {
-    return this.http.get<GenerationStatusResponse>(
-      `${this.baseUrl}/generation/${generationId}/status`,
-    );
-  }
-
-  resumeGeneration(generationId: string): Observable<{ status: string }> {
-    return this.http.post<{ status: string }>(
-      `${this.baseUrl}/generation/${generationId}/resume`,
-      {},
-    );
-  }
-
-  // ── SSE Connection (legacy — dead but compiling; deleted in Task 4) ──
-
-  /** Whether the SSE stream is currently connected (legacy; always false post-auth). */
-  readonly connected = signal(false);
-
-  connectToEvents(generationId: string): void {
-    this.generationId.set(generationId);
-    this.status.set('running');
-
-    // Persist generation_id so user can recover after browser crash/refresh
-    sessionStorage.setItem('active_generation_id', generationId);
-
-    // Close existing connection if any
-    this.disconnectEvents();
-
-    // Reset running totals so a fresh stream doesn't inherit prior generation's
-    // pill value before the first size_update replay arrives.
-    this.runningSize.set(0);
-    this.runningCount.set(0);
-
-    // No auth token now — the backend itself is being removed in Task 7,
-    // so this URL is effectively dead. Kept for compile-only continuity
-    // until Task 4 deletes the SSE methods entirely.
-    const url = `${this.baseUrl}/generation/${generationId}/events`;
-
-    this.eventSource = new EventSource(url);
-
-    this.eventSource.onopen = () => {
-      this.connected.set(true);
-    };
-
-    this.eventSource.onmessage = (event) => {
-      try {
-        const data: GenerationEvent = JSON.parse(event.data);
-        this.applyEvent(data);
-      } catch (e) {
-        console.error('Failed to parse SSE event:', e);
-      }
-    };
-
-    this.eventSource.onerror = () => {
-      // EventSource auto-reconnects. On reconnect, the backend replays
-      // all stored events, so we might get duplicates. The backend
-      // always sends the full history on a new connection.
-      this.connected.set(false);
-    };
-  }
-
-  disconnectEvents(): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = null;
-    }
+  /** Detach the pipeline subscription on terminal events. */
+  private detachPipeline(): void {
     if (this.pipelineSub) {
       this.pipelineSub.unsubscribe();
       this.pipelineSub = null;
     }
-    this.connected.set(false);
   }
 
   /**
@@ -268,51 +180,12 @@ export class GenerationService {
    * Call this before starting a new generation or when leaving the flow entirely.
    */
   reset(): void {
-    this.disconnectEvents();
+    this.detachPipeline();
     this.generationId.set(null);
     this.events.set([]);
     this.status.set('idle');
     this.modlistId.set(null);
     this.runningSize.set(0);
     this.runningCount.set(0);
-    sessionStorage.removeItem('active_generation_id');
-  }
-
-  /**
-   * Get the last active generation_id from sessionStorage.
-   * Used to recover after browser crash or refresh.
-   */
-  getPersistedGenerationId(): string | null {
-    return sessionStorage.getItem('active_generation_id');
-  }
-
-  /**
-   * Check if we have an active/recent generation for the given ID.
-   * Used when navigating back to the generation page.
-   */
-  isConnectedTo(generationId: string): boolean {
-    return this.generationId() === generationId && this.eventSource !== null;
-  }
-
-  /**
-   * Reconnect to an existing generation if we navigated away.
-   * The SSE endpoint replays all past events on reconnect.
-   */
-  reconnectIfNeeded(generationId: string): void {
-    if (this.generationId() === generationId) {
-      if (this.status() === 'running' && !this.eventSource) {
-        // We were running but lost connection — reconnect
-        this.events.set([]); // Clear to avoid duplicates from replay
-        this.runningSize.set(0);
-        this.runningCount.set(0);
-        this.connectToEvents(generationId);
-      }
-      // If complete/error/paused, no need to reconnect — state is already final
-      return;
-    }
-
-    // Different generation — reset and connect fresh
-    this.reset();
-    this.connectToEvents(generationId);
   }
 }

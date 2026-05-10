@@ -3,7 +3,7 @@ import { GameSelectComponent } from './steps/game-select/game-select.component';
 import { SpecInputComponent } from './steps/spec-input/spec-input.component';
 import { PlaystyleSelectComponent } from './steps/playstyle-select/playstyle-select.component';
 import { HardwareSpecs } from '../../shared/models/specs.model';
-import { ApiService } from '../../core/services/api.service';
+import { GameDataService } from '../../core/services/game-data.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 import {
@@ -298,7 +298,7 @@ export class SetupComponent implements OnInit {
   ];
 
   constructor(
-    private api: ApiService,
+    private gameData: GameDataService,
     private themeService: ThemeService,
   ) {}
 
@@ -362,8 +362,9 @@ export class SetupComponent implements OnInit {
 
   onGameSelected(gameId: number): void {
     this.selectedGameId.set(gameId);
-    this.api.getGames().subscribe({
-      next: (games) => {
+    this.gameData
+      .getGames()
+      .then((games) => {
         const game = games.find((g) => g.id === gameId);
         if (game && game.versions && game.versions.length > 0) {
           this.selectedGameVersions.set(game.versions);
@@ -373,12 +374,11 @@ export class SetupComponent implements OnInit {
           this.currentStep.set(3);
         }
         this.saveProgress();
-      },
-      error: () => {
+      })
+      .catch(() => {
         this.currentStep.set(3);
         this.saveProgress();
-      },
-    });
+      });
   }
 
   onVersionSelected(version: string): void {

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Output, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../../../core/services/api.service';
+import { SpecParserService } from '../../../../core/services/spec-parser.service';
 import { HardwareSpecs, SpecsParseResponse, TierScores } from '../../../../shared/models/specs.model';
 import { trigger, transition, style, animate } from '@angular/animations';
 import {
@@ -467,7 +467,7 @@ export class SpecInputComponent implements OnInit {
   showManualEntry = signal(false);
   savedLoading = signal(false);
 
-  constructor(private api: ApiService) {}
+  constructor(private specParser: SpecParserService) {}
 
   ngOnInit(): void {
     // Saved-hardware pre-fill went away with auth (Plan 3 Task 3). The
@@ -506,15 +506,15 @@ export class SpecInputComponent implements OnInit {
 
   analyzeSpecs(): void {
     this.loading.set(true);
-    this.api.parseSpecs(this.rawText).subscribe({
-      next: (response) => {
-        this.fullResponse.set(response);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-      },
-    });
+    // Pure-client parse + tier classification — replaces the deleted
+    // `/api/specs/parse` round-trip. SpecParserService.parseAndClassify
+    // mirrors the backend's `parse_specs_regex + classify_hardware_tier`.
+    try {
+      const response = this.specParser.parseAndClassify(this.rawText);
+      this.fullResponse.set(response);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   confirm(): void {

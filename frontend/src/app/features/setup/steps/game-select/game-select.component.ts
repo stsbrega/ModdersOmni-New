@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output, signal } from '@angular/core';
-import { ApiService } from '../../../../core/services/api.service';
+import { GameDataService } from '../../../../core/services/game-data.service';
 import { Game } from '../../../../shared/models/game.model';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import {
@@ -159,13 +159,13 @@ export class GameSelectComponent implements OnInit {
 
   games = signal<Game[]>([]);
 
-  constructor(private api: ApiService) {}
+  constructor(private gameData: GameDataService) {}
 
   ngOnInit(): void {
-    this.api.getGames().subscribe({
-      next: (games) => this.games.set(games),
-      error: () => {},
-    });
+    this.gameData
+      .getGames()
+      .then((games) => this.games.set(games))
+      .catch(() => {});
   }
 
   selectGame(gameId: number): void {

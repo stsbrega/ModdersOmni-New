@@ -1,7 +1,8 @@
 import { Component, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../../core/services/api.service';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -452,7 +453,7 @@ interface CompatibilityResult {
   `],
 })
 export class CompatibilityComponent {
-  private api = inject(ApiService);
+  private http = inject(HttpClient);
 
   modAName = signal('');
   modBName = signal('');
@@ -496,20 +497,73 @@ export class CompatibilityComponent {
     this.result.set(null);
     this.loading.set(true);
 
-    this.api.checkCompatibility(modA, modB, this.gameSlug()).subscribe({
-      next: (res) => {
-        this.result.set(res as CompatibilityResult);
+    // Backend LLM-driven compat check is gone. Fall back to the static
+    // compatibility table at /data/compatibility.<game>.json — finite list
+    // of well-known mod conflicts/patches. Match is case-insensitive and
+    // direction-agnostic (A↔B and B↔A both hit).
+    const slug = this.gameSlug() === 'skyrimspecialedition' ? 'skyrim' : 'fallout4';
+    firstValueFrom(this.http.get<string[][]>(`/data/compatibility.${slug}.json`))
+      .then((rows) => {
         this.loading.set(false);
-      },
-      error: (err) => {
-        const message =
-          err?.error?.detail ||
-          err?.error?.message ||
-          'Failed to check compatibility. Please try again.';
-        this.error.set(message);
+        const result = this.lookupCompatibility(rows ?? [], modA, modB);
+        this.result.set(result);
+      })
+      .catch(() => {
         this.loading.set(false);
-      },
+        this.error.set('Failed to load the compatibility database.');
+      });
+  }
+
+  /**
+   * Pure lookup against the static compatibility table. The table rows are
+   * `[modA, modB, relation, note]` tuples — relation is one of `conflicts`,
+   * `patch_available`, `load_after`, `requires`. We map those to the same
+   * shape the deleted backend response used so the template stays unchanged.
+   */
+  private lookupCompatibility(
+    rows: string[][],
+    modA: string,
+    modB: string,
+  ): CompatibilityResult {
+    const a = modA.toLowerCase();
+    const b = modB.toLowerCase();
+    const matches = rows.filter(([rowA, rowB]) => {
+      const ra = (rowA ?? '').toLowerCase();
+      const rb = (rowB ?? '').toLowerCase();
+      return (ra === a && rb === b) || (ra === b && rb === a);
     });
+
+    if (matches.length === 0) {
+      // No entry == we don't have known-bad data on this pair.
+      return {
+        compatible: true,
+        issues: [],
+        suggested_patches: [],
+        confidence: 'low',
+      };
+    }
+
+    const issues: CompatibilityIssue[] = [];
+    const patches: string[] = [];
+    let compatible = true;
+    for (const [, , relation, note] of matches) {
+      if (relation === 'conflicts') {
+        compatible = false;
+        issues.push({ description: note, severity: 'critical', source: 'database' });
+      } else if (relation === 'patch_available') {
+        patches.push(note);
+      } else if (relation === 'load_after' || relation === 'requires') {
+        issues.push({ description: note, severity: 'warning', source: 'database' });
+      } else {
+        issues.push({ description: note, severity: 'warning', source: 'database' });
+      }
+    }
+    return {
+      compatible,
+      issues,
+      suggested_patches: patches,
+      confidence: 'high',
+    };
   }
 
   clearResults(): void {

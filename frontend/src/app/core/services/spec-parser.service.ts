@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HardwareSpecs } from '../../shared/models/specs.model';
+import { HardwareSpecs, SpecsParseResponse, TierScores } from '../../shared/models/specs.model';
 
 /**
  * SpecParserService — TS port of `backend/app/services/spec_parser.py`.
@@ -209,6 +209,121 @@ const CPU_SPECS_TABLE: Readonly<Record<string, CpuTableRow>> = {
   'ultra 5 245k': { cores: 14, speed_ghz: 5.2 },
 };
 
+// ---------------------------------------------------------------------------
+// Tier classification — mirrors `backend/app/services/tier_classifier.py`.
+// Scores GPU generation, VRAM, CPU, RAM into a 0-100 overall and maps to
+// a tier name. Front-end normalizes per-axis scores to a 0-5 scale to match
+// the existing `SpecsParseResponse.tier_scores` UI (see specs.model.ts).
+// ---------------------------------------------------------------------------
+
+const NVIDIA_GENS: readonly [RegExp, number][] = [
+  [/(?:RTX\s*)?50\d{2}/i, 25],
+  [/(?:RTX\s*)?40\d{2}/i, 23],
+  [/(?:RTX\s*)?30\d{2}/i, 20],
+  [/(?:RTX\s*)?20\d{2}/i, 15],
+  [/GTX\s*16\d{2}/i, 12],
+  [/GTX\s*10\d{2}/i, 10],
+  [/GTX\s*9\d{2}/i, 5],
+];
+const AMD_GENS: readonly [RegExp, number][] = [
+  [/RX\s*9\d{3}/i, 25],
+  [/RX\s*7\d{3}/i, 23],
+  [/RX\s*6\d{3}/i, 20],
+  [/RX\s*5\d{3}/i, 15],
+  [/RX\s*[45]\d{2}/i, 8],
+];
+const ARC_GENS: readonly [RegExp, number][] = [
+  [/Arc\s*B\d{3}/i, 20],
+  [/Arc\s*A\d{3}/i, 15],
+];
+
+function scoreGpuGeneration(gpu?: string): number {
+  if (!gpu) return 0;
+  for (const set of [NVIDIA_GENS, AMD_GENS, ARC_GENS]) {
+    for (const [pattern, score] of set) {
+      if (pattern.test(gpu)) return score;
+    }
+  }
+  return 5;
+}
+
+function scoreVram(vramMb?: number): number {
+  if (!vramMb) return 0;
+  const gb = vramMb / 1024;
+  if (gb >= 16) return 30;
+  if (gb >= 12) return 27;
+  if (gb >= 8) return 23;
+  if (gb >= 6) return 18;
+  if (gb >= 4) return 12;
+  return 5;
+}
+
+const CPU_FAMILY_CORES: readonly [RegExp, number][] = [
+  [/Ryzen\s*5\s*[79]6\d{2}/i, 6],
+  [/Ryzen\s*7\s*[79][78]\d{2}/i, 8],
+  [/Ryzen\s*9\s*[79]950/i, 16],
+  [/Ryzen\s*9\s*[79]900/i, 12],
+  [/Core\s*i5-1[34]6\d{2}/i, 14],
+  [/Core\s*i7-1[34]7\d{2}/i, 20],
+  [/Core\s*i9-1[34]9\d{2}/i, 24],
+  [/Ultra\s*5\s*245K?/i, 14],
+  [/Ultra\s*7\s*265K?/i, 20],
+  [/Ultra\s*9\s*285K?/i, 24],
+];
+function inferCoresFromModel(cpu?: string): number | undefined {
+  if (!cpu) return undefined;
+  for (const [pattern, cores] of CPU_FAMILY_CORES) {
+    if (pattern.test(cpu)) return cores;
+  }
+  return undefined;
+}
+
+function scoreCpu(cpu?: string, cores?: number, speedGhz?: number): number {
+  let score = 0;
+  const effectiveCores = cores ?? inferCoresFromModel(cpu);
+  if (effectiveCores !== undefined) {
+    if (effectiveCores >= 16) score = 18;
+    else if (effectiveCores >= 12) score = 15;
+    else if (effectiveCores >= 8) score = 12;
+    else if (effectiveCores >= 6) score = 8;
+    else if (effectiveCores >= 4) score = 5;
+    else score = 2;
+  }
+  if (speedGhz !== undefined) {
+    if (speedGhz >= 5.0) score += 4;
+    else if (speedGhz >= 4.5) score += 3;
+    else if (speedGhz >= 4.0) score += 2;
+    else if (speedGhz >= 3.5) score += 1;
+  }
+  if (cpu) {
+    const highPerf = [
+      '7800X3D', '7950X3D', '7950X', '7900X', '7900',
+      '9800X3D', '9950X', '9900X', '9700X',
+      '14900K', '13900K', '12900K', '14700K', '13700K',
+      'Ultra 9 285', 'Ultra 7 265', 'Ultra 9', 'Ultra 7',
+    ];
+    const lower = cpu.toLowerCase();
+    if (highPerf.some((m) => lower.includes(m.toLowerCase()))) score += 3;
+  }
+  return Math.min(score, 25);
+}
+
+function scoreRam(ramGb?: number): number {
+  if (!ramGb) return 0;
+  if (ramGb >= 64) return 20;
+  if (ramGb >= 32) return 17;
+  if (ramGb >= 16) return 12;
+  if (ramGb >= 8) return 5;
+  return 2;
+}
+
+function tierFromScore(overall: number): string {
+  if (overall >= 76) return 'ultra';
+  if (overall >= 56) return 'high';
+  if (overall >= 31) return 'mid';
+  return 'low';
+}
+
 @Injectable({ providedIn: 'root' })
 export class SpecParserService {
   /**
@@ -245,6 +360,43 @@ export class SpecParserService {
     const drives = this.parseDrives(rawText);
     if (drives !== undefined) specs.storage_drives = drives;
     return specs;
+  }
+
+  /**
+   * Parse + tier-classify in one call, returning the same `SpecsParseResponse`
+   * shape the deleted `/api/specs/parse` endpoint produced.
+   *
+   * Per-axis scores are normalized to a 0-5 scale to match the existing UI's
+   * progress bars (`tier_scores!.vram * 20` for percentage). The tier name
+   * (`low`/`mid`/`high`/`ultra`) is derived from the raw 0-100 sum, NOT from
+   * the normalized scores — keeps the bucket boundaries stable across the
+   * normalization step.
+   */
+  parseAndClassify(rawText: string): SpecsParseResponse {
+    const specs = this.parse(rawText);
+
+    const vramScore = scoreVram(specs.vram_mb);
+    const gpuGenScore = scoreGpuGeneration(specs.gpu);
+    const cpuScore = scoreCpu(specs.cpu, specs.cpu_cores, specs.cpu_speed_ghz);
+    const ramScore = scoreRam(specs.ram_gb);
+    const overall = vramScore + gpuGenScore + cpuScore + ramScore;
+
+    const tier = tierFromScore(overall);
+    const tierScores: TierScores = {
+      vram: Math.round((vramScore / 30) * 5 * 10) / 10,
+      cpu: Math.round((cpuScore / 25) * 5 * 10) / 10,
+      ram: Math.round((ramScore / 20) * 5 * 10) / 10,
+      gpu_gen: Math.round((gpuGenScore / 25) * 5 * 10) / 10,
+      overall: Math.round((overall / 100) * 5 * 10) / 10,
+    };
+
+    return {
+      specs,
+      raw_text: rawText,
+      parse_method: 'regex',
+      tier,
+      tier_scores: tierScores,
+    };
   }
 
   // --- private helpers -----------------------------------------------------
