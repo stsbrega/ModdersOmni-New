@@ -40,7 +40,11 @@ import {
   OverlayPositionBuilder,
 } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ActiveDescendantKeyManager, FocusableOption } from '@angular/cdk/a11y';
+import {
+  ActiveDescendantKeyManager,
+  FocusableOption,
+  Highlightable,
+} from '@angular/cdk/a11y';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -51,11 +55,19 @@ export interface UiSelectOption<T = unknown> {
 }
 
 /**
- * Internal item directive-ish wrapper. We need a class that implements
- * `FocusableOption` so ActiveDescendantKeyManager can drive its activation
- * state. Each rendered <li> registers one of these.
+ * Internal item directive-ish wrapper. ActiveDescendantKeyManager requires
+ * `Highlightable` (which extends `FocusableOption`), so we must provide
+ * `setActiveStyles()` / `setInactiveStyles()` in addition to `focus()` and
+ * `disabled`.
+ *
+ * The two style methods are intentional no-ops: the active visual state is
+ * driven by a `[class.bg-surface-2]="i === keyManager?.activeItemIndex"`
+ * binding on the <li> in the template. That binding stays reactive whether
+ * the active item changes via mouse, keyboard, or typeahead, and it keeps
+ * the styling story declarative (Tailwind classes in the template) instead
+ * of imperative DOM mutations here.
  */
-class SelectOptionRef implements FocusableOption {
+class SelectOptionRef implements Highlightable, FocusableOption {
   constructor(
     public readonly option: UiSelectOption,
     public readonly element: HTMLElement,
@@ -68,6 +80,13 @@ class SelectOptionRef implements FocusableOption {
   }
   get disabled(): boolean {
     return !!this.option.disabled;
+  }
+  // Highlightable members — see class JSDoc for why these are no-ops.
+  setActiveStyles(): void {
+    /* visual state is bound in the template via activeItemIndex */
+  }
+  setInactiveStyles(): void {
+    /* visual state is bound in the template via activeItemIndex */
   }
 }
 

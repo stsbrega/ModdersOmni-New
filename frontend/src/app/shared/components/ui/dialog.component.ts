@@ -21,6 +21,7 @@ import {
   TemplateRef,
 } from '@angular/core';
 import { Dialog, DialogConfig, DialogRef } from '@angular/cdk/dialog';
+import { ComponentType } from '@angular/cdk/portal';
 
 /** Shared panel classes — kept in sync with the `host.class` on this component. */
 const PANEL_CLASSES =
@@ -42,14 +43,18 @@ export class UiDialogComponent {
   private readonly dialog = inject(Dialog);
 
   /**
-   * Open a templated dialog. Returns the DialogRef so the caller can listen
-   * for `closed` (an Observable) or call `close(result?)` programmatically.
+   * Open a templated (or component) dialog. Returns the DialogRef so callers
+   * can listen for `closed` (an Observable) or call `close(result?)`.
+   *
+   * Generics are matched to CDK's actual signature: <R, D, C> where R is the
+   * close-result type, D is the data payload, and C is the template/component
+   * context. We let TS infer C from the `template` argument.
    */
-  open<R = unknown, D = unknown>(
-    template: TemplateRef<unknown>,
-    config?: DialogConfig<D>,
-  ): DialogRef<R> {
-    return this.dialog.open<R, D>(template, {
+  open<R = unknown, D = unknown, C = unknown>(
+    template: TemplateRef<C> | ComponentType<C>,
+    config?: DialogConfig<D, DialogRef<R, C>>,
+  ): DialogRef<R, C> {
+    return this.dialog.open<R, D, C>(template, {
       hasBackdrop: true,
       backdropClass: BACKDROP_CLASSES,
       panelClass: PANEL_CLASSES,
