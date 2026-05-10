@@ -1,263 +1,155 @@
 """
-ModdersOmni Import Plugin for Mod Organizer 2
+ModdersOmni MO2 Import Plugin (v2)
 
-Adds a "Import from ModdersOmni" button to MO2's Tools menu.
-Fetches an AI-generated modlist from the ModdersOmni webapp and
-queues downloads through MO2's built-in download manager.
+Imports a modlist JSON exported from ModdersOmni v2.0+ and queues each
+mod for installation through MO2's existing Nexus Mods integration.
 
-Installation: Copy this file to your MO2 plugins/ directory.
+v1 of this plugin used a backend HTTP API + per-user plugin token to
+fetch modlists; v2 has no backend, so this plugin reads a local JSON
+file the user downloads from the ModdersOmni web app.
+
+JSON schema (matches frontend/src/app/core/services/install-guide.service.ts):
+    {
+        "version": "2.0.0",
+        "game": "skyrim" | "fallout4",
+        "name": "<modlist name>",
+        "mods": [
+            {
+                "modId": <int>,
+                "fileId": <int>,
+                "name": "<display name>",
+                "installOrder": <int>,
+                "notes": "<optional install notes>"
+            },
+            ...
+        ]
+    }
 """
-
 import json
-import re
-import urllib.request
-import urllib.error
+import os
 from typing import List
+
+from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 import mobase
 
-try:
-    from PyQt6.QtCore import Qt, QThread, Signal
-    from PyQt6.QtWidgets import (
-        QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-        QPushButton, QProgressBar, QTextEdit, QMessageBox,
-    )
-except ImportError:
-    from PyQt5.QtCore import Qt, QThread, pyqtSignal as Signal
-    from PyQt5.QtWidgets import (
-        QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-        QPushButton, QProgressBar, QTextEdit, QMessageBox,
-    )
 
-API_BASE = "https://api.moddersomni.com/api"
-
-
-class FetchWorker(QThread):
-    """Background thread for fetching the modlist from the API."""
-
-    finished = Signal(dict)
-    error = Signal(str)
-
-    def __init__(self, modlist_id: str, parent=None):
-        super().__init__(parent)
-        self._modlist_id = modlist_id
-
-    def run(self):
-        try:
-            url = f"{API_BASE}/modlist/{self._modlist_id}/export"
-            req = urllib.request.Request(url, headers={"Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                self.finished.emit(data)
-        except urllib.error.HTTPError as e:
-            body = e.read().decode("utf-8", errors="replace")
-            self.error.emit(f"HTTP {e.code}: {body[:200]}")
-        except Exception as e:
-            self.error.emit(str(e))
-
-
-class ImportDialog(QDialog):
-    """Dialog for importing a modlist from ModdersOmni."""
-
-    def __init__(self, organizer: mobase.IOrganizer, parent=None):
-        super().__init__(parent)
-        self._organizer = organizer
-        self._worker = None
-        self._pending_downloads: List[dict] = []
-        self._completed = 0
-
-        self.setWindowTitle("Import from ModdersOmni")
-        self.setMinimumWidth(480)
-        self._build_ui()
-
-    def _build_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(12)
-
-        # Modlist URL / ID
-        layout.addWidget(QLabel("Modlist URL or ID:"))
-        self._url_input = QLineEdit()
-        self._url_input.setPlaceholderText(
-            "e.g. https://moddersomni-web.onrender.com/modlist/abc-123 or just the UUID"
-        )
-        layout.addWidget(self._url_input)
-
-        # Buttons
-        btn_row = QHBoxLayout()
-        self._import_btn = QPushButton("Import")
-        self._import_btn.clicked.connect(self._on_import)
-        self._cancel_btn = QPushButton("Cancel")
-        self._cancel_btn.clicked.connect(self.reject)
-        btn_row.addStretch()
-        btn_row.addWidget(self._cancel_btn)
-        btn_row.addWidget(self._import_btn)
-        layout.addLayout(btn_row)
-
-        # Progress
-        self._progress = QProgressBar()
-        self._progress.setVisible(False)
-        layout.addWidget(self._progress)
-
-        # Log
-        self._log = QTextEdit()
-        self._log.setReadOnly(True)
-        self._log.setMaximumHeight(150)
-        self._log.setVisible(False)
-        layout.addWidget(self._log)
-
-    def _log_msg(self, msg: str):
-        self._log.setVisible(True)
-        self._log.append(msg)
-
-    def _extract_id(self, text: str) -> str | None:
-        """Extract UUID from a modlist URL or raw UUID string."""
-        text = text.strip()
-        match = re.search(
-            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
-            text, re.IGNORECASE,
-        )
-        return match.group(0) if match else None
-
-    def _on_import(self):
-        modlist_id = self._extract_id(self._url_input.text())
-        if not modlist_id:
-            QMessageBox.warning(
-                self, "Invalid Input",
-                "Please enter a valid modlist URL or UUID.",
-            )
-            return
-
-        self._import_btn.setEnabled(False)
-        self._progress.setVisible(True)
-        self._progress.setRange(0, 0)  # Indeterminate
-        self._log_msg(f"Fetching modlist {modlist_id}...")
-
-        self._worker = FetchWorker(modlist_id, self)
-        self._worker.finished.connect(self._on_fetch_success)
-        self._worker.error.connect(self._on_fetch_error)
-        self._worker.start()
-
-    def _on_fetch_error(self, msg: str):
-        self._log_msg(f"Error: {msg}")
-        self._progress.setVisible(False)
-        self._import_btn.setEnabled(True)
-        QMessageBox.critical(self, "Fetch Failed", msg)
-
-    def _on_fetch_success(self, data: dict):
-        entries = data.get("entries", [])
-        game_name = data.get("game_name", "Unknown")
-        game_domain = data.get("game_domain", "")
-
-        self._log_msg(
-            f"Received {len(entries)} mods for {game_name} ({game_domain})"
-        )
-
-        # Filter to entries with nexus_mod_id and file_id
-        downloadable = [
-            e for e in entries
-            if e.get("nexus_mod_id") and e.get("file_id")
-        ]
-        skipped = len(entries) - len(downloadable)
-
-        if skipped > 0:
-            self._log_msg(
-                f"Skipping {skipped} entries without resolved file IDs."
-            )
-
-        if not downloadable:
-            self._log_msg("No downloadable mods found.")
-            self._progress.setVisible(False)
-            self._import_btn.setEnabled(True)
-            return
-
-        self._pending_downloads = downloadable
-        self._completed = 0
-        self._progress.setRange(0, len(downloadable))
-        self._progress.setValue(0)
-
-        dm = self._organizer.downloadManager()
-        dm.onDownloadComplete(self._on_download_complete)
-
-        self._log_msg(f"Starting {len(downloadable)} downloads...")
-        for entry in downloadable:
-            mod_id = entry["nexus_mod_id"]
-            file_id = entry["file_id"]
-            name = entry.get("name", f"mod-{mod_id}")
-            self._log_msg(f"  Queuing: {name} (mod:{mod_id}, file:{file_id})")
-            dm.startDownloadNexusFile(mod_id, file_id)
-
-    def _on_download_complete(self, index: int):
-        self._completed += 1
-        self._progress.setValue(self._completed)
-        self._log_msg(f"  Download {self._completed}/{len(self._pending_downloads)} complete")
-
-        if self._completed >= len(self._pending_downloads):
-            self._log_msg("All downloads complete!")
-            self._set_load_order()
-
-    def _set_load_order(self):
-        """Set mod priorities based on the modlist load order."""
-        modlist = self._organizer.modList()
-        ordered = sorted(self._pending_downloads, key=lambda e: e.get("load_order", 999))
-
-        for priority, entry in enumerate(ordered):
-            name = entry.get("name", "")
-            if name and modlist.state(name) != mobase.ModState(0):
-                modlist.setPriority(name, priority)
-                self._log_msg(f"  Set priority {priority}: {name}")
-
-        self._log_msg("Load order applied. Import complete!")
-        self._import_btn.setEnabled(True)
-
-
-class ModdersOmniImport(mobase.IPluginTool):
-    """MO2 plugin that imports modlists from the ModdersOmni webapp."""
+class ModdersOmniImportPlugin(mobase.IPluginTool):
+    NAME = "ModdersOmni Import"
+    AUTHOR = "ModdersOmni"
+    VERSION = "2.0.0"
 
     def __init__(self):
         super().__init__()
-        self._organizer = None
+        self._organizer: mobase.IOrganizer | None = None
 
+    # ── IPlugin metadata ──
     def init(self, organizer: mobase.IOrganizer) -> bool:
         self._organizer = organizer
         return True
 
-    def name(self) -> str:
-        return "ModdersOmni Import"
+    def name(self) -> str:                     return self.NAME
+    def author(self) -> str:                   return self.AUTHOR
+    def description(self) -> str:              return "Import a modlist JSON exported from the ModdersOmni web app."
+    def version(self) -> mobase.VersionInfo:   return mobase.VersionInfo(2, 0, 0, 0)
+    def isActive(self) -> bool:                return True
+    def settings(self) -> List[mobase.PluginSetting]: return []
+    def displayName(self) -> str:              return "ModdersOmni Import"
+    def tooltip(self) -> str:                  return self.description()
+    def icon(self):                            return None
 
-    def localizedName(self) -> str:
-        return "ModdersOmni Import"
+    # ── IPluginTool ──
+    def display(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            None,
+            "Select ModdersOmni modlist JSON",
+            os.path.expanduser("~"),
+            "ModdersOmni Modlist (*.json)",
+        )
+        if not path:
+            return
 
-    def author(self) -> str:
-        return "ModdersOmni"
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            QMessageBox.critical(None, "Import failed", f"Could not read {path}:\n{e}")
+            return
 
-    def description(self) -> str:
-        return "Import AI-generated modlists from the ModdersOmni webapp."
+        if not self._validate(payload):
+            return
 
-    def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(1, 0, 0)
+        mods = payload.get("mods", [])
+        QMessageBox.information(
+            None,
+            "Import starting",
+            f"Queueing {len(mods)} mods for {payload.get('game', '?')}.\n\n"
+            "Each mod will be downloaded via MO2's Nexus integration "
+            "in install_order. Download speeds depend on your Nexus account "
+            "(premium accounts get higher concurrent download limits).",
+        )
 
-    def requirements(self):
-        return []
+        nexus = self._organizer.downloadManager()
+        game_domain = self._game_domain(payload["game"])
+        queued = 0
+        skipped = 0
 
-    def isActive(self) -> bool:
+        for mod in sorted(mods, key=lambda m: m.get("installOrder", 0)):
+            mod_id = mod.get("modId")
+            file_id = mod.get("fileId")
+            name = mod.get("name", f"mod-{mod_id}")
+            if not mod_id or not file_id:
+                skipped += 1
+                continue
+            try:
+                nexus.startDownloadNexusFile(mod_id, file_id)
+                queued += 1
+            except Exception as e:  # MO2 throws on permissions / network failures
+                skipped += 1
+
+        QMessageBox.information(
+            None,
+            "Import complete",
+            f"Queued: {queued}\nSkipped: {skipped}\n\n"
+            "Watch the Downloads tab for progress. Install each mod in order "
+            "after it finishes downloading.",
+        )
+
+    # ── Helpers ──
+    def _validate(self, payload: dict) -> bool:
+        if not isinstance(payload, dict):
+            QMessageBox.critical(None, "Invalid file", "JSON root is not an object.")
+            return False
+        if not isinstance(payload.get("mods"), list):
+            QMessageBox.critical(None, "Invalid file", "Missing 'mods' array.")
+            return False
+        if payload.get("game") not in ("skyrim", "skyrimse", "fallout4"):
+            QMessageBox.critical(
+                None, "Invalid file",
+                f"Unknown game: {payload.get('game')}. Expected 'skyrim' or 'fallout4'.",
+            )
+            return False
+        # Loose version check — accept v2.x.x payloads
+        version = str(payload.get("version", "0"))
+        if not version.startswith("2."):
+            reply = QMessageBox.question(
+                None, "Version mismatch",
+                f"This file says it's from ModdersOmni v{version}, but this plugin expects v2.x.\n"
+                "Try anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return False
         return True
 
-    def settings(self) -> list:
-        return []
-
-    def displayName(self) -> str:
-        return "Import from ModdersOmni"
-
-    def tooltip(self) -> str:
-        return "Import an AI-generated mod list from ModdersOmni"
-
-    def icon(self):
-        return mobase.getIconForExecutable("python.exe")
-
-    def display(self):
-        dialog = ImportDialog(self._organizer, self._parentWidget())
-        dialog.exec()
+    def _game_domain(self, game: str) -> str:
+        return {
+            "skyrim": "skyrimspecialedition",
+            "skyrimse": "skyrimspecialedition",
+            "fallout4": "fallout4",
+        }.get(game, "skyrimspecialedition")
 
 
-def createPlugin() -> mobase.IPlugin:
-    return ModdersOmniImport()
+def createPlugin() -> mobase.IPluginTool:
+    return ModdersOmniImportPlugin()
