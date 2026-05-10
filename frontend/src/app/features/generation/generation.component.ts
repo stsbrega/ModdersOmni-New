@@ -10,14 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import {
-  trigger,
-  transition,
-  style,
-  animate,
-  query,
-  stagger,
-} from '@angular/animations';
+import { fadeUp, stackBuild } from '../../core/motion/animations';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -147,49 +140,15 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
       }),
     },
   ],
-  animations: [
-
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(8px)' }),
-        animate(
-          '300ms cubic-bezier(0.16, 1, 0.3, 1)',
-          style({ opacity: 1, transform: 'translateY(0)' })
-        ),
-      ]),
-    ]),
-    trigger('staggerList', [
-      transition('* => *', [
-        query(
-          ':enter',
-          [
-            style({ opacity: 0, transform: 'translateX(-12px)' }),
-            stagger(60, [
-              animate(
-                '350ms cubic-bezier(0.16, 1, 0.3, 1)',
-                style({ opacity: 1, transform: 'translateX(0)' })
-              ),
-            ]),
-          ],
-          { optional: true }
-        ),
-      ]),
-    ]),
-    trigger('slideUp', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(20px)' }),
-        animate(
-          '400ms cubic-bezier(0.16, 1, 0.3, 1)',
-          style({ opacity: 1, transform: 'translateY(0)' })
-        ),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. fadeUp replaces the
+  // old inline fadeIn (timeline rows / banners). stackBuild is the new
+  // spring-overshoot motion on each mod-added card — Plan 2 Task 14.
+  animations: [fadeUp, stackBuild],
   template: `
     <div class="generation-page">
       <!-- ── Generation Not Found ── -->
       @if (generationNotFound()) {
-        <div class="not-found-banner" @fadeIn>
+        <div class="not-found-banner" @fadeUp>
           <lucide-icon name="alert-circle" [size]="40" [strokeWidth]="1.5"></lucide-icon>
           <h2>Generation Not Found</h2>
           <p>This generation may have expired or doesn't exist. Start a new one from the setup wizard.</p>
@@ -241,7 +200,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
       }
 
       <!-- ── Top: Phase Progress ── -->
-      <header class="phase-bar" @fadeIn>
+      <header class="phase-bar" @fadeUp>
         <div class="phase-bar-inner">
           <div class="phase-label">
             @if (gen.currentPhase(); as phase) {
@@ -297,7 +256,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
                   [class.completed]="item.phaseComplete"
                   [class.collapsed]="collapsedPhases().has(item.phase)"
                   (click)="item.phaseComplete ? togglePhase(item.phase) : null"
-                  @fadeIn
+                  @fadeUp
                 >
                   <div class="tl-icon">
                     @if (item.phaseComplete && collapsedPhases().has(item.phase)) {
@@ -324,7 +283,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
                 <div
                   class="tl-item"
                   [class]="'tl-' + item.event.type"
-                  @fadeIn
+                  @fadeUp
                 >
                   <div class="tl-icon">
                     <lucide-icon
@@ -477,7 +436,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
 
           <!-- Terminal state banners -->
           @if (gen.status() === 'complete') {
-            <div class="banner banner-success" @slideUp>
+            <div class="banner banner-success" @fadeUp>
               <lucide-icon class="banner-icon icon-green" name="check-circle" [size]="20" [strokeWidth]="2"></lucide-icon>
               <div class="banner-text">
                 <strong>Your modlist is ready!</strong>
@@ -488,7 +447,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
           }
 
           @if (gen.status() === 'error') {
-            <div class="banner banner-error" @slideUp>
+            <div class="banner banner-error" @fadeUp>
               <lucide-icon class="banner-icon icon-red" name="x-circle" [size]="20" [strokeWidth]="2"></lucide-icon>
               <div class="banner-text">
                 <strong>Generation failed</strong>
@@ -499,7 +458,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
           }
 
           @if (gen.status() === 'paused') {
-            <div class="banner banner-paused" @slideUp>
+            <div class="banner banner-paused" @fadeUp>
               <lucide-icon class="banner-icon icon-amber" name="pause" [size]="20" [strokeWidth]="2"></lucide-icon>
               <div class="banner-text">
                 <strong>Generation paused</strong>
@@ -594,10 +553,12 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
             </div>
           }
 
-          <!-- Mod cards -->
-          <div class="mod-cards" [@staggerList]="gen.modsAdded().length + gen.patchesAdded().length">
+          <!-- Mod cards — each card uses @stackBuild on enter so newly added
+               mods slide up from below with a spring overshoot, reading as
+               "stacking onto a load order" rather than a generic fade-in. -->
+          <div class="mod-cards">
             @for (mod of gen.modsAdded(); track mod.mod_id) {
-              <ui-card class="mod-card">
+              <ui-card class="mod-card" @stackBuild>
                 <div class="mod-card-top">
                   <span class="lo-badge font-mono">#{{ mod.load_order }}</span>
                   <span class="mod-name">{{ mod.name }}</span>
@@ -606,7 +567,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
               </ui-card>
             }
             @for (patch of gen.patchesAdded(); track patch.mod_id) {
-              <ui-card class="mod-card patch-card">
+              <ui-card class="mod-card patch-card" @stackBuild>
                 <div class="mod-card-top">
                   <span class="lo-badge patch-badge font-mono">P</span>
                   <span class="mod-name">{{ patch.name }}</span>

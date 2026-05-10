@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { fadeUp, staggerChildren } from '../../core/motion/animations';
 import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { GenerationService } from '../../core/services/generation.service';
@@ -59,24 +59,9 @@ import { DialogRef } from '@angular/cdk/dialog';
       }),
     },
   ],
-  animations: [
-    trigger('fadeUp', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(16px)' }),
-        animate('400ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-    ]),
-    trigger('staggerCards', [
-      transition(':enter', [
-        query('.modlist-card, .stat-card', [
-          style({ opacity: 0, transform: 'translateY(12px)' }),
-          stagger(80, [
-            animate('350ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-          ]),
-        ], { optional: true }),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the
+  // dashboard's prior inline fadeUp + staggerCards definitions — Plan 2 Task 14.
+  animations: [fadeUp, staggerChildren],
   template: `
     <div class="dashboard-layout">
       <!-- Main Content -->
@@ -134,7 +119,7 @@ import { DialogRef } from '@angular/cdk/dialog';
           </div>
         } @else {
           <!-- Stats — ui-card surfaces, font-mono on numeric stat values (data) -->
-          <div class="stats-row" @staggerCards>
+          <div class="stats-row" @staggerChildren>
             <ui-card class="stat-card">
               <div class="stat-icon stat-icon--gold">
                 <lucide-icon name="folder" [size]="20" [strokeWidth]="1.5"></lucide-icon>
@@ -154,7 +139,7 @@ import { DialogRef } from '@angular/cdk/dialog';
           <!-- Modlist preview cards — each card is a routerLink anchor, so we can't
                use <ui-card> as the wrapper element (ui-card is a non-anchor block).
                Inline anchor styling preserves clickability + hover micro-motion. -->
-          <div class="modlist-grid" @staggerCards>
+          <div class="modlist-grid" @staggerChildren>
             @for (ml of modlists(); track ml.id) {
               <a [routerLink]="['/modlist', ml.id]" class="modlist-card">
                 <div class="card-top">
