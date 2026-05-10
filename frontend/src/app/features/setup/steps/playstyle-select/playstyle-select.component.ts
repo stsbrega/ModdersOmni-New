@@ -1,11 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../../core/services/api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { GenerationService } from '../../../../core/services/generation.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { Playstyle } from '../../../../shared/models/game.model';
+import { FeatureFlagsService } from '../../../../core/services/feature-flags.service';
+import { Game, Playstyle } from '../../../../shared/models/game.model';
 import { HardwareSpecs } from '../../../../shared/models/specs.model';
 import { LlmProvider } from '../../../../shared/models/mod.model';
 import { PRESETS, SizePreset } from '../../../../shared/models/generation.model';
@@ -13,6 +14,9 @@ import { detectProvider } from '../../../../core/utils/key-detection';
 import { ApiKeyGuideComponent } from '../../../../shared/components/api-key-guide/api-key-guide.component';
 import { LucideAngularModule, LucideIconProvider, LUCIDE_ICONS, Sparkles, Tent, Swords, Wand2, Camera, Drama, Hammer, Building2 } from 'lucide-angular';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import type { LLMConfig, ProviderId } from '../../../../core/services/llm/types';
+import { defaultModelFor, PROVIDERS } from '../../../../core/services/llm/registry';
+import type { GameVersion } from '../../../../core/services/knowledge.service';
 
 @Component({
   selector: 'app-playstyle-select',
@@ -1075,6 +1079,17 @@ export class PlaystyleSelectComponent implements OnInit {
     this.selectedPreset.set(id);
   }
 
+  // Feature flag — when ON, generate() routes through the in-browser
+  // pipeline via GenerationService.start({pipelineArgs}) instead of the
+  // legacy backend-SSE two-step flow. (Plan 1 Task 14 follow-up.)
+  private readonly featureFlags = inject(FeatureFlagsService);
+
+  // Cached full Game record — needed by the client pipeline because
+  // PipelineStartArgs.game wants {id, name, slug, nexus_domain}, but the
+  // wizard only hands us a gameId. We fetch on init and look up at
+  // generate() time.
+  private games = signal<Game[]>([]);
+
   constructor(
     private api: ApiService,
     private authService: AuthService,
@@ -1106,6 +1121,14 @@ export class PlaystyleSelectComponent implements OnInit {
     // Load provider registry from API
     this.api.getLlmProviders().subscribe({
       next: (providers) => this.providers.set(providers),
+      error: () => {},
+    });
+
+    // Cache the full game list so the client-pipeline branch can resolve
+    // the active gameId → Game record without an extra round trip at
+    // generate() time. Cheap (~2 entries today) and keeps generate() sync.
+    this.api.getGames().subscribe({
+      next: (games) => this.games.set(games),
       error: () => {},
     });
 
@@ -1284,6 +1307,18 @@ export class PlaystyleSelectComponent implements OnInit {
       return;
     }
 
+    // ── Client-pipeline branch (Plan 1 Task 14 follow-up) ──
+    // When the feature flag is on, route through the in-browser pipeline
+    // via GenerationService.start({pipelineArgs}). Bail with a clear
+    // notification if we can't construct the args (no Game record yet,
+    // no whitelisted LLM key, etc.) — DON'T silently fall through to the
+    // legacy SSE path; that would defeat the purpose of the flag (smoke
+    // testing the client pipeline).
+    if (this.featureFlags.useClientPipeline()) {
+      this.startClientPipelineRun();
+      return;
+    }
+
     const hasOllama = this.ollamaStatus() === 'connected';
     // Build credentials list from all configured providers
     const allKeys = this.providerKeys();
@@ -1377,6 +1412,136 @@ export class PlaystyleSelectComponent implements OnInit {
           }
         },
       });
+  }
+
+  /**
+   * Run the in-browser pipeline via GenerationService.start({pipelineArgs}).
+   * Mirrors the post-success cleanup of the legacy SSE branch (clear wizard
+   * state, persist hardware, navigate to /generate/<id>) but feeds the
+   * client pipeline instead of the backend SSE.
+   *
+   * Bails early with a notification if anything required is missing — we
+   * don't fall through to the legacy path because the user explicitly
+   * opted into the client pipeline via the feature flag.
+   */
+  private startClientPipelineRun(): void {
+    // Resolve the active Game record. games() may be empty if the API call
+    // is still pending — in that case we can't proceed.
+    const game = this.games().find((g) => g.id === this.gameId);
+    if (!game) {
+      this.notifications.error(
+        'Game record is still loading — try again in a moment.',
+      );
+      return;
+    }
+
+    // Construct the LLM config from saved keys + Ollama. Returns null
+    // if there's no whitelisted provider available — the client pipeline
+    // can't talk to gemini_pro/groq_scout/together/etc. (only the 6 in
+    // ProviderId), so we surface a clear error.
+    const llmConfig = this.pickLlmConfig();
+    if (!llmConfig) {
+      this.notifications.error(
+        'Add a supported LLM API key (Anthropic, OpenAI, Gemini, Groq, OpenRouter) ' +
+          'or connect Ollama to use the in-browser pipeline.',
+      );
+      return;
+    }
+
+    this.loading.set(true);
+
+    // Same hardware persistence as the legacy branch (audit A.2).
+    this.authService
+      .saveHardware({
+        gpu_model: this.specs.gpu,
+        cpu_model: this.specs.cpu,
+        vram_mb: this.specs.vram_mb,
+        ram_gb: this.specs.ram_gb,
+        cpu_cores: this.specs.cpu_cores,
+        cpu_speed_ghz: this.specs.cpu_speed_ghz,
+        storage_drives: this.specs.storage_drives,
+      })
+      .subscribe({ error: (err) => console.warn('Hardware persistence failed (non-fatal):', err) });
+
+    // Optional playstyle — the wizard may have one selected by id but the
+    // pipeline wants the full Playstyle record. Look it up in the cached list.
+    const selectedId = this.selectedId();
+    const playstyle = selectedId != null
+      ? this.playstyles().find((p) => p.id === selectedId) ?? null
+      : null;
+
+    const description = this.customDescription().trim() || undefined;
+    const mods = this.requestedMods();
+
+    this.generationService
+      .start({
+        pipelineArgs: {
+          game,
+          preset: this.selectedPreset(),
+          hardwareSpec: this.specs,
+          availableStorageGb: this.getMaxFreeStorageGb(),
+          llmConfig,
+          playstyle,
+          gameVersion: (this.gameVersion ?? null) as GameVersion | null,
+          customDescription: description ?? null,
+          requestedMods: mods,
+        },
+      })
+      .then((session) => {
+        this.loading.set(false);
+
+        // Wizard is complete — clear refresh-recovery snapshots like the
+        // legacy branch does (otherwise "New Build" would restore the
+        // just-finished run).
+        sessionStorage.removeItem('setup_wizard_progress');
+        localStorage.removeItem('setup_wizard_state');
+
+        // Navigate to the generation viewer using the pipeline session id.
+        // start() resolves with a StoredSession on the client-pipeline path.
+        const sessionId = session?.id ?? this.generationService.generationId();
+        if (sessionId) {
+          this.router.navigate(['/generate', sessionId]);
+        }
+      })
+      .catch((err: Error) => {
+        this.loading.set(false);
+        this.notifications.error(
+          err?.message || 'Failed to start the in-browser generation.',
+        );
+      });
+  }
+
+  /**
+   * Build an LLMConfig from saved provider keys + Ollama. Returns null if
+   * none of the user's saved providers are on the client-pipeline whitelist
+   * (the dispatcher only supports anthropic/openai/gemini/groq/openrouter/ollama).
+   *
+   * Precedence: Ollama wins when connected (matches user's local-first
+   * intent — they actively tested the connection); otherwise the first
+   * whitelisted provider with a non-empty key.
+   */
+  private pickLlmConfig(): LLMConfig | null {
+    if (this.ollamaStatus() === 'connected') {
+      return {
+        provider: 'ollama',
+        model: this.ollamaSelectedModel(),
+        baseUrl: this.ollamaUrl(),
+      };
+    }
+
+    const whitelist = Object.keys(PROVIDERS) as ProviderId[];
+    const keys = this.providerKeys();
+    for (const providerId of whitelist) {
+      const key = keys[providerId];
+      if (key && key.length > 0) {
+        return {
+          provider: providerId,
+          model: defaultModelFor(providerId),
+          apiKey: key,
+        };
+      }
+    }
+    return null;
   }
 
   private saveWizardState(): void {
