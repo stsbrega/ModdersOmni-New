@@ -1,19 +1,32 @@
 /**
  * Singleton service for managing real-time modlist generation.
  *
- * Holds state across route navigation — the EventSource stays open even
- * when the user navigates away. On return to the generation page, events
- * are replayed from the server (the backend stores all events in memory).
+ * Holds state across route navigation — for the backend SSE path, the
+ * EventSource stays open even when the user navigates away. On return to the
+ * generation page, events are replayed from the server (the backend stores
+ * all events in memory).
+ *
+ * Two backends, one signal API:
+ *  - Backend SSE (default): `connectToEvents(id)` opens an EventSource and
+ *    threads events into `events`/`status`/`modlistId`/etc.
+ *  - Client pipeline (Plan 1 Task 14, gated by `FeatureFlagsService.useClientPipeline()`):
+ *    `startClientPipeline(args)` subscribes to `GenerationPipelineService.events()`
+ *    and feeds the SAME signals. UI components don't need to know which is
+ *    active.
  *
  * Key design decisions:
  * - Uses signals for reactive state (Angular 17+ pattern)
- * - EventSource for SSE (auto-reconnect built into the browser API)
+ * - EventSource for SSE (auto-reconnect built into the browser API).
+ *   Constructor goes through `EventSourceFactory` so tests can swap it.
  * - Token passed as query param since EventSource doesn't support headers
+ * - The unified `start()` entry point routes by the flag; legacy
+ *   `startGeneration` / `connectToEvents` are kept for callers that still
+ *   want the explicit two-step (and for SSE reconnect).
  */
 
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import {
   CompleteEvent,
   ErrorEvent,
@@ -27,11 +40,35 @@ import {
   SizeUpdateEvent,
 } from '../../shared/models/generation.model';
 import { AuthService } from './auth.service';
+import { EventSourceFactory } from './event-source-factory';
+import { FeatureFlagsService } from './feature-flags.service';
+import { GenerationPipelineService, type PipelineStartArgs } from './generation/pipeline.service';
+import type { StoredSession } from './generation/types';
+
+/**
+ * Args for the unified `start()` entry. Both fields are optional because
+ * each backend needs only one — `start()` validates the right one is
+ * present for the active flag.
+ */
+export interface GenerationStartArgs {
+  /** Backend SSE path: the generation_id returned by `POST /api/generation/start`. */
+  generationId?: string;
+  /** Client pipeline path: full args fed to `GenerationPipelineService.start`. */
+  pipelineArgs?: PipelineStartArgs;
+}
 
 @Injectable({ providedIn: 'root' })
 export class GenerationService {
   private baseUrl = window.__env?.API_URL || '/api';
   private eventSource: EventSource | null = null;
+
+  /** Active subscription to the client pipeline's events stream (when flag is on). */
+  private pipelineSub: Subscription | null = null;
+
+  // Injected via inject() to avoid bloating the constructor signature.
+  private readonly featureFlags = inject(FeatureFlagsService);
+  private readonly pipeline = inject(GenerationPipelineService);
+  private readonly esFactory = inject(EventSourceFactory);
 
   // ── Observable state ──
   readonly generationId = signal<string | null>(null);
@@ -91,6 +128,125 @@ export class GenerationService {
     private auth: AuthService,
   ) {}
 
+  // ── Unified entry point (Plan 1 Task 14) ──
+
+  /**
+   * Kick off a generation run on whichever backend the feature flag selects.
+   *
+   * Flag OFF (default): expects `args.generationId` (the caller has already
+   * called `api.startGeneration(...)` and obtained it). We `reset()` and
+   * open the SSE stream — equivalent to the legacy two-step.
+   *
+   * Flag ON: expects `args.pipelineArgs`. We `reset()` and start the client
+   * pipeline, subscribing to its events to drive the same signals.
+   *
+   * Returns a Promise that resolves when the run terminates (complete /
+   * paused / error). For the SSE path it resolves once the connection has
+   * been opened (the run continues asynchronously after that).
+   */
+  async start(args: GenerationStartArgs): Promise<StoredSession | void> {
+    if (this.featureFlags.useClientPipeline()) {
+      if (!args.pipelineArgs) {
+        throw new Error(
+          'start(): useClientPipeline is on but pipelineArgs missing.',
+        );
+      }
+      return this.startClientPipeline(args.pipelineArgs);
+    }
+    if (!args.generationId) {
+      throw new Error(
+        'start(): backend SSE requires generationId (call api.startGeneration first).',
+      );
+    }
+    this.reset();
+    this.connectToEvents(args.generationId);
+  }
+
+  /**
+   * Run the in-browser pipeline and pipe its events into the signal API.
+   *
+   * Mirrors the SSE `onmessage` handler's switch — same status/modlistId
+   * transitions — so UI components observe the same shape regardless of
+   * which backend is active.
+   *
+   * Note: the pipeline service exposes no `stop()`. Once started, an active
+   * run keeps going until it finishes; calling `disconnectEvents()` only
+   * detaches our subscription. (Resume goes through `pipeline.resume()`.)
+   */
+  async startClientPipeline(args: PipelineStartArgs): Promise<StoredSession> {
+    this.reset();
+    this.status.set('running');
+    // Use a synthetic id for the UI's generationId signal — the pipeline
+    // assigns its own session id internally and stamps it on the StoredSession
+    // returned from start(). We update generationId() to the real one as
+    // soon as we have it.
+    this.generationId.set('client-pipeline-pending');
+
+    // Subscribe BEFORE start() so we don't miss the first events
+    // (start() is async but emits synchronously into the Subject).
+    this.pipelineSub = this.pipeline.events().subscribe({
+      next: (evt) => this.applyEvent(evt),
+      error: (err) =>
+        // Pipeline errors usually surface as `error` events; this branch
+        // catches anything that escapes to the observable's error channel.
+        this.applyEvent({ type: 'error', message: (err as Error).message } as GenerationEvent),
+    });
+
+    try {
+      const session = await this.pipeline.start(args);
+      this.generationId.set(session.id);
+      return session;
+    } catch (e) {
+      // Surface escaped errors as an `error` event so the UI shows them.
+      this.applyEvent({
+        type: 'error',
+        message: (e as Error).message,
+      } as GenerationEvent);
+      throw e;
+    } finally {
+      // Pipeline run is over — detach the subscription so we don't leak
+      // listeners across runs. The pipeline subject is hot, so unsubscribing
+      // simply stops US from receiving.
+      this.pipelineSub?.unsubscribe();
+      this.pipelineSub = null;
+    }
+  }
+
+  /**
+   * Apply an event from EITHER backend to the signal API. Pulled out of the
+   * SSE `onmessage` so the client-pipeline subscription can reuse the same
+   * status/modlistId/runningSize transitions verbatim.
+   */
+  private applyEvent(data: GenerationEvent): void {
+    this.events.update((prev) => [...prev, data]);
+    switch (data.type) {
+      case 'complete':
+        this.status.set('complete');
+        this.modlistId.set((data as CompleteEvent).modlist_id);
+        this.disconnectEvents();
+        sessionStorage.removeItem('active_generation_id');
+        break;
+      case 'error':
+        this.status.set('error');
+        this.disconnectEvents();
+        sessionStorage.removeItem('active_generation_id');
+        break;
+      case 'paused':
+        this.status.set('paused');
+        this.disconnectEvents();
+        break;
+      case 'resumed':
+        this.status.set('running');
+        break;
+      case 'size_update': {
+        const s = data as SizeUpdateEvent;
+        this.runningSize.set(s.total_bytes);
+        this.runningCount.set(s.mod_count);
+        break;
+      }
+    }
+  }
+
   // ── API Methods ──
 
   startGeneration(request: Record<string, unknown>): Observable<GenerationStartResponse> {
@@ -138,7 +294,7 @@ export class GenerationService {
     const token = this.auth.getAccessToken();
     const url = `${this.baseUrl}/generation/${generationId}/events?token=${encodeURIComponent(token || '')}`;
 
-    this.eventSource = new EventSource(url);
+    this.eventSource = this.esFactory.create(url);
 
     this.eventSource.onopen = () => {
       this.connected.set(true);
@@ -147,35 +303,7 @@ export class GenerationService {
     this.eventSource.onmessage = (event) => {
       try {
         const data: GenerationEvent = JSON.parse(event.data);
-        this.events.update((prev) => [...prev, data]);
-
-        // Update status based on terminal events
-        switch (data.type) {
-          case 'complete':
-            this.status.set('complete');
-            this.modlistId.set((data as CompleteEvent).modlist_id);
-            this.disconnectEvents();
-            sessionStorage.removeItem('active_generation_id');
-            break;
-          case 'error':
-            this.status.set('error');
-            this.disconnectEvents();
-            sessionStorage.removeItem('active_generation_id');
-            break;
-          case 'paused':
-            this.status.set('paused');
-            this.disconnectEvents();
-            break;
-          case 'resumed':
-            this.status.set('running');
-            break;
-          case 'size_update': {
-            const s = data as SizeUpdateEvent;
-            this.runningSize.set(s.total_bytes);
-            this.runningCount.set(s.mod_count);
-            break;
-          }
-        }
+        this.applyEvent(data);
       } catch (e) {
         console.error('Failed to parse SSE event:', e);
       }
@@ -193,6 +321,10 @@ export class GenerationService {
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
+    }
+    if (this.pipelineSub) {
+      this.pipelineSub.unsubscribe();
+      this.pipelineSub = null;
     }
     this.connected.set(false);
   }
