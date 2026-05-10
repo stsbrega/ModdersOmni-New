@@ -280,9 +280,15 @@ git commit -m "feat(design): swap Playfair for Instrument Serif, add JetBrains M
 
 ---
 
-### Task 3: Install spartan-ng + lucide-angular
+### Task 3: Install @angular/cdk + lucide-angular
 
-**Goal:** Add the design system dependencies. No component code yet — that's Task 4.
+**Goal:** Add the headless behavior layer (`@angular/cdk` — overlays, focus traps, a11y, portal, dialog/bottom-sheet modules) + lucide-angular for icons. No spartan-ng — Task 3's first attempt found that:
+
+1. Half of spartan-ng's `*-brain` packages (button, dialog, sheet, separator) are 404 on npm under that naming.
+2. Current `@spartan-ng/ui-core` peer-requires Tailwind 3, but the project is on Tailwind 4 (and Task 1's `tokens.scss` uses Tailwind-4-only `@theme` syntax).
+3. The migrated structure (`@spartan-ng/brain` + `@spartan-ng/cli`) requires Angular 20; project is on Angular 19.
+
+CDK is the same headless layer spartan-ng uses internally, just unwrapped — we own the styled layer (Task 4) directly on Tailwind 4 + our OKLCH tokens. This is what shadcn does in React (Radix + Tailwind); we do it with CDK + Tailwind.
 
 **Files:**
 - Modify: `frontend/package.json` (deps), `frontend/package-lock.json` (lockfile)
@@ -291,23 +297,10 @@ git commit -m "feat(design): swap Playfair for Instrument Serif, add JetBrains M
 
 ```bash
 cd C:/Users/stsbr/Documents/ModdersOmni-New/frontend
-npm install \
-  @spartan-ng/ui-core \
-  @spartan-ng/ui-button-brain @spartan-ng/ui-button-helm \
-  @spartan-ng/ui-card-helm \
-  @spartan-ng/ui-dialog-brain @spartan-ng/ui-dialog-helm \
-  @spartan-ng/ui-sheet-brain @spartan-ng/ui-sheet-helm \
-  @spartan-ng/ui-input-helm \
-  @spartan-ng/ui-label-helm \
-  @spartan-ng/ui-badge-helm \
-  @spartan-ng/ui-separator-brain @spartan-ng/ui-separator-helm \
-  @spartan-ng/ui-icon-helm \
-  lucide-angular
+npm install @angular/cdk lucide-angular
 ```
 
-**If any package returns 404** (spartan-ng package names sometimes evolve): check the current naming at `https://www.spartan.ng/documentation/installation`. The pattern is `@spartan-ng/ui-<component>-{brain,helm}` where `brain` is the headless behavior layer and `helm` is the styled layer. Some primitives (card, badge, label) have only the helm package.
-
-**If peer-dep conflicts** appear: spartan-ng uses Angular CDK as a peer. CDK should already be installed via Angular Material or directly. If not: `npm install @angular/cdk`.
+`@angular/cdk` version should auto-pick the one matching Angular 19. If the exact version doesn't exist for `^19`, pin it: `npm install @angular/cdk@^19.0.0 lucide-angular`.
 
 - [ ] **Step 2: Verify build**
 
@@ -325,16 +318,16 @@ If build fails with "Cannot find module" for a spartan-ng package, double-check 
 ```bash
 cd C:/Users/stsbr/Documents/ModdersOmni-New
 git add frontend/package.json frontend/package-lock.json
-git commit -m "feat(design): install spartan-ng + lucide-angular" -m "" -m "Plan 2 Task 3. spartan-ng provides shadcn-quality primitives (split" -m "into 'brain' headless behavior + 'helm' styled presentation packages)." -m "lucide-angular replaces inline hand-coded SVGs across the app." -m "" -m "No usage yet — Task 4 builds the wrapper primitives in shared/components/ui/." -m "" -m "Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
+git commit -m "feat(design): install @angular/cdk + lucide-angular" -m "" -m "Plan 2 Task 3 (revised). CDK is the headless behavior layer (overlays," -m "focus traps, a11y, portals); Task 4 builds styled wrappers on top with" -m "Tailwind 4 + our OKLCH tokens. Same pattern as shadcn (Radix + Tailwind)." -m "" -m "Originally planned spartan-ng — found unworkable: half of *-brain" -m "packages 404, current core requires Tailwind 3 (we're on 4), new variant" -m "requires Angular 20 (we're on 19). CDK avoids all three." -m "" -m "Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ```
 
 ---
 
 ### Task 4: Build shared UI primitive layer
 
-**Goal:** Create thin Angular wrappers under `frontend/src/app/shared/components/ui/` that compose spartan-ng's helm components with our token system. Features import these wrappers, not spartan-ng directly. Single barrel re-exports them.
+**Goal:** Create thin Angular wrappers under `frontend/src/app/shared/components/ui/` that compose `@angular/cdk` headless directives with our Tailwind 4 OKLCH tokens. Features import these wrappers; they don't import CDK directly. Single barrel re-exports them.
 
-**Why a wrapper layer:** Spartan-ng helm components ship with Tailwind utility classes that mostly use `oklch(...)` values from CSS variables — but those default to spartan-ng's own theme. Our wrappers override the relevant classes to use our `--color-*` tokens.
+**Why a wrapper layer:** CDK provides the behavior (overlay positioning, focus management, keyboard interaction) but no styling. We own the visual layer using Tailwind 4 utility classes that resolve to our `--color-*` tokens. Same pattern as shadcn-in-React — Radix gives behavior, Tailwind gives style — adapted for Angular CDK.
 
 **Files:**
 - Create: `frontend/src/app/shared/components/ui/button.component.ts`
@@ -352,10 +345,11 @@ git commit -m "feat(design): install spartan-ng + lucide-angular" -m "" -m "Plan
 
 - [ ] **Step 1: Implement button + smoke test (sets the pattern for the rest)**
 
+A button doesn't need CDK behavior — native `<button>` element handles keyboard/focus/disabled. The wrapper is pure Tailwind classes via host bindings.
+
 ```typescript
 // frontend/src/app/shared/components/ui/button.component.ts
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { HlmButtonDirective } from '@spartan-ng/ui-button-helm';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 type Size = 'sm' | 'md' | 'lg';
@@ -374,9 +368,8 @@ const SIZE_CLASSES: Record<Size, string> = {
 };
 
 @Component({
-  selector: 'ui-button',
+  selector: 'button[ui-button]',
   standalone: true,
-  hostDirectives: [HlmButtonDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<ng-content/>`,
   host: {
@@ -395,6 +388,8 @@ export class UiButtonComponent {
   sizeClasses() { return SIZE_CLASSES[this.size]; }
 }
 ```
+
+Usage in templates: `<button ui-button variant="primary">Save</button>` — attaches to a real `<button>` element so native semantics (form submit, focus, screen reader) work without extra wiring.
 
 ```typescript
 // frontend/src/app/shared/components/ui/button.component.spec.ts
@@ -445,34 +440,47 @@ describe('UiButtonComponent', () => {
 
 - [ ] **Step 2: Implement remaining primitives**
 
-For each primitive (card, dialog, sheet, input, textarea, select, badge, separator, label), follow the same pattern:
-1. Standalone component with `selector: 'ui-<name>'`
-2. Compose the spartan-ng helm directive via `hostDirectives` (or wrap brain + helm if behavior is needed, e.g., dialog/sheet)
-3. Apply Tailwind utility classes that resolve to our `--color-*` tokens
-4. `ChangeDetectionStrategy.OnPush`
-5. Use `@Input()` for variant/size/etc. props that mirror what features need
+For static-styled primitives (card, badge, separator, input, textarea, label) — same pattern as button: a single component with host bindings that apply Tailwind utility classes resolving to our `--color-*` tokens. No CDK needed for these.
 
-Don't write a `.spec.ts` for each primitive — the button spec validates the pattern. Add specs for ones with non-trivial behavior (dialog open/close lifecycle, sheet side prop) but only if straightforward.
+For interactive primitives that need overlay/focus management (dialog, sheet, select), use CDK:
 
-For dialogs and sheets specifically, spartan-ng splits brain (state) from helm (styling). The wrapper composes both:
+- **Dialog:** import `Dialog` from `@angular/cdk/dialog`. Inject in a service or directly in the wrapper. The wrapper exposes an `open()` method that calls `dialog.open(template)`.
+- **Sheet:** use CDK Overlay's `Overlay` + `OverlayConfig` with positioning anchored to the right/left/bottom edge. CDK provides `OverlayPositionBuilder` for this.
+- **Select:** use CDK Overlay + a flexible position strategy anchored to the trigger button. CDK's `ListKeyManager` handles keyboard nav (up/down arrows, Enter to select).
+
+Example dialog wrapper:
 
 ```typescript
 // frontend/src/app/shared/components/ui/dialog.component.ts (example)
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { BrnDialogDirective } from '@spartan-ng/ui-dialog-brain';
-import { HlmDialogDirective } from '@spartan-ng/ui-dialog-helm';
+import { Component, ChangeDetectionStrategy, inject, TemplateRef } from '@angular/core';
+import { Dialog, DialogConfig } from '@angular/cdk/dialog';
 
 @Component({
   selector: 'ui-dialog',
   standalone: true,
-  hostDirectives: [BrnDialogDirective, HlmDialogDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<ng-content/>`,
+  host: {
+    'class': 'block bg-surface-1 border border-border rounded-md shadow-lg p-6 max-w-md',
+  },
 })
-export class UiDialogComponent {}
+export class UiDialogComponent {
+  private readonly dialog = inject(Dialog);
+
+  open(template: TemplateRef<unknown>, config?: DialogConfig) {
+    return this.dialog.open(template, {
+      hasBackdrop: true,
+      backdropClass: 'bg-bg/80',
+      panelClass: 'block bg-surface-1 border border-border rounded-md shadow-lg p-6 max-w-md',
+      ...config,
+    });
+  }
+}
 ```
 
-If a particular spartan-ng helm package has API quirks (different selector convention, requires `<ng-template>` projection), check `https://www.spartan.ng/components/<name>` for the canonical example and adapt the wrapper.
+Don't write a `.spec.ts` for each primitive — the button spec validates the pattern. Add specs for ones with non-trivial behavior (dialog open/close lifecycle, sheet side prop) but only if straightforward.
+
+If a CDK API has subtleties, refer to `https://material.angular.io/cdk/categories` (CDK's docs are under the Material Angular site).
 
 - [ ] **Step 3: Write the barrel**
 
