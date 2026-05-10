@@ -33,7 +33,7 @@ import { RouterLink } from '@angular/router';
       font-size: clamp(4rem, 12vw, 6.5rem);
       font-weight: 700;
       margin: 0;
-      color: var(--color-gold);
+      color: var(--color-accent);
       line-height: 1;
       letter-spacing: -0.02em;
     }
@@ -71,11 +71,11 @@ import { RouterLink } from '@angular/router';
       transform: translateY(-1px);
     }
     .btn-primary {
-      background: var(--color-gold);
+      background: var(--color-accent);
       color: #0D0D0F;
     }
     .btn-primary:hover {
-      background: var(--color-gold-hover);
+      background: var(--color-accent);
       box-shadow: 0 4px 20px rgba(196, 165, 90, 0.25);
     }
     .btn-secondary {
@@ -85,7 +85,7 @@ import { RouterLink } from '@angular/router';
     }
     .btn-secondary:hover {
       border-color: rgba(196, 165, 90, 0.3);
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
   `],
 })

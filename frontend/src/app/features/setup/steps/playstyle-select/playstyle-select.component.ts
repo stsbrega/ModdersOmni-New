@@ -440,7 +440,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 8px;
       padding: 0.625rem 0.75rem;
@@ -452,11 +452,11 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       position: relative;
     }
     .playstyle-card:hover {
-      border-color: var(--color-border-hover);
+      border-color: var(--color-border);
       transform: translateY(-1px);
     }
     .playstyle-card.selected {
-      border-color: var(--color-gold);
+      border-color: var(--color-accent);
       background: rgba(192, 160, 96, 0.05);
     }
     .ps-icon {
@@ -475,7 +475,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     .playstyle-card.selected .ps-icon {
       background: rgba(192, 160, 96, 0.12);
       border-color: rgba(192, 160, 96, 0.3);
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
     .ps-content {
       flex: 1;
@@ -493,7 +493,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: var(--color-gold);
+      background: var(--color-accent);
       color: #0D0D0F;
       display: flex;
       align-items: center;
@@ -509,7 +509,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       margin-bottom: 1.5rem;
     }
     .size-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 8px;
       padding: 0.75rem 0.875rem;
@@ -522,9 +522,9 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       flex-direction: column;
       gap: 0.25rem;
     }
-    .size-card:hover { border-color: var(--color-border-hover); transform: translateY(-1px); }
+    .size-card:hover { border-color: var(--color-border); transform: translateY(-1px); }
     .size-card.selected {
-      border-color: var(--color-gold);
+      border-color: var(--color-accent);
       background: rgba(192, 160, 96, 0.05);
     }
     .size-card.locked {
@@ -537,7 +537,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     .byok-lock {
       margin-top: 0.35rem;
       font-size: 0.72rem;
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-style: normal;
     }
 
@@ -641,7 +641,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       width: 16px;
       height: 16px;
       border: 2px solid var(--color-border);
-      border-top-color: var(--color-gold);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
@@ -665,7 +665,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
 
     /* AI Provider Section */
     .ai-provider-section {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 10px;
       margin-bottom: 1.5rem;
@@ -673,7 +673,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       transition: border-color 0.3s;
     }
     .ai-provider-section.pending-highlight {
-      border-color: var(--color-gold);
+      border-color: var(--color-accent);
     }
     .provider-header {
       display: flex;
@@ -703,7 +703,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     }
     .provider-badge.configured {
       background: rgba(192, 160, 96, 0.1);
-      color: var(--color-gold);
+      color: var(--color-accent);
       border-color: rgba(192, 160, 96, 0.25);
     }
     .chevron {
@@ -723,7 +723,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     }
     .pending-prompt {
       font-size: 0.8125rem;
-      color: var(--color-gold);
+      color: var(--color-accent);
       line-height: 1.5;
       margin: 0 0 1rem;
       font-weight: 500;
@@ -784,8 +784,8 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       color: var(--color-text-dim);
     }
     .provider-row.has-key .provider-status {
-      background: var(--color-gold);
-      border-color: var(--color-gold);
+      background: var(--color-accent);
+      border-color: var(--color-accent);
       color: #0D0D0F;
     }
     .provider-name {
@@ -829,7 +829,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     }
     .key-security-notice lucide-icon {
       flex-shrink: 0;
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
 
     /* Add key row */

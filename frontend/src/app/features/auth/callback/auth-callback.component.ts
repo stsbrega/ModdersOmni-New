@@ -21,7 +21,7 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--color-bg-dark);
+      background: var(--color-bg);
     }
     .callback-card {
       text-align: center;
@@ -34,7 +34,7 @@ import { AuthService } from '../../../core/services/auth.service';
       width: 40px;
       height: 40px;
       border: 3px solid var(--color-border);
-      border-top-color: var(--color-gold);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }

@@ -92,7 +92,7 @@ import {
       display: flex;
       align-items: center;
       gap: 1rem;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 12px;
       padding: 1.25rem 1.5rem;
@@ -105,11 +105,11 @@ import {
       transform: translateY(-2px);
     }
     .game-card.skyrim:hover {
-      border-color: var(--color-blue);
+      border-color: var(--color-secondary);
       background: rgba(123, 164, 192, 0.04);
     }
     .game-card.fallout:hover {
-      border-color: var(--color-gold);
+      border-color: var(--color-accent);
       background: rgba(192, 160, 96, 0.04);
     }
     .game-icon {
@@ -127,12 +127,12 @@ import {
     }
     .icon-skyrim {
       background: rgba(123, 164, 192, 0.12);
-      color: var(--color-blue);
+      color: var(--color-secondary);
       border: 1px solid rgba(123, 164, 192, 0.2);
     }
     .icon-fallout {
       background: rgba(192, 160, 96, 0.12);
-      color: var(--color-gold);
+      color: var(--color-accent);
       border: 1px solid rgba(192, 160, 96, 0.2);
     }
     .game-card h3 {
@@ -150,8 +150,8 @@ import {
     .game-card:hover .game-arrow {
       transform: translateX(3px);
     }
-    .game-card.skyrim:hover .game-arrow { color: var(--color-blue); }
-    .game-card.fallout:hover .game-arrow { color: var(--color-gold); }
+    .game-card.skyrim:hover .game-arrow { color: var(--color-secondary); }
+    .game-card.fallout:hover .game-arrow { color: var(--color-accent); }
   `],
 })
 export class GameSelectComponent implements OnInit {

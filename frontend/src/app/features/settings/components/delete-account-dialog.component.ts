@@ -64,22 +64,20 @@ import { UiInputComponent } from '../../../shared/components/ui/input.component'
     .backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.7);
       z-index: 190;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
     }
     .dialog {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       color: var(--color-text);
       padding: 1.75rem;
       border-radius: var(--radius-md);
       border: 1px solid var(--color-border);
-      box-shadow: var(--shadow-elevated);
+      box-shadow: var(--shadow-lg);
       z-index: 200;
       width: min(480px, 92vw);
       animation: dialog-enter 0.18s ease-out;

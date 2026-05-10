@@ -86,7 +86,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       align-items: center;
       justify-content: center;
       padding: 2rem;
-      background: var(--color-bg-dark);
+      background: var(--color-bg);
       position: relative;
       overflow: hidden;
     }
@@ -115,13 +115,13 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
     .auth-card {
       width: 100%;
       max-width: 400px;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-xl);
       padding: 2.5rem;
       position: relative;
       z-index: 1;
-      box-shadow: var(--shadow-elevated);
+      box-shadow: var(--shadow-lg);
       animation: card-enter 0.5s var(--ease-out);
     }
     @keyframes card-enter {
@@ -165,7 +165,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
     }
     .input {
       width: 100%;
-      background: var(--color-bg-dark);
+      background: var(--color-bg);
       border: 1px solid var(--color-border);
       border-radius: 8px;
       color: var(--color-text);
@@ -175,7 +175,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       transition: border-color 0.15s;
     }
     .input:focus {
-      border-color: var(--color-gold);
+      border-color: var(--color-accent);
       box-shadow: 0 0 0 3px rgba(196, 165, 90, 0.1);
     }
     .input::placeholder { color: var(--color-text-dim); }
@@ -186,7 +186,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
     }
     .forgot-link {
       font-size: 0.8125rem;
-      color: var(--color-gold);
+      color: var(--color-accent);
       transition: opacity 0.15s;
     }
     .forgot-link:hover { opacity: 0.8; }
@@ -197,7 +197,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      background: var(--color-gold);
+      background: var(--color-accent);
       color: #0D0D0F;
       padding: 0.7rem;
       border-radius: 8px;
@@ -207,8 +207,8 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       margin-top: 0.5rem;
     }
     .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: var(--shadow-gold);
+      background: var(--color-accent);
+      box-shadow: var(--shadow-md);
       transform: translateY(-1px);
     }
     .btn-primary:active { transform: translateY(0); }
@@ -264,7 +264,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       transition: border-color 0.15s, background 0.15s;
     }
     .btn-oauth:hover {
-      border-color: var(--color-border-hover);
+      border-color: var(--color-border);
       background: rgba(255, 255, 255, 0.03);
     }
 
@@ -275,7 +275,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       color: var(--color-text-muted);
     }
     .auth-footer a {
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-weight: 500;
     }
   `],

@@ -122,8 +122,8 @@ import {
     }
     .header-badge {
       display: inline-block;
-      background: var(--color-gold-subtle);
-      color: var(--color-gold);
+      background: color-mix(in oklch, var(--color-accent) 10%, transparent);
+      color: var(--color-accent);
       font-size: 0.6875rem;
       font-weight: 700;
       letter-spacing: 0.15em;
@@ -154,7 +154,7 @@ import {
     }
 
     .donation-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: 1.75rem 1.5rem;
@@ -242,7 +242,7 @@ import {
       display: flex;
       gap: 1rem;
       align-items: flex-start;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid rgba(99, 102, 241, 0.2);
       border-radius: var(--radius-lg);
       padding: 1.25rem 1.5rem;
@@ -269,7 +269,7 @@ import {
       line-height: 1.55;
     }
     .inline-link {
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-weight: 600;
     }
 

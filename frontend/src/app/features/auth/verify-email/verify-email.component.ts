@@ -49,12 +49,12 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       align-items: center;
       justify-content: center;
       padding: 2rem;
-      background: var(--color-bg-dark);
+      background: var(--color-bg);
     }
     .auth-card {
       width: 100%;
       max-width: 400px;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 16px;
       padding: 2.5rem;
@@ -78,7 +78,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       width: 40px;
       height: 40px;
       border: 3px solid var(--color-border);
-      border-top-color: var(--color-gold);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -108,7 +108,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: var(--color-gold);
+      background: var(--color-accent);
       color: #0D0D0F;
       padding: 0.7rem 2rem;
       border-radius: 8px;
@@ -119,8 +119,8 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       margin-top: 0.5rem;
     }
     .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 0 20px var(--color-gold-glow);
+      background: var(--color-accent);
+      box-shadow: var(--shadow-md);
     }
   `],
 })

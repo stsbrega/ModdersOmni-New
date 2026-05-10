@@ -362,13 +362,12 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       z-index: 200;
       padding: 0 2rem;
       height: 64px;
-      transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
     .navbar.scrolled {
-      background: rgba(13, 13, 15, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: var(--color-bg);
       border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
     }
     .nav-container {
       max-width: var(--max-width);
@@ -442,13 +441,13 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     .hero-glow--gold {
       top: 5%;
       left: 12%;
-      background: radial-gradient(circle, var(--color-gold-glow) 0%, transparent 70%);
+      background: radial-gradient(circle, color-mix(in oklch, var(--color-accent) 25%, transparent) 0%, transparent 70%);
       opacity: 0.6;
     }
     .hero-glow--blue {
       bottom: 8%;
       right: 8%;
-      background: radial-gradient(circle, var(--color-blue-glow) 0%, transparent 70%);
+      background: radial-gradient(circle, color-mix(in oklch, var(--color-secondary) 20%, transparent) 0%, transparent 70%);
       opacity: 0.5;
       animation-delay: -6s;
       animation-direction: reverse;
@@ -468,21 +467,19 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: rgba(196, 165, 90, 0.08);
-      border: 1px solid rgba(196, 165, 90, 0.18);
-      color: var(--color-gold);
+      background: color-mix(in oklch, var(--color-accent) 10%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 25%, transparent);
+      color: var(--color-accent);
       padding: 0.375rem 1rem;
       border-radius: 100px;
       font-size: 0.8125rem;
       font-weight: 500;
       margin-bottom: 2rem;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
     }
     .badge-dot {
       width: 6px;
       height: 6px;
-      background: var(--color-gold);
+      background: var(--color-accent);
       border-radius: 50%;
       animation: pulse-dot 2s ease-in-out infinite;
     }
@@ -500,7 +497,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       color: var(--color-text);
     }
     .hero-title-accent {
-      background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-hover) 40%, var(--color-blue) 100%);
+      background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent) 40%, var(--color-secondary) 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -546,12 +543,12 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     }
     .game-tag--skyrim {
       background: rgba(123, 164, 192, 0.12);
-      color: var(--color-blue);
+      color: var(--color-secondary);
       border: 1px solid rgba(123, 164, 192, 0.2);
     }
     .game-tag--fallout {
       background: rgba(192, 160, 96, 0.12);
-      color: var(--color-gold);
+      color: var(--color-accent);
       border: 1px solid rgba(192, 160, 96, 0.2);
     }
 
@@ -574,7 +571,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       height: 100%;
     }
     .nx-line {
-      stroke: var(--color-gold);
+      stroke: var(--color-accent);
       stroke-width: 0.5;
       opacity: 0;
       animation: nx-draw 1.8s ease-out forwards, nx-pulse 5s ease-in-out infinite;
@@ -608,7 +605,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       width: 4px;
       height: 4px;
       border-radius: 50%;
-      background: var(--color-gold);
+      background: var(--color-accent);
       opacity: 0;
       animation: nx-node-in 0.6s ease-out forwards, nx-node-glow 4s ease-in-out infinite;
       box-shadow: 0 0 8px rgba(196, 165, 90, 0.3);
@@ -643,7 +640,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       margin-top: 4rem;
     }
     .preview-window {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 14px;
       overflow: hidden;
@@ -660,7 +657,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       align-items: center;
       gap: 1rem;
       padding: 0.75rem 1rem;
-      background: var(--color-bg-elevated);
+      background: var(--color-surface-2);
       border-bottom: 1px solid var(--color-border);
     }
     .preview-dots {
@@ -707,7 +704,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     }
     .preview-sidebar-item.active {
       background: rgba(196, 165, 90, 0.12);
-      color: var(--color-gold);
+      color: var(--color-accent);
       border: 1px solid rgba(196, 165, 90, 0.2);
     }
     .preview-main {
@@ -736,7 +733,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     .preview-new-btn {
       font-size: 0.5625rem;
       font-weight: 600;
-      background: var(--color-gold);
+      background: var(--color-accent);
       color: #0D0D0F;
       padding: 0.25rem 0.625rem;
       border-radius: 5px;
@@ -764,8 +761,8 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       justify-content: center;
       margin-bottom: 0.375rem;
     }
-    .preview-stat-icon--gold { background: rgba(192, 160, 96, 0.12); color: var(--color-gold); }
-    .preview-stat-icon--blue { background: rgba(123, 164, 192, 0.12); color: var(--color-blue); }
+    .preview-stat-icon--gold { background: rgba(192, 160, 96, 0.12); color: var(--color-accent); }
+    .preview-stat-icon--blue { background: rgba(123, 164, 192, 0.12); color: var(--color-secondary); }
     .preview-stat-value {
       font-size: 0.875rem;
       font-weight: 700;
@@ -813,11 +810,11 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     }
     .preview-card-game--blue {
       background: rgba(123, 164, 192, 0.12);
-      color: var(--color-blue);
+      color: var(--color-secondary);
     }
     .preview-card-game--gold {
       background: rgba(192, 160, 96, 0.12);
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
     .preview-card-provider {
       font-size: 0.5rem;
@@ -825,14 +822,14 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       padding: 0.125rem 0.375rem;
       border-radius: 100px;
       background: rgba(192, 160, 96, 0.12);
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
     .preview-card-arrow {
       color: var(--color-text-dim);
       transition: color 0.15s, transform 0.15s;
     }
     .preview-card:hover .preview-card-arrow {
-      color: var(--color-gold);
+      color: var(--color-accent);
       transform: translateX(2px);
     }
     .preview-card-stats {
@@ -859,7 +856,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       padding: 6rem 2rem;
     }
     .section--dark {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
     }
     .section-container {
       max-width: var(--max-width);
@@ -875,7 +872,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin-bottom: 1rem;
     }
     .section-title {
@@ -902,7 +899,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       font-family: var(--font-display);
       font-size: 0.875rem;
       font-weight: 600;
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin-bottom: 1.25rem;
       letter-spacing: 0.05em;
     }
@@ -948,7 +945,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       gap: 1.5rem;
     }
     .feature-card {
-      background: var(--color-bg-dark);
+      background: var(--color-bg);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: 2rem;
@@ -984,11 +981,11 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     }
     .feature-icon--gold {
       background: rgba(192, 160, 96, 0.12);
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
     .feature-icon--blue {
       background: rgba(123, 164, 192, 0.12);
-      color: var(--color-blue);
+      color: var(--color-secondary);
     }
     .feature-card h3 {
       font-size: 1rem;

@@ -244,7 +244,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       width: 28px;
       height: 28px;
       border: 2px solid var(--color-border);
-      border-top-color: var(--color-gold);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
@@ -263,7 +263,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin-bottom: 0.375rem;
     }
     h1 {
@@ -301,7 +301,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       border: 1px solid rgba(196, 165, 90, 0.18);
       border-radius: var(--radius-md);
       margin-bottom: 1.5rem;
-      color: var(--color-gold);
+      color: var(--color-accent);
       cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.25s, transform 0.15s var(--ease-out);
     }
@@ -341,9 +341,9 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       gap: 0.5rem;
     }
     .mod-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
-      border-left: 3px solid var(--color-gold);
+      border-left: 3px solid var(--color-accent);
       border-radius: var(--radius-md);
       padding: 1rem 1.25rem;
       display: flex;
@@ -359,7 +359,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
 
     /* Patch card variant */
     .mod-card.patch-card {
-      border-left-color: var(--color-blue, #7ba4c0);
+      border-left-color: var(--color-secondary, #7ba4c0);
       background: rgba(123, 164, 192, 0.03);
     }
     .mod-card.patch-card:hover {
@@ -378,14 +378,14 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       justify-content: center;
       font-size: 0.75rem;
       font-weight: 600;
-      color: var(--color-gold);
+      color: var(--color-accent);
       flex-shrink: 0;
       margin-top: 2px;
     }
     .mod-order.patch-order {
       background: rgba(123, 164, 192, 0.12);
       border-color: rgba(123, 164, 192, 0.2);
-      color: var(--color-blue, #7ba4c0);
+      color: var(--color-secondary, #7ba4c0);
     }
 
     .mod-info { flex: 1; min-width: 0; }
@@ -412,12 +412,12 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       padding: 0.125rem 0.4rem;
       border-radius: 4px;
       background: rgba(123, 164, 192, 0.15);
-      color: var(--color-blue, #7ba4c0);
+      color: var(--color-secondary, #7ba4c0);
       border: 1px solid rgba(123, 164, 192, 0.25);
     }
     .patches-subtitle {
       font-size: 0.75rem;
-      color: var(--color-blue, #7ba4c0);
+      color: var(--color-secondary, #7ba4c0);
       margin: 0.25rem 0 0;
       opacity: 0.85;
     }
@@ -429,7 +429,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
     }
     .mod-reason {
       font-size: 0.75rem;
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin: 0.25rem 0 0;
       font-style: italic;
       opacity: 0.8;
@@ -458,7 +458,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       margin-top: 2px;
     }
     .nexus-link:hover {
-      color: var(--color-gold);
+      color: var(--color-accent);
       background: rgba(196, 165, 90, 0.08);
     }
 

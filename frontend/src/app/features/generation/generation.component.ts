@@ -546,7 +546,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
                       Save & Start
                     </button>
                   </form>
-                  <p style="margin:0.5rem 0 0;font-size:0.75rem;color:var(--color-text-muted)">Key is auto-detected and saved to your account. <a routerLink="/settings" style="color:var(--color-gold)">Manage keys in Settings</a></p>
+                  <p style="margin:0.5rem 0 0;font-size:0.75rem;color:var(--color-text-muted)">Key is auto-detected and saved to your account. <a routerLink="/settings" style="color:var(--color-accent)">Manage keys in Settings</a></p>
                 </div>
               } @else if (isAuthError()) {
                 <!-- Inline API key form for auth errors -->
@@ -642,7 +642,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
       :host {
         display: block;
         min-height: 100vh;
-        background: var(--color-bg-dark);
+        background: var(--color-bg);
       }
 
       /* ── Not Found ── */
@@ -674,7 +674,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
          Used by EVENT_ICONS map + inline lucide-icon usages. The map drives
          which class lights up per event type — keeps the visual semantic the
          same as before (gold = phase, green = added, red = error, etc.) */
-      .icon-gold   { color: var(--color-gold); }
+      .icon-gold   { color: var(--color-accent); }
       .icon-green  { color: #22c55e; }
       .icon-amber  { color: #f59e0b; }
       .icon-red    { color: #ef4444; }
@@ -713,7 +713,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         position: sticky;
         top: 0;
         z-index: 10;
-        background: var(--color-bg-card);
+        background: var(--color-surface-1);
         border-bottom: 1px solid var(--color-border);
         padding: 0.875rem 1.5rem;
       }
@@ -732,7 +732,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         min-width: 220px;
       }
       .phase-number {
-        background: var(--color-gold);
+        background: var(--color-accent);
         color: #0D0D0F;
         font-size: 0.6875rem;
         font-weight: 700;
@@ -766,7 +766,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         padding: 0.15rem 0.55rem;
         border-radius: 999px;
         background: rgba(201, 168, 108, 0.12);
-        color: var(--color-gold, #c9a86c);
+        color: var(--color-accent, #c9a86c);
         font-size: 0.75rem;
         font-weight: 500;
         letter-spacing: 0.01em;
@@ -784,10 +784,10 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         transition: background 0.4s;
       }
       .phase-seg.completed {
-        background: var(--color-gold);
+        background: var(--color-accent);
       }
       .phase-seg.active {
-        background: var(--color-gold);
+        background: var(--color-accent);
         animation: seg-pulse 1.5s ease-in-out infinite;
       }
       .phase-seg.pending {
@@ -817,7 +817,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
       /* ── Panel shared ── */
       .timeline-panel,
       .modlist-panel {
-        background: var(--color-bg-dark);
+        background: var(--color-bg);
         display: flex;
         flex-direction: column;
       }
@@ -859,8 +859,8 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         transition: color 0.15s, border-color 0.15s;
       }
       .log-download-btn:hover {
-        color: var(--color-gold);
-        border-color: var(--color-gold);
+        color: var(--color-accent);
+        border-color: var(--color-accent);
       }
 
       /* ── Timeline ── */
@@ -877,7 +877,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         width: 5px;
       }
       .timeline-scroll::-webkit-scrollbar-thumb {
-        background: var(--color-border-hover);
+        background: var(--color-border);
         border-radius: 3px;
       }
 
@@ -958,10 +958,10 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         align-items: center;
         gap: 0.5rem;
         font-weight: 600;
-        color: var(--color-gold);
+        color: var(--color-accent);
       }
       .phase-header-name {
-        color: var(--color-gold);
+        color: var(--color-accent);
       }
       .phase-complete-tag {
         font-size: 0.6875rem;
@@ -982,7 +982,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
       /* Legacy phase badge (reused in accordion headers) */
       .tl-phase-badge {
         background: rgba(196, 165, 90, 0.15);
-        color: var(--color-gold);
+        color: var(--color-accent);
         font-size: 0.625rem;
         font-weight: 700;
         padding: 0.15rem 0.4rem;
@@ -1043,7 +1043,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
 
       /* Final sweep + missing-mod warnings */
       .tl-sweep_start .tl-icon {
-        color: var(--color-gold);
+        color: var(--color-accent);
       }
       .tl-sweep-start strong {
         color: var(--color-text);
@@ -1079,7 +1079,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
 
       /* Phase complete */
       .tl-phase-done {
-        color: var(--color-gold);
+        color: var(--color-accent);
         font-weight: 500;
         font-size: 0.75rem;
       }
@@ -1199,7 +1199,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: var(--color-gold);
+        background: var(--color-accent);
         animation: dot-blink 1.2s ease-in-out infinite;
       }
       @keyframes dot-blink {
@@ -1218,8 +1218,8 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         bottom: 12px;
         left: 50%;
         transform: translateX(-50%);
-        background: var(--color-bg-elevated);
-        border: 1px solid var(--color-border-hover);
+        background: var(--color-surface-2);
+        border: 1px solid var(--color-border);
         color: var(--color-text-muted);
         padding: 0.35rem 0.75rem;
         border-radius: 20px;
@@ -1228,13 +1228,13 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         align-items: center;
         gap: 0.35rem;
         cursor: pointer;
-        box-shadow: var(--shadow-card);
+        box-shadow: var(--shadow-md);
         transition:
           background 0.15s,
           color 0.15s;
       }
       .scroll-btn:hover {
-        background: var(--color-bg-surface);
+        background: var(--color-surface-1);
         color: var(--color-text);
       }
 
@@ -1349,7 +1349,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         transition: border-color 0.15s;
       }
       .mod-card:hover {
-        border-color: var(--color-border-hover);
+        border-color: var(--color-border);
       }
       .mod-card-top {
         display: flex;
@@ -1359,7 +1359,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
       .lo-badge {
         font-size: 0.625rem;
         font-weight: 700;
-        color: var(--color-gold);
+        color: var(--color-accent);
         background: rgba(196, 165, 90, 0.1);
         padding: 0.1rem 0.35rem;
         border-radius: 3px;
@@ -1451,7 +1451,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         height: 100%;
       }
       .nx-line {
-        stroke: var(--color-gold);
+        stroke: var(--color-accent);
         stroke-width: 0.5;
         opacity: 0;
         animation: line-draw 1.5s ease-out forwards, line-pulse 4s ease-in-out infinite;
@@ -1485,7 +1485,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         width: 4px;
         height: 4px;
         border-radius: 50%;
-        background: var(--color-gold);
+        background: var(--color-accent);
         opacity: 0;
         animation: node-appear 0.6s ease-out forwards, node-glow 3s ease-in-out infinite;
         box-shadow: 0 0 8px rgba(196, 165, 90, 0.3);

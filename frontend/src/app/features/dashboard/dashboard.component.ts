@@ -254,7 +254,7 @@ import { DialogRef } from '@angular/cdk/dialog';
       width: 28px;
       height: 28px;
       border: 2px solid var(--color-border);
-      border-top-color: var(--color-gold);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
@@ -280,14 +280,14 @@ import { DialogRef } from '@angular/cdk/dialog';
       border-color: rgba(192, 160, 96, 0.35);
     }
     .resume-banner strong {
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin-left: auto;
     }
     .resume-pulse {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--color-gold);
+      background: var(--color-accent);
       animation: pulse 1.5s ease-in-out infinite;
       flex-shrink: 0;
     }
@@ -338,9 +338,9 @@ import { DialogRef } from '@angular/cdk/dialog';
       transition: border-color 0.25s, transform 0.25s var(--ease-out), box-shadow 0.25s;
     }
     .stat-card:hover {
-      border-color: var(--color-border-hover);
+      border-color: var(--color-border);
       transform: translateY(-2px);
-      box-shadow: var(--shadow-card);
+      box-shadow: var(--shadow-md);
     }
     .stat-icon {
       width: 36px;
@@ -351,8 +351,8 @@ import { DialogRef } from '@angular/cdk/dialog';
       justify-content: center;
       margin-bottom: 0.875rem;
     }
-    .stat-icon--gold { background: rgba(192, 160, 96, 0.12); color: var(--color-gold); }
-    .stat-icon--blue { background: rgba(123, 164, 192, 0.12); color: var(--color-blue); }
+    .stat-icon--gold { background: rgba(192, 160, 96, 0.12); color: var(--color-accent); }
+    .stat-icon--blue { background: rgba(123, 164, 192, 0.12); color: var(--color-secondary); }
     .stat-value {
       font-size: 1.375rem;
       font-weight: 700;
@@ -372,7 +372,7 @@ import { DialogRef } from '@angular/cdk/dialog';
       gap: 1rem;
     }
     .modlist-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: 1.25rem;
@@ -404,7 +404,7 @@ import { DialogRef } from '@angular/cdk/dialog';
       padding: 0.1875rem 0.625rem;
       border-radius: 100px;
       background: rgba(123, 164, 192, 0.12);
-      color: var(--color-blue);
+      color: var(--color-secondary);
     }
     .card-provider {
       font-size: 0.6875rem;
@@ -412,7 +412,7 @@ import { DialogRef } from '@angular/cdk/dialog';
       padding: 0.1875rem 0.625rem;
       border-radius: 100px;
       background: rgba(192, 160, 96, 0.12);
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
     .card-actions {
       display: flex;
@@ -445,7 +445,7 @@ import { DialogRef } from '@angular/cdk/dialog';
       flex-shrink: 0;
     }
     .modlist-card:hover .card-arrow {
-      color: var(--color-gold);
+      color: var(--color-accent);
       transform: translateX(2px);
     }
 

@@ -659,7 +659,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
     .tab:hover { color: var(--color-text); }
     .tab.active {
       color: var(--color-text);
-      border-bottom-color: var(--color-gold);
+      border-bottom-color: var(--color-accent);
     }
 
     /* Panel */
@@ -718,18 +718,18 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: var(--color-gold);
+      background: var(--color-accent);
       cursor: pointer;
-      border: 3px solid var(--color-bg-dark);
-      box-shadow: 0 0 0 1px var(--color-gold);
+      border: 3px solid var(--color-bg);
+      box-shadow: 0 0 0 1px var(--color-accent);
     }
     .slider::-moz-range-thumb {
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: var(--color-gold);
+      background: var(--color-accent);
       cursor: pointer;
-      border: 3px solid var(--color-bg-dark);
+      border: 3px solid var(--color-bg);
     }
     .slider-value {
       font-size: 0.875rem;
@@ -845,7 +845,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       font-size: 0.8125rem;
       font-weight: 600;
       min-width: 24px;
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
     .drive-bar-container {
       flex: 1;
@@ -856,7 +856,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
     }
     .drive-bar {
       height: 100%;
-      background: var(--color-gold);
+      background: var(--color-accent);
       border-radius: 3px;
       transition: width 0.3s ease;
     }
@@ -898,7 +898,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       font-size: 0.8125rem;
       font-weight: 600;
       margin-bottom: 0.25rem;
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
     .help-option p {
       font-size: 0.8125rem;
@@ -941,7 +941,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
     .key-security-notice lucide-icon {
       flex-shrink: 0;
       margin-top: 1px;
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
 
     /* Add key row — input + button, side by side */
@@ -991,7 +991,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
        was adopted yet for these legacy detection/reassign menus. */
     .legacy-select {
       width: 100%;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 8px;
       color: var(--color-text);
@@ -1001,7 +1001,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       outline: none;
       transition: border-color 0.15s;
     }
-    .legacy-select:focus { border-color: var(--color-gold); }
+    .legacy-select:focus { border-color: var(--color-accent); }
     .reassign-select {
       max-width: 140px;
       padding: 0.25rem 0.5rem;
@@ -1076,7 +1076,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       transition: background 0.2s;
       padding: 0;
     }
-    .toggle-switch.on { background: var(--color-gold); }
+    .toggle-switch.on { background: var(--color-accent); }
     .toggle-knob {
       position: absolute;
       top: 2px;

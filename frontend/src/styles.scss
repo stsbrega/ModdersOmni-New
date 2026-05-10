@@ -1,13 +1,8 @@
-/* ===== Design System — Forge Dark: Gold × Midnight ===== */
+/* ===== Design System — v2 OKLCH tokens ===== */
 //
-// Design tokens live in styles/tokens.scss (Tailwind 4 @theme block + a
-// :root backwards-compat shim that maps v1 var names like --color-bg-dark,
-// --color-gold, --shadow-card, etc. to either the new OKLCH tokens or the
-// preserved v1 literal values). This file owns the global reset, body
-// styles, keyframes, and accessibility helpers.
-//
-// The shim block in tokens.scss is removed in Plan 2 Task 13 once every
-// feature has been migrated to the new token names.
+// Design tokens live in styles/tokens.scss. The @theme block is the
+// single source of truth and feeds Tailwind 4. This file owns the global
+// reset, body styles, keyframes, and accessibility helpers.
 @use 'styles/tokens.scss';
 
 /* ===== Global Resets ===== */
@@ -18,8 +13,8 @@
 }
 
 body {
-  font-family: var(--font-body);
-  background-color: var(--color-bg-dark);
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
   color: var(--color-text);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -68,8 +63,8 @@ input, select, textarea { font-family: inherit; }
 
 /* ===== Selection ===== */
 ::selection {
-  background: var(--color-gold);
-  color: #0A0A0C;
+  background: var(--color-accent);
+  color: var(--color-bg);
 }
 
 /* ===== Global Keyframes ===== */
@@ -95,7 +90,7 @@ input, select, textarea { font-family: inherit; }
 
 @keyframes border-glow {
   0%, 100% { border-color: var(--color-border); }
-  50% { border-color: var(--color-border-hover); }
+  50% { border-color: var(--color-accent-muted); }
 }
 
 @keyframes spin {
@@ -104,7 +99,7 @@ input, select, textarea { font-family: inherit; }
 
 /* ===== Focus Visible ===== */
 :focus-visible {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -126,8 +121,8 @@ input, select, textarea { font-family: inherit; }
   top: 0;
   z-index: 10000;
   padding: 0.75rem 1rem;
-  background: var(--color-gold);
-  color: #0A0A0C;
+  background: var(--color-accent);
+  color: var(--color-bg);
   font-weight: 600;
   border-radius: var(--radius-sm);
 }

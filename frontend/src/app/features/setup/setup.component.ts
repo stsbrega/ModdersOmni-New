@@ -137,7 +137,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin-bottom: 0.625rem;
     }
     .setup-header h1 {
@@ -167,7 +167,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      background: var(--color-bg-elevated);
+      background: var(--color-surface-2);
       border: 1px solid var(--color-border);
       display: flex;
       align-items: center;
@@ -178,8 +178,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       transition: all 0.25s;
     }
     .step.active .step-indicator {
-      background: var(--color-gold);
-      border-color: var(--color-gold);
+      background: var(--color-accent);
+      border-color: var(--color-accent);
       color: #0D0D0F;
     }
     .step.completed .step-indicator {
@@ -227,7 +227,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 10px;
       padding: 1rem 1.25rem;
@@ -237,7 +237,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       transition: border-color 0.2s, transform 0.15s, background 0.15s;
     }
     .version-card:hover {
-      border-color: var(--color-gold);
+      border-color: var(--color-accent);
       transform: translateY(-1px);
       background: rgba(192, 160, 96, 0.04);
     }
@@ -246,7 +246,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       height: 36px;
       border-radius: 8px;
       background: rgba(192, 160, 96, 0.1);
-      color: var(--color-gold);
+      color: var(--color-accent);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -275,7 +275,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       transition: color 0.15s, transform 0.15s;
     }
     .version-card:hover .version-arrow {
-      color: var(--color-gold);
+      color: var(--color-accent);
       transform: translateX(2px);
     }
   `],

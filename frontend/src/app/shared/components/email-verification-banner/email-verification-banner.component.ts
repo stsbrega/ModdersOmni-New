@@ -50,12 +50,10 @@ const DISMISS_KEY = 'moddersomni:email-banner-dismissed';
       justify-content: center;
       gap: 1rem;
       padding: 0.5rem 1rem;
-      background: rgba(196, 165, 90, 0.12);
-      border-bottom: 1px solid rgba(196, 165, 90, 0.3);
+      background: color-mix(in oklch, var(--color-accent) 15%, var(--color-bg));
+      border-bottom: 1px solid var(--color-border);
       color: var(--color-text);
       font-size: 0.8125rem;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
     }
     .banner-content {
       display: inline-flex;
@@ -65,11 +63,11 @@ const DISMISS_KEY = 'moddersomni:email-banner-dismissed';
       justify-content: center;
     }
     .banner-content svg {
-      color: var(--color-gold);
+      color: var(--color-accent);
       flex-shrink: 0;
     }
     .resend {
-      background: var(--color-gold);
+      background: var(--color-accent);
       color: #0D0D0F;
       border: none;
       padding: 0.25rem 0.75rem;
@@ -80,7 +78,7 @@ const DISMISS_KEY = 'moddersomni:email-banner-dismissed';
       transition: background 0.15s, opacity 0.15s;
     }
     .resend:hover:not(:disabled) {
-      background: var(--color-gold-hover);
+      background: var(--color-accent);
     }
     .resend:disabled {
       opacity: 0.6;

@@ -199,7 +199,7 @@ type TabId = 'mo2' | 'vortex';
       width: 28px;
       height: 28px;
       border: 2px solid var(--color-border);
-      border-top-color: var(--color-gold);
+      border-top-color: var(--color-accent);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
@@ -219,7 +219,7 @@ type TabId = 'mo2' | 'vortex';
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin: 0.75rem 0 0.375rem;
     }
     h1 {
@@ -244,7 +244,7 @@ type TabId = 'mo2' | 'vortex';
       border-radius: 999px;
       background: rgba(196, 165, 90, 0.12);
       border: 1px solid rgba(196, 165, 90, 0.25);
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-size: 0.75rem;
       font-weight: 600;
       letter-spacing: 0.02em;
@@ -254,7 +254,7 @@ type TabId = 'mo2' | 'vortex';
       align-items: center;
       gap: 0.375rem;
       background: none;
-      border: 1px dashed var(--color-border-hover);
+      border: 1px dashed var(--color-border);
       color: var(--color-text-muted);
       padding: 0.25rem 0.625rem;
       border-radius: 6px;
@@ -263,8 +263,8 @@ type TabId = 'mo2' | 'vortex';
       transition: color 0.15s, border-color 0.15s;
     }
     .version-btn:hover {
-      color: var(--color-gold);
-      border-color: var(--color-gold);
+      color: var(--color-accent);
+      border-color: var(--color-accent);
     }
     .header-actions {
       display: flex;
@@ -313,7 +313,7 @@ type TabId = 'mo2' | 'vortex';
       align-items: flex-start;
       gap: 0.2rem;
       padding: 0.75rem 1rem;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       color: var(--color-text-muted);
@@ -323,7 +323,7 @@ type TabId = 'mo2' | 'vortex';
       overflow: hidden;
       transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
-    .tab:hover { border-color: var(--color-border-hover); color: var(--color-text); }
+    .tab:hover { border-color: var(--color-border); color: var(--color-text); }
     .tab.active {
       border-color: rgba(196, 165, 90, 0.35);
       background: rgba(196, 165, 90, 0.05);
@@ -337,7 +337,7 @@ type TabId = 'mo2' | 'vortex';
       right: 0;
       bottom: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+      background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
     }
     .tab-label {
       font-family: var(--font-display);
@@ -350,7 +350,7 @@ type TabId = 'mo2' | 'vortex';
       text-transform: uppercase;
       color: var(--color-text-dim);
     }
-    .tab.active .tab-sub { color: var(--color-gold); }
+    .tab.active .tab-sub { color: var(--color-accent); }
 
     .section-summary {
       padding: 0.875rem 1rem;
@@ -375,7 +375,7 @@ type TabId = 'mo2' | 'vortex';
       display: flex;
       align-items: flex-start;
       gap: 1rem;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       padding: 1rem 1.25rem;
@@ -395,7 +395,7 @@ type TabId = 'mo2' | 'vortex';
       justify-content: center;
       background: rgba(196, 165, 90, 0.1);
       border: 1px solid rgba(196, 165, 90, 0.25);
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-family: var(--font-display);
       font-size: 0.8125rem;
       font-weight: 600;
@@ -440,7 +440,7 @@ type TabId = 'mo2' | 'vortex';
       cursor: pointer;
       transition: color 0.15s;
     }
-    .troubleshoot-toggle:hover { color: var(--color-gold); }
+    .troubleshoot-toggle:hover { color: var(--color-accent); }
     .chevron {
       transition: transform 0.2s;
     }

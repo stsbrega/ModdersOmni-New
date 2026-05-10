@@ -341,7 +341,7 @@ RAM: 32 GB DDR5"
     }
     .tier-low {
       background: rgba(239, 68, 68, 0.12);
-      color: var(--color-error);
+      color: var(--color-danger);
       border: 1px solid rgba(239, 68, 68, 0.25);
     }
     .tier-mid {
@@ -428,7 +428,7 @@ RAM: 32 GB DDR5"
     }
     .score-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--color-gold), var(--color-blue));
+      background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
       border-radius: 2px;
       transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }

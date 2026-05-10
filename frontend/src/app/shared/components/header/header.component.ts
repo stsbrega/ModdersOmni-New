@@ -106,10 +106,9 @@ import {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(13, 13, 15, 0.8);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: var(--color-bg);
       border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
       height: var(--header-height);
     }
     .header-content {
@@ -147,8 +146,8 @@ import {
       background: rgba(255, 255, 255, 0.05);
     }
     .nav-link.active {
-      color: var(--color-gold);
-      background: rgba(196, 165, 90, 0.08);
+      color: var(--color-accent);
+      background: color-mix(in oklch, var(--color-accent) 10%, transparent);
     }
     .header-actions {
       display: flex;
@@ -157,17 +156,16 @@ import {
 
     /* Sign In Button */
     .sign-in-btn {
-      background: var(--color-gold);
-      color: #0D0D0F;
+      background: var(--color-accent);
+      color: var(--color-bg);
       padding: 0.4rem 1rem;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       font-size: 0.8125rem;
       font-weight: 600;
-      transition: background 0.2s, box-shadow 0.2s;
+      transition: background 0.2s;
     }
     .sign-in-btn:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 4px 20px rgba(196, 165, 90, 0.25);
+      background: var(--color-accent-muted);
     }
 
     /* User Menu */
@@ -178,7 +176,7 @@ import {
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: var(--color-bg-elevated);
+      background: var(--color-surface-2);
       border: 1px solid var(--color-border);
       color: var(--color-text-muted);
       display: flex;
@@ -188,14 +186,13 @@ import {
       cursor: pointer;
     }
     .avatar-btn:hover {
-      border-color: rgba(196, 165, 90, 0.3);
-      color: var(--color-gold);
-      box-shadow: 0 0 12px rgba(196, 165, 90, 0.12);
+      border-color: var(--color-accent);
+      color: var(--color-accent);
     }
     .avatar-initials {
       font-size: 0.75rem;
       font-weight: 600;
-      color: var(--color-gold);
+      color: var(--color-accent);
       text-transform: uppercase;
     }
 
@@ -210,12 +207,12 @@ import {
       right: 0;
       top: calc(100% + 8px);
       width: 220px;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       padding: 0.5rem;
       z-index: 100;
-      box-shadow: var(--shadow-elevated);
+      box-shadow: var(--shadow-lg);
       animation: dropdown-enter 0.2s var(--ease-out);
       transform-origin: top right;
     }
@@ -267,7 +264,7 @@ import {
       background: rgba(255, 255, 255, 0.04);
     }
     .dropdown-item--danger:hover {
-      color: #ef4444;
+      color: var(--color-danger);
     }
 
     /* Mobile hamburger (hidden on desktop, shown under 768px) */
@@ -283,7 +280,7 @@ import {
     }
     .mobile-nav-toggle:hover {
       background: rgba(255, 255, 255, 0.06);
-      color: var(--color-gold);
+      color: var(--color-accent);
     }
 
     @media (max-width: 768px) {

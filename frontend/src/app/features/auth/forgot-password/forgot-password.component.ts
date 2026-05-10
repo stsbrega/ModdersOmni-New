@@ -70,12 +70,12 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       align-items: center;
       justify-content: center;
       padding: 2rem;
-      background: var(--color-bg-dark);
+      background: var(--color-bg);
     }
     .auth-card {
       width: 100%;
       max-width: 400px;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: 16px;
       padding: 2.5rem;
@@ -128,7 +128,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
     }
     .input {
       width: 100%;
-      background: var(--color-bg-dark);
+      background: var(--color-bg);
       border: 1px solid var(--color-border);
       border-radius: 8px;
       color: var(--color-text);
@@ -137,7 +137,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       outline: none;
       transition: border-color 0.15s;
     }
-    .input:focus { border-color: var(--color-gold); }
+    .input:focus { border-color: var(--color-accent); }
     .input::placeholder { color: var(--color-text-dim); }
 
     .btn-primary {
@@ -146,7 +146,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      background: var(--color-gold);
+      background: var(--color-accent);
       color: #0D0D0F;
       padding: 0.7rem;
       border-radius: 8px;
@@ -156,8 +156,8 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       margin-top: 0.5rem;
     }
     .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 0 20px var(--color-gold-glow);
+      background: var(--color-accent);
+      box-shadow: var(--shadow-md);
     }
     .btn-primary:disabled {
       opacity: 0.5;
@@ -186,7 +186,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       transition: border-color 0.15s, background 0.15s;
     }
     .btn-secondary:hover {
-      border-color: var(--color-border-hover);
+      border-color: var(--color-border);
       background: rgba(255, 255, 255, 0.03);
     }
 
@@ -196,7 +196,7 @@ import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-
       font-size: 0.8125rem;
     }
     .auth-footer a {
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-weight: 500;
     }
   `],

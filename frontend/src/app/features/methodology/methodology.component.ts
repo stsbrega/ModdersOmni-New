@@ -370,7 +370,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--color-gold);
+      color: var(--color-accent);
       background: rgba(196, 165, 90, 0.1);
       border: 1px solid rgba(196, 165, 90, 0.2);
       padding: 0.25rem 0.75rem;
@@ -383,7 +383,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       font-weight: 700;
       letter-spacing: -0.02em;
       margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--color-text) 30%, var(--color-gold) 100%);
+      background: linear-gradient(135deg, var(--color-text) 30%, var(--color-accent) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -410,7 +410,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       color: var(--color-text-muted);
       transition: color 0.15s;
     }
-    .toc-link:hover { color: var(--color-gold); }
+    .toc-link:hover { color: var(--color-accent); }
     .toc-dot {
       width: 3px;
       height: 3px;
@@ -425,7 +425,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
     .section-label {
       font-size: 0.75rem;
       font-weight: 600;
-      color: var(--color-gold);
+      color: var(--color-accent);
       letter-spacing: 0.05em;
       margin-bottom: 0.5rem;
     }
@@ -450,14 +450,14 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       margin-bottom: 2rem;
     }
     .phase-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       padding: 1rem;
       transition: border-color 0.2s;
     }
     .phase-card:hover {
-      border-color: var(--color-border-hover);
+      border-color: var(--color-border);
     }
     .phase-number {
       font-size: 0.6875rem;
@@ -507,7 +507,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       display: flex;
       gap: 0.875rem;
       padding: 1.25rem;
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       margin-bottom: 2rem;
@@ -521,7 +521,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       color: var(--color-text-muted);
       margin-top: 2px;
     }
-    .callout-gold .callout-icon { color: var(--color-gold); }
+    .callout-gold .callout-icon { color: var(--color-accent); }
     .callout-text {
       font-size: 0.875rem;
       color: var(--color-text-muted);
@@ -539,13 +539,13 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       margin-bottom: 2rem;
     }
     .tier-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       padding: 1.25rem;
       transition: border-color 0.2s;
     }
-    .tier-card:hover { border-color: var(--color-border-hover); }
+    .tier-card:hover { border-color: var(--color-border); }
     .tier-header {
       display: flex;
       align-items: center;
@@ -597,7 +597,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
     .tier-phase-tag {
       font-size: 0.6875rem;
       color: var(--color-text-muted);
-      background: var(--color-bg-elevated);
+      background: var(--color-surface-2);
       padding: 0.125rem 0.5rem;
       border-radius: 4px;
     }
@@ -615,13 +615,13 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
     .tier-cost-value {
       font-size: 0.8125rem;
       font-weight: 600;
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-variant-numeric: tabular-nums;
     }
 
     /* Transparency Box */
     .transparency-box {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: 1.5rem;
@@ -651,7 +651,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       display: flex;
       gap: 0.75rem;
       padding: 0.625rem 0.875rem;
-      background: var(--color-bg-elevated);
+      background: var(--color-surface-2);
       border-radius: var(--radius-sm);
       font-size: 0.8125rem;
       align-items: baseline;
@@ -659,7 +659,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
     .event-label {
       flex-shrink: 0;
       font-weight: 600;
-      color: var(--color-gold);
+      color: var(--color-accent);
       font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
       font-size: 0.75rem;
     }
@@ -679,7 +679,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       .quality-grid { grid-template-columns: 1fr; }
     }
     .quality-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: 1.5rem;
@@ -734,7 +734,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
     .honesty-title {
       font-size: 1rem;
       font-weight: 600;
-      color: var(--color-gold);
+      color: var(--color-accent);
       margin-bottom: 0.625rem;
     }
     .honesty-box p {
@@ -763,7 +763,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--color-text-dim);
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border-bottom: 1px solid var(--color-border);
     }
     .cost-table td {
@@ -789,7 +789,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       gap: 1rem;
     }
     .cost-detail {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       padding: 1.25rem;
@@ -815,7 +815,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       .free-tier-grid { grid-template-columns: 1fr; }
     }
     .free-card {
-      background: var(--color-bg-card);
+      background: var(--color-surface-1);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       padding: 1.25rem;
