@@ -8,11 +8,15 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+// Direct primitive imports — same pattern landing/setup adopted in Tasks 5-6
+// to avoid pulling in sibling primitives that may have unrelated TS errors.
+import { UiButtonComponent } from '../../../shared/components/ui/button.component';
+import { UiInputComponent } from '../../../shared/components/ui/input.component';
 
 @Component({
   selector: 'app-delete-account-dialog',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, UiButtonComponent, UiInputComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="backdrop" (click)="!working() && cancel.emit()"></div>
@@ -24,20 +28,29 @@ import { AuthService } from '../../../core/services/auth.service';
       <label>
         Type <strong>DELETE</strong> to confirm:
         <input
+          ui-input
           type="text"
           [(ngModel)]="confirmText"
           autocomplete="off"
           spellcheck="false"
           [disabled]="working()"
+          class="mt-2"
         />
       </label>
       <div class="actions">
-        <button type="button" class="cancel" (click)="cancel.emit()" [disabled]="working()">
+        <button
+          ui-button
+          variant="secondary"
+          type="button"
+          (click)="cancel.emit()"
+          [disabled]="working()"
+        >
           Cancel
         </button>
         <button
+          ui-button
+          variant="destructive"
           type="button"
-          class="danger"
           [disabled]="confirmText !== 'DELETE' || working()"
           (click)="confirm()"
         >
@@ -95,59 +108,11 @@ import { AuthService } from '../../../core/services/auth.service';
     strong {
       color: var(--color-text);
     }
-    input {
-      display: block;
-      width: 100%;
-      margin-top: 0.4rem;
-      padding: 0.55rem 0.75rem;
-      font-size: 0.875rem;
-      background: var(--color-bg-elevated);
-      color: var(--color-text);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      font-family: inherit;
-    }
-    input:focus {
-      outline: none;
-      border-color: rgba(239, 68, 68, 0.5);
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-    }
-    input:disabled {
-      opacity: 0.6;
-    }
     .actions {
       display: flex;
       gap: 0.5rem;
       justify-content: flex-end;
       margin-top: 1rem;
-    }
-    button {
-      padding: 0.5rem 1rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .cancel {
-      background: transparent;
-      color: var(--color-text);
-      border-color: var(--color-border);
-    }
-    .cancel:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.04);
-    }
-    .danger {
-      background: #ef4444;
-      color: #fff;
-    }
-    .danger:hover:not(:disabled) {
-      background: #dc2626;
     }
     .err {
       color: #ef4444;

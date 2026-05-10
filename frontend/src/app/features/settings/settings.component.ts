@@ -1,6 +1,18 @@
 import { Component, computed, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  AlertCircle,
+  Lock,
+  Check,
+  X,
+  Pencil,
+  Trash2,
+  Settings as SettingsIcon,
+} from 'lucide-angular';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -9,13 +21,45 @@ import { LlmProvider } from '../../shared/models/mod.model';
 import { detectProvider } from '../../core/utils/key-detection';
 import { ApiKeyGuideComponent } from '../../shared/components/api-key-guide/api-key-guide.component';
 import { DeleteAccountDialogComponent } from './components/delete-account-dialog.component';
+// Direct primitive imports — same pattern landing/setup adopted in Tasks 5-6
+// to avoid pulling in sibling primitives that may have unrelated TS errors.
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
+import { UiInputComponent } from '../../shared/components/ui/input.component';
+import { UiTextareaComponent } from '../../shared/components/ui/textarea.component';
+import { UiCardComponent } from '../../shared/components/ui/card.component';
+import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
 
 type SettingsTab = 'profile' | 'hardware' | 'notifications';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [FormsModule, ApiKeyGuideComponent, DeleteAccountDialogComponent],
+  imports: [
+    FormsModule,
+    ApiKeyGuideComponent,
+    DeleteAccountDialogComponent,
+    LucideAngularModule,
+    UiButtonComponent,
+    UiInputComponent,
+    UiTextareaComponent,
+    UiCardComponent,
+    UiBadgeComponent,
+  ],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        AlertCircle,
+        Lock,
+        Check,
+        X,
+        Pencil,
+        Trash2,
+        Settings: SettingsIcon,
+      }),
+    },
+  ],
   animations: [
     trigger('fadeIn', [
       transition(':enter', [
@@ -51,24 +95,29 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
             <div class="tab-panel" @fadeIn>
               <div class="panel-section">
                 <h3>Display Name</h3>
-                <input type="text" class="input" [(ngModel)]="displayName" placeholder="Your display name">
+                <input
+                  ui-input
+                  type="text"
+                  [(ngModel)]="displayName"
+                  placeholder="Your display name"
+                />
               </div>
               <div class="panel-section">
                 <h3>Email</h3>
-                <input type="email" class="input" [value]="email" disabled>
+                <input ui-input type="email" [value]="email" disabled />
                 <p class="input-hint">Email cannot be changed.</p>
               </div>
               @if (!emailVerified) {
-                <div class="panel-section verify-banner">
-                  <div class="verify-info">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <span>Email not verified.</span>
-                  </div>
-                  <button class="btn-verify" (click)="resendVerification()">Resend Link</button>
+                <div class="panel-section">
+                  <ui-card class="verify-card">
+                    <div class="verify-info">
+                      <lucide-icon name="alert-circle" [size]="16" [strokeWidth]="2"></lucide-icon>
+                      <span>Email not verified.</span>
+                    </div>
+                    <button ui-button variant="primary" size="sm" (click)="resendVerification()">
+                      Resend Link
+                    </button>
+                  </ui-card>
                 </div>
               }
               <div class="panel-section">
@@ -76,16 +125,18 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                 <p class="input-hint" style="margin-bottom: 0.75rem;">Link additional sign-in methods to your account.</p>
                 <div class="connected-list">
                   @for (p of availableProviders; track p.id) {
-                    <div class="connected-item">
+                    <ui-card class="connected-item">
                       <div class="connected-info">
                         <span class="provider-name">{{ p.label }}</span>
                         @if (isProviderConnected(p.id)) {
-                          <span class="connected-badge">Connected</span>
+                          <ui-badge variant="success">Connected</ui-badge>
                         }
                       </div>
                       @if (isProviderConnected(p.id)) {
                         <button
-                          class="btn-disconnect"
+                          ui-button
+                          variant="destructive"
+                          size="sm"
                           (click)="disconnectProvider(p.id)"
                           [disabled]="!canDisconnect()"
                           [title]="canDisconnect() ? 'Disconnect ' + p.label : 'Set a password before disconnecting your only sign-in method'"
@@ -93,11 +144,11 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                           Disconnect
                         </button>
                       } @else {
-                        <button class="btn-connect" (click)="connectProvider(p.id)">
+                        <button ui-button variant="secondary" size="sm" (click)="connectProvider(p.id)">
                           Connect
                         </button>
                       }
-                    </div>
+                    </ui-card>
                   }
                 </div>
               </div>
@@ -112,33 +163,40 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                 @if (nexusStatus().loading) {
                   <p class="input-hint">Loading connection status…</p>
                 } @else if (!nexusStatus().configured) {
-                  <div class="verify-banner" style="margin: 0;">
-                    <div class="verify-info">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
+                  <ui-card class="info-banner">
+                    <div class="verify-info info">
+                      <lucide-icon name="alert-circle" [size]="16" [strokeWidth]="2"></lucide-icon>
                       <span>Nexus Collections publishing is coming soon — ModdersOmni is waiting on OAuth app approval from Nexus Mods. We'll light up this section as soon as it's ready.</span>
                     </div>
-                  </div>
+                  </ui-card>
                 } @else if (nexusStatus().connected) {
-                  <div class="connected-item">
+                  <ui-card class="connected-item">
                     <div class="connected-info">
                       <span class="provider-name">{{ nexusStatus().username || 'Nexus Mods' }}</span>
-                      <span class="connected-badge">Connected</span>
+                      <ui-badge variant="success">Connected</ui-badge>
                     </div>
-                    <button class="btn-disconnect" [disabled]="nexusBusy()" (click)="disconnectNexus()">
+                    <button
+                      ui-button
+                      variant="destructive"
+                      size="sm"
+                      [disabled]="nexusBusy()"
+                      (click)="disconnectNexus()"
+                    >
                       Disconnect
                     </button>
-                  </div>
+                  </ui-card>
                   @if (nexusStatus().expiresAt) {
                     <p class="input-hint" style="margin-top: 0.5rem;">
                       Access renews automatically. Current token expires {{ nexusStatus().expiresAt }}.
                     </p>
                   }
                 } @else {
-                  <button class="btn-connect" [disabled]="nexusBusy()" (click)="connectNexus()">
+                  <button
+                    ui-button
+                    variant="primary"
+                    [disabled]="nexusBusy()"
+                    (click)="connectNexus()"
+                  >
                     Connect to Nexus Mods
                   </button>
                 }
@@ -146,13 +204,10 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
 
               <div class="panel-section">
                 <h3>AI Provider API Keys</h3>
-                <div class="key-security-notice">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
+                <ui-card class="key-security-notice">
+                  <lucide-icon name="lock" [size]="14" [strokeWidth]="1.5"></lucide-icon>
                   <span>Your API keys are stored securely and only used during modlist generation. Never share your keys with anyone.</span>
-                </div>
+                </ui-card>
                 <p class="input-hint" style="margin-bottom: 0.75rem;">
                   Paste an API key below — the provider will be detected automatically.
                   If one provider hits a rate limit during generation, the next is used.
@@ -162,42 +217,45 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
 
                 <!-- Add Key Input -->
                 <form class="add-key-row" (ngSubmit)="addKey()">
-                  <div class="key-input-wrap">
-                    <input
-                      type="password"
-                      [value]="newKeyInput()"
-                      (input)="newKeyInput.set($any($event.target).value)"
-                      (paste)="onKeyPaste($event)"
-                      placeholder="Paste any AI provider API key..."
-                      autocomplete="new-password"
-                      spellcheck="false"
-                    />
-                  </div>
-                  <button type="submit" class="btn-add-key" [disabled]="!newKeyInput()">
+                  <input
+                    ui-input
+                    type="password"
+                    [value]="newKeyInput()"
+                    (input)="newKeyInput.set($any($event.target).value)"
+                    (paste)="onKeyPaste($event)"
+                    placeholder="Paste any AI provider API key..."
+                    autocomplete="new-password"
+                    spellcheck="false"
+                    class="key-input"
+                  />
+                  <button
+                    ui-button
+                    variant="primary"
+                    type="submit"
+                    [disabled]="!newKeyInput()"
+                  >
                     Add Key
                   </button>
                 </form>
 
                 <!-- Detection feedback -->
                 @if (detectionState()) {
-                  <div class="detection-feedback" [class.warning]="detectionState()!.type !== 'exact'" @fadeIn>
+                  <ui-card
+                    class="detection-feedback"
+                    [class.warning]="detectionState()!.type !== 'exact'"
+                    @fadeIn
+                  >
                     @if (detectionState()!.type === 'exact') {
                       <div class="detection-exact">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
+                        <lucide-icon name="check" [size]="14" [strokeWidth]="2.5"></lucide-icon>
                         Detected: <strong>{{ detectionState()!.providerName }}</strong>
                       </div>
                     } @else if (detectionState()!.type === 'ambiguous') {
                       <div class="detection-warn">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <line x1="12" y1="8" x2="12" y2="12"/>
-                          <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
+                        <lucide-icon name="alert-circle" [size]="14" [strokeWidth]="2"></lucide-icon>
                         <span>This key prefix matches multiple providers. Please select the correct one:</span>
                       </div>
-                      <select class="input detection-select" (change)="confirmProvider($any($event.target).value)">
+                      <select class="legacy-select" (change)="confirmProvider($any($event.target).value)">
                         <option value="" disabled selected>Select provider...</option>
                         @for (m of detectionState()!.matches; track m.id) {
                           <option [value]="m.id">{{ m.name }}</option>
@@ -205,35 +263,31 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                       </select>
                     } @else {
                       <div class="detection-warn">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <line x1="12" y1="8" x2="12" y2="12"/>
-                          <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
+                        <lucide-icon name="alert-circle" [size]="14" [strokeWidth]="2"></lucide-icon>
                         <span>Could not identify the provider from this key. Please select it manually:</span>
                       </div>
-                      <select class="input detection-select" (change)="confirmProvider($any($event.target).value)">
+                      <select class="legacy-select" (change)="confirmProvider($any($event.target).value)">
                         <option value="" disabled selected>Select provider...</option>
                         @for (p of llmProviders(); track p.id) {
                           <option [value]="p.id">{{ p.name }}</option>
                         }
                       </select>
                     }
-                  </div>
+                  </ui-card>
                 }
 
                 <!-- Saved Keys List -->
                 @if (savedKeysList().length > 0) {
                   <div class="saved-keys">
                     @for (entry of savedKeysList(); track entry.providerId) {
-                      <div class="saved-key-row">
+                      <ui-card class="saved-key-row">
                         <div class="saved-key-info">
                           <span class="saved-key-provider">{{ entry.providerName }}</span>
                           <span class="saved-key-masked">{{ entry.maskedKey }}</span>
                         </div>
                         <div class="saved-key-actions">
                           @if (editingKeyProvider() === entry.providerId) {
-                            <select class="input reassign-select" (change)="reassignKey(entry.providerId, $any($event.target).value)">
+                            <select class="legacy-select reassign-select" (change)="reassignKey(entry.providerId, $any($event.target).value)">
                               <option value="" disabled selected>Move to...</option>
                               @for (p of llmProviders(); track p.id) {
                                 @if (p.id !== entry.providerId) {
@@ -241,27 +295,19 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                                 }
                               }
                             </select>
-                            <button class="btn-icon" (click)="editingKeyProvider.set(null)" title="Cancel">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                              </svg>
+                            <button ui-button variant="ghost" size="sm" (click)="editingKeyProvider.set(null)" title="Cancel">
+                              <lucide-icon name="x" [size]="12" [strokeWidth]="2"></lucide-icon>
                             </button>
                           } @else {
-                            <button class="btn-icon" (click)="editingKeyProvider.set(entry.providerId)" title="Reassign to different provider">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                              </svg>
+                            <button ui-button variant="ghost" size="sm" (click)="editingKeyProvider.set(entry.providerId)" title="Reassign to different provider">
+                              <lucide-icon name="pencil" [size]="12" [strokeWidth]="2"></lucide-icon>
                             </button>
-                            <button class="btn-icon btn-delete" (click)="deleteKey(entry.providerId)" title="Remove key">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                              </svg>
+                            <button ui-button variant="destructive" size="sm" (click)="deleteKey(entry.providerId)" title="Remove key">
+                              <lucide-icon name="trash-2" [size]="12" [strokeWidth]="2"></lucide-icon>
                             </button>
                           }
                         </div>
-                      </div>
+                      </ui-card>
                     }
                   </div>
                 }
@@ -278,32 +324,30 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                   </p>
 
                   <div class="add-key-row">
-                    <div class="key-input-wrap">
-                      <input
-                        type="text"
-                        [value]="ollamaUrl()"
-                        (input)="ollamaUrl.set($any($event.target).value)"
-                        placeholder="http://localhost:11434/v1"
-                        autocomplete="off"
-                      />
-                    </div>
-                    <button class="btn-add-key" (click)="testOllamaConnection()">
+                    <input
+                      ui-input
+                      type="text"
+                      [value]="ollamaUrl()"
+                      (input)="ollamaUrl.set($any($event.target).value)"
+                      placeholder="http://localhost:11434/v1"
+                      autocomplete="off"
+                      class="key-input"
+                    />
+                    <button ui-button variant="primary" (click)="testOllamaConnection()">
                       Test Connection
                     </button>
                   </div>
 
                   @if (ollamaStatus() === 'connected') {
-                    <div class="detection-feedback" @fadeIn>
+                    <ui-card class="detection-feedback" @fadeIn>
                       <div class="detection-exact">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
+                        <lucide-icon name="check" [size]="14" [strokeWidth]="2.5"></lucide-icon>
                         Connected — {{ ollamaModels().length }} model(s) available
                       </div>
-                    </div>
+                    </ui-card>
                     @if (ollamaModels().length > 0) {
                       <div style="margin-top: 0.5rem;">
-                        <select class="input" [value]="ollamaSelectedModel()" (change)="onOllamaModelChange($any($event.target).value)">
+                        <select class="legacy-select" [value]="ollamaSelectedModel()" (change)="onOllamaModelChange($any($event.target).value)">
                           @for (m of ollamaModels(); track m) {
                             <option [value]="m">{{ m }}</option>
                           }
@@ -312,36 +356,35 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                     }
                   }
                   @if (ollamaStatus() === 'error') {
-                    <div class="detection-feedback" @fadeIn>
+                    <ui-card class="detection-feedback warning" @fadeIn>
                       <div class="detection-warn">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <line x1="12" y1="8" x2="12" y2="12"/>
-                          <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
+                        <lucide-icon name="alert-circle" [size]="14" [strokeWidth]="2"></lucide-icon>
                         <span>{{ ollamaError() }}</span>
                       </div>
-                    </div>
+                    </ui-card>
                   }
                 </div>
               }
 
               <!-- Danger Zone -->
-              <div class="panel-section danger-zone">
-                <h3>Danger Zone</h3>
-                <div class="danger-row">
-                  <div class="danger-info">
-                    <strong>Delete account</strong>
-                    <span>Permanently delete your account, modlists, and settings. Cannot be undone.</span>
+              <div class="panel-section">
+                <ui-card class="danger-zone">
+                  <h3>Danger Zone</h3>
+                  <div class="danger-row">
+                    <div class="danger-info">
+                      <strong>Delete account</strong>
+                      <span>Permanently delete your account, modlists, and settings. Cannot be undone.</span>
+                    </div>
+                    <button
+                      ui-button
+                      variant="destructive"
+                      type="button"
+                      (click)="showDeleteDialog.set(true)"
+                    >
+                      Delete account
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    class="btn-danger"
-                    (click)="showDeleteDialog.set(true)"
-                  >
-                    Delete account
-                  </button>
-                </div>
+                </ui-card>
               </div>
             </div>
           }
@@ -351,15 +394,12 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
               <div class="panel-section">
                 <h3>Auto-Detect</h3>
                 <p class="input-hint" style="margin-bottom: 0.75rem;">Detect your GPU automatically via your browser. VRAM is inferred from the GPU model.</p>
-                <button class="btn-scan btn-detect" (click)="autoDetect()" [disabled]="scanLoading()">
+                <button ui-button variant="secondary" (click)="autoDetect()" [disabled]="scanLoading()">
                   @if (scanLoading() && !hardwareRawText.trim()) {
                     <span class="btn-spinner"></span>
                     Detecting...
                   } @else {
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="3"/>
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
+                    <lucide-icon name="settings" [size]="14" [strokeWidth]="2"></lucide-icon>
                     Auto-Detect Hardware
                   }
                 </button>
@@ -369,18 +409,18 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
               <div class="panel-section">
                 <div class="section-header-row">
                   <h3>Paste & Scan</h3>
-                  <button class="btn-toggle-help" (click)="showHelpGuide.set(!showHelpGuide())">
+                  <button ui-button variant="ghost" size="sm" (click)="showHelpGuide.set(!showHelpGuide())">
                     {{ showHelpGuide() ? 'Hide guide' : 'How to find your specs' }}
                   </button>
                 </div>
                 @if (showHelpGuide()) {
-                  <div class="help-guide" @fadeIn>
+                  <ui-card class="help-guide" @fadeIn>
                     <div class="help-option">
                       <h4>Option 1: PowerShell Command</h4>
                       <p>Open PowerShell and run this command, then paste the output below:</p>
                       <div class="code-block">
                         <code>{{ powershellCommand }}</code>
-                        <button class="btn-copy" (click)="copyCommand()" [title]="'Copy to clipboard'">
+                        <button ui-button variant="ghost" size="sm" (click)="copyCommand()" [title]="'Copy to clipboard'">
                           {{ commandCopied() ? 'Copied!' : 'Copy' }}
                         </button>
                       </div>
@@ -393,15 +433,22 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                       <h4>Option 3: NVIDIA App / AMD Software</h4>
                       <p>Open your GPU software &rarr; System Information &rarr; copy the hardware details and paste below.</p>
                     </div>
-                  </div>
+                  </ui-card>
                 }
                 <textarea
-                  class="input scan-textarea"
+                  ui-textarea
                   [(ngModel)]="hardwareRawText"
                   placeholder="Paste hardware info from PowerShell output, NVIDIA App, HWiNFO, or Task Manager..."
                   rows="4"
+                  class="font-mono text-sm"
                 ></textarea>
-                <button class="btn-scan" (click)="scanHardware()" [disabled]="scanLoading() || !hardwareRawText.trim()">
+                <button
+                  ui-button
+                  variant="secondary"
+                  (click)="scanHardware()"
+                  [disabled]="scanLoading() || !hardwareRawText.trim()"
+                  class="mt-2"
+                >
                   @if (scanLoading() && hardwareRawText.trim()) {
                     <span class="btn-spinner"></span>
                     Scanning...
@@ -414,7 +461,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
               <!-- Hardware Fields -->
               <div class="panel-section">
                 <h3>GPU Model</h3>
-                <input type="text" class="input" [(ngModel)]="gpuModel" placeholder="e.g. NVIDIA GeForce RTX 4070">
+                <input ui-input type="text" [(ngModel)]="gpuModel" placeholder="e.g. NVIDIA GeForce RTX 4070" />
               </div>
               <div class="panel-section">
                 <h3>VRAM</h3>
@@ -432,23 +479,23 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
               </div>
               <div class="panel-section">
                 <h3>CPU Model</h3>
-                <input type="text" class="input" [(ngModel)]="cpuModel" placeholder="e.g. AMD Ryzen 7 7800X3D">
+                <input ui-input type="text" [(ngModel)]="cpuModel" placeholder="e.g. AMD Ryzen 7 7800X3D" />
               </div>
               <div class="panel-section hw-row">
                 <div class="hw-field">
                   <h3>CPU Cores</h3>
-                  <input type="number" class="input" [(ngModel)]="cpuCores" min="1" max="128" step="1" placeholder="e.g. 8">
+                  <input ui-input type="number" [(ngModel)]="cpuCores" min="1" max="128" step="1" placeholder="e.g. 8" />
                 </div>
                 <div class="hw-field">
                   <h3>CPU Speed (GHz)</h3>
-                  <input type="number" class="input" [(ngModel)]="cpuSpeedGhz" min="0.5" max="8" step="0.1" placeholder="e.g. 4.7">
+                  <input ui-input type="number" [(ngModel)]="cpuSpeedGhz" min="0.5" max="8" step="0.1" placeholder="e.g. 4.7" />
                 </div>
               </div>
               <div class="panel-section">
                 <h3>Storage Drives</h3>
                 <input
+                  ui-input
                   type="text"
-                  class="input"
                   placeholder="C: 180GB free / 931GB, D: 450GB free / 1863GB"
                   [ngModel]="storageDrives"
                   (ngModelChange)="storageDrives = $event; storageDrivesSignal.set($event)"
@@ -474,7 +521,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                   </div>
                 </div>
               }
-              <div class="hw-summary">
+              <ui-card class="hw-summary">
                 <h4>Hardware Summary</h4>
                 <div class="hw-grid">
                   <div class="hw-item">
@@ -512,7 +559,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                     </div>
                   }
                 </div>
-              </div>
+              </ui-card>
             </div>
           }
           @case ('notifications') {
@@ -560,7 +607,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
 
       <!-- Save Button -->
       <div class="save-bar">
-        <button class="btn-save" (click)="saveSettings()">
+        <button ui-button variant="primary" (click)="saveSettings()">
           Save Changes
         </button>
       </div>
@@ -625,11 +672,6 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       padding: 1rem 0;
       border-bottom: 1px solid var(--color-border);
     }
-    .panel-section.sub {
-      padding-left: 1rem;
-      border-left: 2px solid var(--color-border);
-      margin-left: 0.5rem;
-    }
     .panel-section:last-child { border-bottom: none; }
     .panel-section.hw-row {
       display: flex;
@@ -649,28 +691,13 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       margin-bottom: 0.5rem;
     }
 
-    /* Inputs */
-    .input {
-      width: 100%;
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      color: var(--color-text);
-      padding: 0.625rem 0.875rem;
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .input:focus { border-color: var(--color-gold); }
-    select.input { cursor: pointer; }
-    .input::placeholder { color: var(--color-text-dim); }
     .input-hint {
       font-size: 0.75rem;
       color: var(--color-text-dim);
       margin-top: 0.375rem;
     }
 
-    /* Slider */
+    /* Slider — kept inline; ui-input semantics don't fit a range slider */
     .slider-group {
       display: flex;
       align-items: center;
@@ -711,14 +738,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       text-align: right;
     }
 
-    /* Hardware summary */
-    .hw-summary {
-      margin-top: 1.5rem;
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 10px;
-      padding: 1.25rem;
-    }
+    /* Hardware summary — uses ui-card; only inner layout below */
     .hw-summary h4 {
       font-size: 0.75rem;
       font-weight: 600;
@@ -745,9 +765,8 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       font-size: 0.875rem;
       font-weight: 500;
     }
-    .capitalize { text-transform: capitalize; }
 
-    /* Input hint (used under free-form fields like Storage Drives) */
+    /* Hint under freeform fields */
     .hint {
       display: block;
       margin-top: 0.375rem;
@@ -763,15 +782,19 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       font-size: 0.72rem;
     }
 
-    /* Verify Banner */
-    .verify-banner {
+    /* Verify card — overrides ui-card padding for the banner row */
+    .verify-card {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(234, 179, 8, 0.08);
-      border: 1px solid rgba(234, 179, 8, 0.2) !important;
-      border-radius: 8px;
       padding: 0.75rem 1rem !important;
+      background: rgba(234, 179, 8, 0.08) !important;
+      border-color: rgba(234, 179, 8, 0.2) !important;
+    }
+    .info-banner {
+      padding: 0.75rem 1rem !important;
+      background: rgba(96, 165, 250, 0.06) !important;
+      border-color: rgba(96, 165, 250, 0.2) !important;
     }
     .verify-info {
       display: flex;
@@ -781,31 +804,21 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       font-size: 0.8125rem;
       font-weight: 500;
     }
-    .btn-verify {
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.375rem 0.875rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      transition: background 0.2s;
+    .verify-info.info {
+      color: var(--color-text);
     }
-    .btn-verify:hover { background: var(--color-gold-hover); }
 
-    /* Connected Accounts */
+    /* Connected accounts — ui-card with custom row layout */
     .connected-list {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
     }
     .connected-item {
-      display: flex;
+      display: flex !important;
       align-items: center;
       justify-content: space-between;
-      padding: 0.625rem 0.875rem;
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
+      padding: 0.625rem 0.875rem !important;
     }
     .connected-info {
       display: flex;
@@ -816,47 +829,8 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       font-size: 0.875rem;
       font-weight: 500;
     }
-    .connected-badge {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      color: #22c55e;
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.25);
-      padding: 0.125rem 0.5rem;
-      border-radius: 100px;
-    }
-    .btn-connect {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--color-border);
-      color: var(--color-text);
-      padding: 0.375rem 0.875rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .btn-connect:hover {
-      border-color: var(--color-gold);
-      background: rgba(192, 160, 96, 0.08);
-      color: var(--color-gold);
-    }
-    .btn-disconnect {
-      background: transparent;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #ef4444;
-      padding: 0.375rem 0.875rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .btn-disconnect:hover:not(:disabled) {
-      background: rgba(239, 68, 68, 0.08);
-      border-color: #ef4444;
-    }
-    .btn-disconnect:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    /* Storage Drives */
+    /* Storage Drives bars */
     .drives-list {
       display: flex;
       flex-direction: column;
@@ -893,43 +867,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       text-align: right;
     }
 
-    /* Scan */
-    .scan-textarea {
-      resize: vertical;
-      min-height: 80px;
-      font-family: 'Fira Code', 'Consolas', monospace;
-      font-size: 0.8125rem;
-      line-height: 1.5;
-    }
-    .btn-scan {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      margin-top: 0.5rem;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--color-border);
-      color: var(--color-text);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .btn-scan:hover:not(:disabled) {
-      border-color: var(--color-border-hover);
-      background: rgba(255, 255, 255, 0.08);
-    }
-    .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-detect {
-      background: rgba(192, 160, 96, 0.08);
-      border-color: rgba(192, 160, 96, 0.3);
-      color: var(--color-gold);
-      margin-top: 0;
-    }
-    .btn-detect:hover:not(:disabled) {
-      background: rgba(192, 160, 96, 0.15);
-      border-color: var(--color-gold);
-    }
+    /* Spinner used inside Detect / Scan buttons */
     .btn-spinner {
       width: 12px;
       height: 12px;
@@ -948,27 +886,11 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       margin-bottom: 0.5rem;
     }
     .section-header-row h3 { margin-bottom: 0; }
-    .btn-toggle-help {
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 0;
-      cursor: pointer;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-    .btn-toggle-help:hover { color: var(--color-text); }
 
-    /* Help guide */
+    /* Help guide — ui-card; only inner layout below */
     .help-guide {
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 10px;
-      padding: 1rem;
       margin-bottom: 0.75rem;
-      display: flex;
+      display: flex !important;
       flex-direction: column;
       gap: 1rem;
     }
@@ -1002,104 +924,51 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       word-break: break-all;
       white-space: pre-wrap;
     }
-    .btn-copy {
-      flex-shrink: 0;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--color-border);
-      color: var(--color-text-muted);
-      padding: 0.25rem 0.625rem;
-      border-radius: 6px;
-      font-size: 0.6875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-copy:hover {
-      border-color: var(--color-gold);
-      color: var(--color-gold);
-    }
 
-    /* Security notice */
+    /* API key security notice — ui-card with row icon+text layout */
     .key-security-notice {
-      display: flex;
+      display: flex !important;
       align-items: flex-start;
       gap: 0.5rem;
-      padding: 0.625rem 0.75rem;
-      background: rgba(192, 160, 96, 0.06);
-      border: 1px solid rgba(192, 160, 96, 0.15);
-      border-radius: 8px;
+      padding: 0.625rem 0.75rem !important;
+      background: rgba(192, 160, 96, 0.06) !important;
+      border-color: rgba(192, 160, 96, 0.15) !important;
       margin-bottom: 0.75rem;
       font-size: 0.75rem;
       color: var(--color-text-muted);
       line-height: 1.4;
     }
-    .key-security-notice svg {
+    .key-security-notice lucide-icon {
       flex-shrink: 0;
       margin-top: 1px;
       color: var(--color-gold);
     }
 
-    /* Add key row */
+    /* Add key row — input + button, side by side */
     .add-key-row {
       display: flex;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
+      align-items: stretch;
     }
-    .add-key-row .key-input-wrap {
+    .key-input {
       flex: 1;
-      display: flex;
-      align-items: center;
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      overflow: hidden;
-      transition: border-color 0.15s;
-    }
-    .add-key-row .key-input-wrap:focus-within {
-      border-color: var(--color-gold);
-    }
-    .add-key-row .key-input-wrap input {
-      flex: 1;
-      background: none;
-      border: none;
-      color: var(--color-text);
-      font-size: 0.8125rem;
-      padding: 0.625rem 0.875rem;
-      outline: none;
-      font-family: monospace;
       min-width: 0;
-    }
-    .add-key-row .key-input-wrap input::placeholder {
-      color: var(--color-text-dim);
-      font-family: inherit;
-    }
-    .btn-add-key {
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
+      font-family: monospace;
       font-size: 0.8125rem;
-      font-weight: 600;
-      white-space: nowrap;
-      transition: background 0.2s;
     }
-    .btn-add-key:hover:not(:disabled) { background: var(--color-gold-hover); }
-    .btn-add-key:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* Detection feedback */
+    /* Detection feedback — ui-card with success/warning tinting */
     .detection-feedback {
-      padding: 0.625rem 0.75rem;
-      border-radius: 8px;
+      padding: 0.625rem 0.75rem !important;
       margin-bottom: 0.75rem;
       font-size: 0.8125rem;
-    }
-    .detection-feedback:not(.warning) {
-      background: rgba(34, 197, 94, 0.08);
-      border: 1px solid rgba(34, 197, 94, 0.2);
+      background: rgba(34, 197, 94, 0.08) !important;
+      border-color: rgba(34, 197, 94, 0.2) !important;
     }
     .detection-feedback.warning {
-      background: rgba(234, 179, 8, 0.08);
-      border: 1px solid rgba(234, 179, 8, 0.2);
+      background: rgba(234, 179, 8, 0.08) !important;
+      border-color: rgba(234, 179, 8, 0.2) !important;
     }
     .detection-exact {
       display: flex;
@@ -1116,13 +985,30 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       color: var(--color-warning);
       margin-bottom: 0.5rem;
     }
-    .detection-warn svg { flex-shrink: 0; margin-top: 2px; }
-    .detection-select {
-      margin-top: 0.25rem;
+    .detection-warn lucide-icon { flex-shrink: 0; margin-top: 2px; }
+
+    /* Native <select> — no UiSelect wrapper for cdk-overlay-style menus
+       was adopted yet for these legacy detection/reassign menus. */
+    .legacy-select {
+      width: 100%;
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      color: var(--color-text);
+      padding: 0.5rem 0.75rem;
       font-size: 0.8125rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .legacy-select:focus { border-color: var(--color-gold); }
+    .reassign-select {
+      max-width: 140px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
     }
 
-    /* Saved keys list */
+    /* Saved keys list — each row is a ui-card */
     .saved-keys {
       display: flex;
       flex-direction: column;
@@ -1130,13 +1016,10 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       margin-top: 0.5rem;
     }
     .saved-key-row {
-      display: flex;
+      display: flex !important;
       align-items: center;
       justify-content: space-between;
-      padding: 0.625rem 0.75rem;
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
+      padding: 0.625rem 0.75rem !important;
     }
     .saved-key-info {
       display: flex;
@@ -1163,26 +1046,9 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       gap: 0.25rem;
       flex-shrink: 0;
     }
-    .btn-icon {
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      padding: 0.375rem;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      transition: color 0.15s, background 0.15s;
-    }
-    .btn-icon:hover { color: var(--color-text); background: rgba(255,255,255,0.06); }
-    .btn-delete:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
-    .reassign-select {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      max-width: 140px;
-    }
 
-    /* Notification items */
+    /* Notification rows — toggle switches kept inline. ui-button variants
+       don't model an on/off pill; ui-input is for text/password fields. */
     .notif-item {
       display: flex;
       align-items: center;
@@ -1225,37 +1091,22 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       transform: translateX(20px);
     }
 
-    /* Save */
+    /* Save bar */
     .save-bar {
       margin-top: 2rem;
       padding-top: 1.5rem;
       border-top: 1px solid var(--color-border);
     }
-    .btn-save {
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.625rem 2rem;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: background 0.2s, box-shadow 0.3s;
-    }
-    .btn-save:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 0 20px var(--color-gold-glow);
-    }
 
-    /* Danger Zone */
+    /* Danger Zone — ui-card with danger tint */
     .danger-zone {
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      border-radius: var(--radius-md);
-      padding: 1.25rem;
-      margin-top: 1.5rem;
-      background: rgba(239, 68, 68, 0.04);
+      border-color: rgba(239, 68, 68, 0.35) !important;
+      background: rgba(239, 68, 68, 0.04) !important;
     }
     .danger-zone h3 {
       color: #ef4444;
       margin-top: 0;
+      margin-bottom: 0.75rem;
     }
     .danger-row {
       display: flex;
@@ -1276,20 +1127,6 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
     .danger-info span {
       color: var(--color-text-muted);
       font-size: 0.8125rem;
-    }
-    .btn-danger {
-      background: #ef4444;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-danger:hover {
-      background: #dc2626;
     }
   `],
 })
