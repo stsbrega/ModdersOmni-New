@@ -52,6 +52,10 @@ filter_commits = false
 topo_order = false
 sort_commits = "newest"
 
-[remote.github]
-owner = "stsbrega"
-repo = "ModdersOmni-New"
+# [remote.github] intentionally omitted. With it set, git-cliff calls the
+# GitHub API to enrich each commit with PR/username metadata; the call
+# fails with 403 in CI because orhun/git-cliff-action@v4 does not reliably
+# forward GITHUB_TOKEN to the underlying git-cliff binary. The template
+# uses {% if commit.github.* %} guards, so absent metadata is harmless —
+# usernames and PR numbers simply don't appear. Fresh-history rebuild
+# doesn't need them anyway.
