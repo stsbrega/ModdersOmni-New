@@ -18,6 +18,33 @@ import {
   query,
   stagger,
 } from '@angular/animations';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  AlertCircle,
+  AlertTriangle,
+  ArrowDown,
+  CheckCircle,
+  ChevronDown,
+  Circle,
+  Download,
+  Eye,
+  FileText,
+  Flag,
+  HelpCircle,
+  Pause,
+  Play,
+  PlusCircle,
+  RefreshCw,
+  Repeat,
+  Search,
+  SearchX,
+  Shuffle,
+  Users,
+  XCircle,
+  Zap,
+} from 'lucide-angular';
 import { GenerationService } from '../../core/services/generation.service';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -29,6 +56,13 @@ import {
 } from '../../shared/models/generation.model';
 import { LlmProvider } from '../../shared/models/mod.model';
 import { detectProvider } from '../../core/utils/key-detection';
+// Direct primitive imports — same pattern landing/setup/settings adopted in
+// Tasks 5-7 to avoid pulling in sibling primitives that may have unrelated
+// TS errors via the barrel.
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
+import { UiInputComponent } from '../../shared/components/ui/input.component';
+import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
+import { UiCardComponent } from '../../shared/components/ui/card.component';
 
 /** Flat item for the timeline — either a phase accordion header or a regular event. */
 interface TimelineItem {
@@ -40,11 +74,81 @@ interface TimelineItem {
   phaseModCount: number;
 }
 
+/**
+ * Map each SSE event type to a Lucide icon name + CSS color class.
+ * Replaces the old iconFor() function that returned raw SVG strings via
+ * [innerHTML]. Keeps the visual semantics (gold for phase markers, green
+ * for additions, red for errors, amber for warnings, purple for providers).
+ */
+interface EventIcon { name: string; cls: string; }
+const EVENT_ICONS: Record<string, EventIcon> = {
+  providers_ready:       { name: 'users',         cls: 'icon-purple' },
+  phase_start:           { name: 'zap',           cls: 'icon-gold' },
+  searching:             { name: 'search',        cls: 'icon-dim' },
+  search_results:        { name: 'file-text',     cls: 'icon-dim' },
+  reading_mod:           { name: 'eye',           cls: 'icon-dim' },
+  mod_added:             { name: 'plus-circle',   cls: 'icon-green' },
+  patch_added:           { name: 'shuffle',       cls: 'icon-blue' },
+  knowledge_flag:        { name: 'flag',          cls: 'icon-amber' },
+  thinking:              { name: 'circle',        cls: 'icon-dim' },
+  phase_complete:        { name: 'check-circle',  cls: 'icon-gold' },
+  retrying:              { name: 'refresh-cw',    cls: 'icon-amber' },
+  provider_error:        { name: 'x-circle',      cls: 'icon-red' },
+  provider_switch:       { name: 'repeat',        cls: 'icon-dim' },
+  paused:                { name: 'pause',         cls: 'icon-amber' },
+  resumed:               { name: 'play',          cls: 'icon-green' },
+  complete:              { name: 'check-circle',  cls: 'icon-green' },
+  error:                 { name: 'x-circle',      cls: 'icon-red' },
+  sweep_start:           { name: 'refresh-cw',    cls: 'icon-gold' },
+  missing_requested_mod: { name: 'search-x',      cls: 'icon-amber' },
+  sweep_complete:        { name: 'check-circle',  cls: 'icon-dim' },
+};
+const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
+
 @Component({
   selector: 'app-generation',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [
+    RouterLink,
+    FormsModule,
+    LucideAngularModule,
+    UiButtonComponent,
+    UiInputComponent,
+    UiBadgeComponent,
+    UiCardComponent,
+  ],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        AlertCircle,
+        AlertTriangle,
+        ArrowDown,
+        CheckCircle,
+        ChevronDown,
+        Circle,
+        Download,
+        Eye,
+        FileText,
+        Flag,
+        HelpCircle,
+        Pause,
+        Play,
+        PlusCircle,
+        RefreshCw,
+        Repeat,
+        Search,
+        SearchX,
+        Shuffle,
+        Users,
+        XCircle,
+        Zap,
+      }),
+    },
+  ],
   animations: [
+
     trigger('fadeIn', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(8px)' }),
@@ -86,14 +190,10 @@ interface TimelineItem {
       <!-- ── Generation Not Found ── -->
       @if (generationNotFound()) {
         <div class="not-found-banner" @fadeIn>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
+          <lucide-icon name="alert-circle" [size]="40" [strokeWidth]="1.5"></lucide-icon>
           <h2>Generation Not Found</h2>
           <p>This generation may have expired or doesn't exist. Start a new one from the setup wizard.</p>
-          <a routerLink="/setup" class="btn-primary-link">Start New Modlist</a>
+          <a ui-button variant="primary" size="md" routerLink="/setup">Start New Modlist</a>
         </div>
       }
 
@@ -145,7 +245,7 @@ interface TimelineItem {
         <div class="phase-bar-inner">
           <div class="phase-label">
             @if (gen.currentPhase(); as phase) {
-              <span class="phase-number">Phase {{ phase.number }}/{{ phase.total_phases }}</span>
+              <span class="phase-number font-mono">Phase {{ phase.number }}/{{ phase.total_phases }}</span>
               <span class="phase-name">{{ phase.phase }}</span>
             } @else if (gen.status() === 'complete') {
               <span class="phase-done">Generation Complete</span>
@@ -184,7 +284,7 @@ interface TimelineItem {
             <div class="panel-header-right">
               <span class="event-count">{{ gen.events().length }} events</span>
               <button class="log-download-btn" (click)="downloadLog()" title="Download generation debug log">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
               </button>
             </div>
           </div>
@@ -201,14 +301,14 @@ interface TimelineItem {
                 >
                   <div class="tl-icon">
                     @if (item.phaseComplete && collapsedPhases().has(item.phase)) {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <lucide-icon class="icon-green" name="check-circle" [size]="14" [strokeWidth]="2"></lucide-icon>
                     } @else {
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-gold)"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                      <lucide-icon class="icon-gold" name="zap" [size]="14" [strokeWidth]="2"></lucide-icon>
                     }
                   </div>
                   <div class="tl-body">
                     <div class="phase-header-content">
-                      <span class="tl-phase-badge">Phase {{ item.phase }}</span>
+                      <span class="tl-phase-badge font-mono">Phase {{ item.phase }}</span>
                       <span class="phase-header-name">{{ item.phaseName }}</span>
                       @if (item.phaseComplete) {
                         <span class="phase-complete-tag">{{ item.phaseModCount }} mods</span>
@@ -216,9 +316,7 @@ interface TimelineItem {
                     </div>
                   </div>
                   @if (item.phaseComplete) {
-                    <svg class="phase-chevron" [class.open]="!collapsedPhases().has(item.phase)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
+                    <lucide-icon class="phase-chevron" [class.open]="!collapsedPhases().has(item.phase)" name="chevron-down" [size]="16" [strokeWidth]="2"></lucide-icon>
                   }
                 </div>
               } @else if (!collapsedPhases().has(item.phase) || isTerminalEvent(item.event)) {
@@ -228,7 +326,14 @@ interface TimelineItem {
                   [class]="'tl-' + item.event.type"
                   @fadeIn
                 >
-                  <div class="tl-icon" [innerHTML]="iconFor(item.event)"></div>
+                  <div class="tl-icon">
+                    <lucide-icon
+                      [class]="iconClassFor(item.event)"
+                      [name]="iconNameFor(item.event)"
+                      [size]="14"
+                      [strokeWidth]="2"
+                    ></lucide-icon>
+                  </div>
                   <div class="tl-body">
                     @switch (item.event.type) {
                       @case ('providers_ready') {
@@ -236,7 +341,7 @@ interface TimelineItem {
                           <strong>{{ $any(item.event).count }} provider{{ $any(item.event).count !== 1 ? 's' : '' }} available</strong>
                           <ul class="tl-provider-list">
                             @for (p of $any(item.event).providers; track p.provider_id) {
-                              <li><span class="tl-provider-name">{{ p.name }}</span> <span class="tl-provider-model">{{ p.model }}</span></li>
+                              <li><span class="tl-provider-name">{{ p.name }}</span> <span class="tl-provider-model font-mono">{{ p.model }}</span></li>
                             }
                           </ul>
                         </div>
@@ -248,7 +353,7 @@ interface TimelineItem {
                         <span class="tl-muted">Found {{ $any(item.event).count }} mods</span>
                       }
                       @case ('reading_mod') {
-                        <span class="tl-dim">Reading mod #{{ $any(item.event).mod_id }}…</span>
+                        <span class="tl-dim">Reading mod <span class="font-mono">#{{ $any(item.event).mod_id }}</span>…</span>
                       }
                       @case ('mod_added') {
                         <div class="tl-mod-add">
@@ -263,9 +368,11 @@ interface TimelineItem {
                         </div>
                       }
                       @case ('knowledge_flag') {
-                        <div class="tl-flag" [class.critical]="$any(item.event).severity === 'critical'">
-                          <span class="tl-flag-badge">{{ $any(item.event).severity }}</span>
-                          {{ $any(item.event).mod_a }} ↔ {{ $any(item.event).mod_b }}: {{ $any(item.event).issue }}
+                        <div class="tl-flag">
+                          <ui-badge [variant]="$any(item.event).severity === 'critical' ? 'danger' : 'warning'">
+                            {{ $any(item.event).severity }}
+                          </ui-badge>
+                          {{ $any(item.event).mod_a }} &harr; {{ $any(item.event).mod_b }}: {{ $any(item.event).issue }}
                         </div>
                       }
                       @case ('thinking') {
@@ -321,7 +428,7 @@ interface TimelineItem {
                       }
                       @case ('missing_requested_mod') {
                         <div class="tl-missing-mod">
-                          <span class="tl-missing-badge">Not found</span>
+                          <ui-badge variant="warning">Not found</ui-badge>
                           Couldn't locate "{{ $any(item.event).name }}" on Nexus.
                         </div>
                       }
@@ -355,7 +462,7 @@ interface TimelineItem {
 
           @if (!userAtBottom()) {
             <button class="scroll-btn" (click)="scrollToBottom()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              <lucide-icon name="arrow-down" [size]="14" [strokeWidth]="2"></lucide-icon>
               New events
             </button>
           }
@@ -371,29 +478,29 @@ interface TimelineItem {
           <!-- Terminal state banners -->
           @if (gen.status() === 'complete') {
             <div class="banner banner-success" @slideUp>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <lucide-icon class="banner-icon icon-green" name="check-circle" [size]="20" [strokeWidth]="2"></lucide-icon>
               <div class="banner-text">
                 <strong>Your modlist is ready!</strong>
                 <p>{{ gen.modsAdded().length }} mods and {{ gen.patchesAdded().length }} patches selected.</p>
               </div>
-              <a class="btn-gold" [routerLink]="['/modlist', gen.modlistId()]">View Modlist</a>
+              <a ui-button variant="primary" size="md" [routerLink]="['/modlist', gen.modlistId()]">View Modlist</a>
             </div>
           }
 
           @if (gen.status() === 'error') {
             <div class="banner banner-error" @slideUp>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <lucide-icon class="banner-icon icon-red" name="x-circle" [size]="20" [strokeWidth]="2"></lucide-icon>
               <div class="banner-text">
                 <strong>Generation failed</strong>
                 <p>{{ gen.errorMessage() }}</p>
               </div>
-              <a class="btn-outline" routerLink="/setup">Start Over</a>
+              <a ui-button variant="secondary" size="md" routerLink="/setup">Start Over</a>
             </div>
           }
 
           @if (gen.status() === 'paused') {
             <div class="banner banner-paused" @slideUp>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>
+              <lucide-icon class="banner-icon icon-amber" name="pause" [size]="20" [strokeWidth]="2"></lucide-icon>
               <div class="banner-text">
                 <strong>Generation paused</strong>
                 @if (gen.pauseInfo()?.provider_errors?.length) {
@@ -418,16 +525,19 @@ interface TimelineItem {
                   <label>Paste an API key to start generating:</label>
                   <form class="key-input-row" (ngSubmit)="updateKeyAndResume()">
                     <input
+                      ui-input
                       type="password"
-                      class="input"
+                      class="font-mono key-field"
                       [(ngModel)]="apiKeyInput"
                       name="apiKey"
                       autocomplete="new-password"
                       placeholder="sk-... or gsk_..."
                     >
                     <button
+                      ui-button
+                      variant="primary"
+                      size="sm"
                       type="submit"
-                      class="btn-gold btn-sm"
                       [disabled]="resuming() || !apiKeyInput"
                     >
                       @if (resuming()) {
@@ -444,16 +554,19 @@ interface TimelineItem {
                   <label>Enter your API key to continue:</label>
                   <form class="key-input-row" (ngSubmit)="updateKeyAndResume()">
                     <input
+                      ui-input
                       type="password"
-                      class="input"
+                      class="font-mono key-field"
                       [(ngModel)]="apiKeyInput"
                       name="apiKey"
                       autocomplete="new-password"
                       placeholder="sk-..."
                     >
                     <button
+                      ui-button
+                      variant="primary"
+                      size="sm"
                       type="submit"
-                      class="btn-gold btn-sm"
                       [disabled]="resuming() || !apiKeyInput"
                     >
                       @if (resuming()) {
@@ -465,7 +578,9 @@ interface TimelineItem {
                 </div>
               } @else {
                 <button
-                  class="btn-gold btn-sm"
+                  ui-button
+                  variant="primary"
+                  size="sm"
                   [disabled]="resuming()"
                   (click)="resume()"
                 >
@@ -482,22 +597,22 @@ interface TimelineItem {
           <!-- Mod cards -->
           <div class="mod-cards" [@staggerList]="gen.modsAdded().length + gen.patchesAdded().length">
             @for (mod of gen.modsAdded(); track mod.mod_id) {
-              <div class="mod-card">
+              <ui-card class="mod-card">
                 <div class="mod-card-top">
-                  <span class="lo-badge">#{{ mod.load_order }}</span>
+                  <span class="lo-badge font-mono">#{{ mod.load_order }}</span>
                   <span class="mod-name">{{ mod.name }}</span>
                 </div>
                 <p class="mod-reason">{{ mod.reason }}</p>
-              </div>
+              </ui-card>
             }
             @for (patch of gen.patchesAdded(); track patch.mod_id) {
-              <div class="mod-card patch-card">
+              <ui-card class="mod-card patch-card">
                 <div class="mod-card-top">
-                  <span class="lo-badge patch-badge">P</span>
+                  <span class="lo-badge patch-badge font-mono">P</span>
                   <span class="mod-name">{{ patch.name }}</span>
                 </div>
                 <p class="mod-reason">Patches: {{ patch.patches_mods.join(', ') }}</p>
-              </div>
+              </ui-card>
             }
           </div>
 
@@ -507,9 +622,11 @@ interface TimelineItem {
               <h3>Compatibility Notes</h3>
               @for (flag of knowledgeFlags(); track $index) {
                 <div class="flag-card" [class.critical]="flag.severity === 'critical'">
-                  <span class="flag-severity">{{ flag.severity }}</span>
+                  <ui-badge [variant]="flag.severity === 'critical' ? 'danger' : 'warning'">
+                    {{ flag.severity }}
+                  </ui-badge>
                   <div>
-                    <strong>{{ flag.mod_a }} ↔ {{ flag.mod_b }}</strong>
+                    <strong>{{ flag.mod_a }} &harr; {{ flag.mod_b }}</strong>
                     <p>{{ flag.issue }}</p>
                   </div>
                 </div>
@@ -539,7 +656,7 @@ interface TimelineItem {
         text-align: center;
         color: var(--color-text-muted);
       }
-      .not-found-banner svg { color: var(--color-text-dim); }
+      .not-found-banner lucide-icon { color: var(--color-text-dim); }
       .not-found-banner h2 {
         font-size: 1.25rem;
         font-weight: 600;
@@ -552,22 +669,19 @@ interface TimelineItem {
         line-height: 1.5;
         margin: 0;
       }
-      .btn-primary-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: var(--color-gold);
-        color: #0D0D0F;
-        padding: 0.625rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-decoration: none;
-        transition: background 0.2s;
-      }
-      .btn-primary-link:hover {
-        background: var(--color-gold-hover);
-      }
+
+      /* ── Lucide icon color utilities ──
+         Used by EVENT_ICONS map + inline lucide-icon usages. The map drives
+         which class lights up per event type — keeps the visual semantic the
+         same as before (gold = phase, green = added, red = error, etc.) */
+      .icon-gold   { color: var(--color-gold); }
+      .icon-green  { color: #22c55e; }
+      .icon-amber  { color: #f59e0b; }
+      .icon-red    { color: #ef4444; }
+      .icon-blue   { color: #6b9fbf; }
+      .icon-purple { color: #8b5cf6; }
+      .icon-dim    { color: var(--color-text-dim); }
+      .banner-icon { flex-shrink: 0; }
 
       /* ── Connection Banner ── */
       .connection-banner {
@@ -942,16 +1056,9 @@ interface TimelineItem {
         font-size: 0.8125rem;
         color: var(--color-text);
       }
-      .tl-missing-badge {
-        display: inline-block;
-        font-size: 0.625rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        padding: 0.1rem 0.35rem;
-        border-radius: 3px;
-        background: rgba(245, 158, 11, 0.15);
-        color: #f59e0b;
+      .tl-missing-mod ui-badge {
         margin-right: 0.35rem;
+        text-transform: uppercase;
       }
       .tl-sweep_complete .tl-icon {
         color: var(--color-text-muted);
@@ -965,20 +1072,9 @@ interface TimelineItem {
         font-size: 0.75rem;
         color: var(--color-text-muted);
       }
-      .tl-flag-badge {
-        display: inline-block;
-        font-size: 0.625rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        padding: 0.1rem 0.35rem;
-        border-radius: 3px;
-        background: rgba(245, 158, 11, 0.15);
-        color: #f59e0b;
+      .tl-flag ui-badge {
         margin-right: 0.25rem;
-      }
-      .tl-flag.critical .tl-flag-badge {
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
+        text-transform: uppercase;
       }
 
       /* Phase complete */
@@ -1203,76 +1299,14 @@ interface TimelineItem {
         display: flex;
         gap: 0.5rem;
       }
-      .input {
+      /* Tighten the ui-input field width inside the inline pause-form so it
+         shares the row gracefully with the Save/Resume button. */
+      .key-field {
         flex: 1;
-        background: var(--color-bg-dark);
-        border: 1px solid var(--color-border);
-        border-radius: 6px;
-        color: var(--color-text);
-        padding: 0.5rem 0.625rem;
         font-size: 0.8125rem;
-        outline: none;
-        transition: border-color 0.15s;
-      }
-      .input:focus {
-        border-color: var(--color-gold);
-        box-shadow: 0 0 0 3px rgba(196, 165, 90, 0.1);
-      }
-      .input::placeholder {
-        color: var(--color-text-dim);
-      }
-
-      /* Buttons */
-      .btn-gold {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem;
-        background: var(--color-gold);
-        color: #0d0d0f;
-        padding: 0.55rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.8125rem;
-        transition:
-          background 0.2s,
-          box-shadow 0.3s;
-        text-decoration: none;
-        white-space: nowrap;
-        cursor: pointer;
-        border: none;
-      }
-      .btn-gold:hover {
-        background: var(--color-gold-hover);
-        box-shadow: 0 0 16px var(--color-gold-glow);
-      }
-      .btn-gold:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      .btn-sm {
-        padding: 0.45rem 0.75rem;
-        font-size: 0.75rem;
-      }
-      .btn-outline {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        color: var(--color-text);
-        font-weight: 500;
-        font-size: 0.8125rem;
-        background: transparent;
-        text-decoration: none;
-        cursor: pointer;
-        transition:
-          border-color 0.15s,
-          background 0.15s;
-      }
-      .btn-outline:hover {
-        border-color: var(--color-border-hover);
-        background: rgba(255, 255, 255, 0.03);
+        height: 2rem;
+        padding-top: 0.4rem;
+        padding-bottom: 0.4rem;
       }
       .link-muted {
         font-size: 0.75rem;
@@ -1284,6 +1318,9 @@ interface TimelineItem {
       .link-muted:hover {
         color: var(--color-text-muted);
       }
+      /* Inline spinner used inside ui-button while resuming. Kept here (as a
+         child <span>) instead of refactoring ui-button to expose a loading
+         prop — same approach Settings/Setup take. */
       .btn-spinner {
         width: 12px;
         height: 12px;
@@ -1305,11 +1342,10 @@ interface TimelineItem {
         flex-direction: column;
         gap: 0.5rem;
       }
+      /* ui-card brings bg/border/radius/shadow at p-6; the timeline's per-row
+         density needs tighter padding + a hover border accent. */
       .mod-card {
-        background: var(--color-bg-card);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-sm);
-        padding: 0.625rem 0.75rem;
+        padding: 0.625rem 0.75rem !important;
         transition: border-color 0.15s;
       }
       .mod-card:hover {
@@ -1378,20 +1414,10 @@ interface TimelineItem {
         background: rgba(239, 68, 68, 0.05);
         border-color: rgba(239, 68, 68, 0.12);
       }
-      .flag-severity {
-        font-size: 0.5625rem;
-        font-weight: 700;
+      .flag-card ui-badge {
         text-transform: uppercase;
-        padding: 0.1rem 0.3rem;
-        border-radius: 3px;
-        background: rgba(245, 158, 11, 0.15);
-        color: #f59e0b;
         flex-shrink: 0;
         height: fit-content;
-      }
-      .flag-card.critical .flag-severity {
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
       }
       .flag-card strong {
         font-size: 0.75rem;
@@ -1800,50 +1826,14 @@ export class GenerationComponent implements OnInit, OnDestroy, AfterViewChecked 
     });
   }
 
-  iconFor(evt: GenerationEvent): string {
-    const icons: Record<string, string> = {
-      providers_ready:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#8b5cf6"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-      phase_start:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-gold)"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
-      searching:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>',
-      search_results:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
-      reading_mod:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
-      mod_added:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>',
-      patch_added:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
-      knowledge_flag:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#f59e0b"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-      thinking:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>',
-      phase_complete:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-gold)"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-      retrying:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#f59e0b"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
-      provider_error:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#ef4444"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-      provider_switch:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><path d="M21 3 9 15"/><polyline points="9 21 3 21 3 15"/><path d="M3 21 15 9"/></svg>',
-      paused:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#f59e0b"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>',
-      resumed:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#22c55e"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
-      complete:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#22c55e"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-      error:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#ef4444"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-      sweep_start:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-gold)"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
-      missing_requested_mod:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#f59e0b"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
-      sweep_complete:
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
-    };
-    return icons[evt.type] || '';
+  /** Lookup the lucide icon name for an SSE event type. See EVENT_ICONS map. */
+  iconNameFor(evt: GenerationEvent): string {
+    return (EVENT_ICONS[evt.type] ?? FALLBACK_EVENT_ICON).name;
+  }
+
+  /** Color CSS class (icon-gold / icon-green / etc.) for an SSE event type. */
+  iconClassFor(evt: GenerationEvent): string {
+    return (EVENT_ICONS[evt.type] ?? FALLBACK_EVENT_ICON).cls;
   }
 
   formatGB(bytes: number): string {
