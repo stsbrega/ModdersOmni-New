@@ -17,6 +17,7 @@ import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { HardwareDetectorService } from '../../core/services/hardware-detector.service';
+import { SettingsStore } from '../../core/services/settings-store.service';
 import { LlmProvider } from '../../shared/models/mod.model';
 import { detectProvider } from '../../core/utils/key-detection';
 import { ApiKeyGuideComponent } from '../../shared/components/api-key-guide/api-key-guide.component';
@@ -1238,6 +1239,7 @@ export class SettingsComponent implements OnInit {
     private notifications: NotificationService,
     private authService: AuthService,
     private hardwareDetector: HardwareDetectorService,
+    private settingsStore: SettingsStore,
   ) {}
 
   ngOnInit(): void {
@@ -1336,14 +1338,14 @@ export class SettingsComponent implements OnInit {
   }
 
   deleteKey(providerId: string): void {
+    // Persist deletion to localStorage via SettingsStore — also updates the
+    // shared signal, but we keep our local llmKeys signal in sync for the
+    // template's existing computed bindings.
+    this.settingsStore.removeLlmKey(providerId);
     this.llmKeys.update(keys => {
       const updated = { ...keys };
       delete updated[providerId];
       return updated;
-    });
-    // Persist deletion to backend
-    this.api.saveLlmKeys({ [providerId]: '' }).subscribe({
-      error: () => this.notifications.error('Failed to remove key'),
     });
     this.notifications.success('API key removed');
   }
@@ -1360,10 +1362,11 @@ export class SettingsComponent implements OnInit {
           if (res.models.length > 0 && !res.models.includes(this.ollamaSelectedModel())) {
             this.ollamaSelectedModel.set(res.models[0]);
           }
-          // Auto-save Ollama URL and selected model
+          // Auto-save Ollama URL and selected model to localStorage
           const model = this.ollamaSelectedModel();
+          this.settingsStore.setOllamaUrl(this.ollamaUrl());
+          this.settingsStore.setOllamaModel(model);
           this.llmKeys.update(k => ({ ...k, ollama: this.ollamaUrl(), ollama_model: model }));
-          this.api.saveLlmKeys({ ollama: this.ollamaUrl(), ollama_model: model }).subscribe();
           this.notifications.success('Connected to Ollama!');
         } else {
           this.ollamaStatus.set('error');
@@ -1380,7 +1383,7 @@ export class SettingsComponent implements OnInit {
   onOllamaModelChange(model: string): void {
     this.ollamaSelectedModel.set(model);
     this.llmKeys.update(k => ({ ...k, ollama_model: model }));
-    this.api.saveLlmKeys({ ollama_model: model }).subscribe();
+    this.settingsStore.setOllamaModel(model);
   }
 
   reassignKey(oldProviderId: string, newProviderId: string): void {
@@ -1389,17 +1392,14 @@ export class SettingsComponent implements OnInit {
     const key = keys[oldProviderId];
     if (!key) return;
 
-    // Remove old, add new
+    // Remove old, add new — persist both changes to localStorage
+    this.settingsStore.removeLlmKey(oldProviderId);
+    this.settingsStore.setLlmKey(newProviderId, key);
     this.llmKeys.update(k => {
       const updated = { ...k };
       delete updated[oldProviderId];
       updated[newProviderId] = key;
       return updated;
-    });
-
-    // Persist both changes
-    this.api.saveLlmKeys({ [oldProviderId]: '', [newProviderId]: key }).subscribe({
-      error: () => this.notifications.error('Failed to reassign key'),
     });
 
     this.editingKeyProvider.set(null);
@@ -1431,9 +1431,7 @@ export class SettingsComponent implements OnInit {
 
   private saveDetectedKey(providerId: string, key: string): void {
     this.llmKeys.update(keys => ({ ...keys, [providerId]: key }));
-    this.api.saveLlmKeys({ [providerId]: key }).subscribe({
-      error: () => this.notifications.error('Failed to save key'),
-    });
+    this.settingsStore.setLlmKey(providerId, key);
 
     const provider = this.llmProviders().find(p => p.id === providerId);
     this.notifications.success(`${provider?.name || providerId} key saved`);
@@ -1556,15 +1554,12 @@ export class SettingsComponent implements OnInit {
   }
 
   private loadSettings(): void {
-    this.api.getSettings().subscribe({
-      next: (settings: any) => {
-        this.emailAlerts = settings.email_alerts ?? true;
-        this.modRecommendations = settings.mod_recommendations ?? true;
-        this.compatWarnings = settings.compat_warnings ?? true;
-        this.emailOnGenerationComplete = settings.email_on_generation_complete ?? true;
-      },
-      error: () => {},
-    });
+    // Notification prefs are now localStorage-only (Plan 3 Task 2). The
+    // three email-coupled toggles (alerts, recommendations, compat warnings)
+    // become local-only signals — Task 3's auth strip removes the email
+    // delivery path entirely. `notifyOnComplete` maps onto the SettingsStore
+    // signal because that's the one that survives into the no-auth world.
+    this.emailOnGenerationComplete = this.settingsStore.notifyOnComplete();
   }
 
   private loadLlmProviders(): void {
@@ -1575,20 +1570,23 @@ export class SettingsComponent implements OnInit {
   }
 
   private loadLlmKeys(): void {
-    this.api.getLlmKeys().subscribe({
-      next: (keys) => {
-        this.llmKeys.set(keys);
-        // Restore Ollama URL + model from saved keys and re-test connection
-        if (keys['ollama']) {
-          this.ollamaUrl.set(keys['ollama']);
-          if (keys['ollama_model']) {
-            this.ollamaSelectedModel.set(keys['ollama_model']);
-          }
-          this.testOllamaConnection();
-        }
-      },
-      error: () => {},
-    });
+    // Read keys synchronously from SettingsStore (localStorage-backed).
+    const keys = this.settingsStore.llmKeys();
+    this.llmKeys.set(keys);
+
+    // Restore Ollama URL + model — these have dedicated SettingsStore signals
+    // that take precedence over anything legacy ollama keys may carry.
+    const ollamaUrl = this.settingsStore.ollamaUrl();
+    if (ollamaUrl) {
+      this.ollamaUrl.set(ollamaUrl);
+    }
+    const ollamaModel = this.settingsStore.ollamaModel();
+    if (ollamaModel) {
+      this.ollamaSelectedModel.set(ollamaModel);
+    }
+    if (ollamaUrl || keys['ollama']) {
+      this.testOllamaConnection();
+    }
   }
 
   private loadConnectedAccounts(): void {
@@ -1649,20 +1647,15 @@ export class SettingsComponent implements OnInit {
       error: () => this.notifications.error('Failed to save hardware'),
     });
 
-    // Save settings (notification prefs)
-    this.api.updateSettings({
-      email_alerts: this.emailAlerts,
-      mod_recommendations: this.modRecommendations,
-      compat_warnings: this.compatWarnings,
-      email_on_generation_complete: this.emailOnGenerationComplete,
-    }).subscribe({
-      error: () => this.notifications.error('Failed to save settings'),
-    });
+    // Notification prefs — only `notifyOnComplete` survives into the no-auth
+    // world (Plan 3 Task 3 strips the email delivery path). The other three
+    // toggles stay in the UI as local-only signals for this task; they're
+    // pruned in Task 3.
+    this.settingsStore.setNotifyOnComplete(this.emailOnGenerationComplete);
 
-    // Save LLM API keys
-    this.api.saveLlmKeys(this.llmKeys()).subscribe({
-      next: () => this.notifications.success('Settings saved successfully'),
-      error: () => this.notifications.error('Failed to save API keys'),
-    });
+    // LLM API keys are written to localStorage on every individual edit
+    // (saveDetectedKey / deleteKey / reassignKey / Ollama auto-save); the
+    // explicit "Save Settings" button just confirms success to the user.
+    this.notifications.success('Settings saved successfully');
   }
 }

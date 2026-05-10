@@ -6,6 +6,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { GenerationService } from '../../../../core/services/generation.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { FeatureFlagsService } from '../../../../core/services/feature-flags.service';
+import { SettingsStore } from '../../../../core/services/settings-store.service';
 import { Game, Playstyle } from '../../../../shared/models/game.model';
 import { HardwareSpecs } from '../../../../shared/models/specs.model';
 import { LlmProvider } from '../../../../shared/models/mod.model';
@@ -1027,6 +1028,7 @@ export class PlaystyleSelectComponent implements OnInit {
     private generationService: GenerationService,
     private notifications: NotificationService,
     private router: Router,
+    private settingsStore: SettingsStore,
   ) {}
 
   ngOnInit(): void {
@@ -1063,30 +1065,30 @@ export class PlaystyleSelectComponent implements OnInit {
       error: () => {},
     });
 
-    // Only load keys if logged in — guests don't see the key inputs
-    if (this.authService.isLoggedIn()) {
-      this.api.getLlmKeys().subscribe({
-        next: (keys) => {
-          // Separate Ollama URL from regular API keys
-          const regularKeys = { ...keys };
-          if (regularKeys['ollama']) {
-            this.ollamaUrl.set(regularKeys['ollama']);
-            delete regularKeys['ollama'];
-            if (regularKeys['ollama_model']) {
-              this.ollamaSelectedModel.set(regularKeys['ollama_model']);
-              delete regularKeys['ollama_model'];
-            }
-            this.testOllamaConnection();
-          } else {
-            delete regularKeys['ollama_model'];
-          }
-          this.providerKeys.set(regularKeys);
-          if (Object.values(regularKeys).some(k => k?.length > 0)) {
-            this.providerExpanded.set(false);
-          }
-        },
-        error: () => {},
-      });
+    // Read saved keys synchronously from SettingsStore (localStorage). No
+    // backend call, no auth gate — keys are local-only now (Plan 3 Task 2).
+    const savedKeys = this.settingsStore.llmKeys();
+    const regularKeys = { ...savedKeys };
+    // Strip the legacy ollama / ollama_model entries; Ollama URL + model
+    // live on dedicated SettingsStore signals.
+    delete regularKeys['ollama'];
+    delete regularKeys['ollama_model'];
+    this.providerKeys.set(regularKeys);
+
+    const ollamaUrl = this.settingsStore.ollamaUrl();
+    if (ollamaUrl) {
+      this.ollamaUrl.set(ollamaUrl);
+    }
+    const ollamaModel = this.settingsStore.ollamaModel();
+    if (ollamaModel) {
+      this.ollamaSelectedModel.set(ollamaModel);
+    }
+    if (ollamaUrl || savedKeys['ollama']) {
+      this.testOllamaConnection();
+    }
+
+    if (Object.values(regularKeys).some(k => k?.length > 0)) {
+      this.providerExpanded.set(false);
     }
   }
 
@@ -1154,9 +1156,8 @@ export class PlaystyleSelectComponent implements OnInit {
     const updated = { ...this.providerKeys() };
     delete updated[providerId];
     this.providerKeys.set(updated);
-    if (this.authService.isLoggedIn()) {
-      this.api.saveLlmKeys({ [providerId]: '' }).subscribe({ error: () => {} });
-    }
+    // Persist removal to localStorage (no auth gate — local only).
+    this.settingsStore.removeLlmKey(providerId);
   }
 
   testOllamaConnection(): void {
@@ -1206,9 +1207,8 @@ export class PlaystyleSelectComponent implements OnInit {
     const updated = { ...this.providerKeys(), [providerId]: key };
     this.providerKeys.set(updated);
 
-    if (this.authService.isLoggedIn()) {
-      this.api.saveLlmKeys({ [providerId]: key }).subscribe({ error: () => {} });
-    }
+    // Persist to localStorage (no auth gate — local only).
+    this.settingsStore.setLlmKey(providerId, key);
 
     // Reset input state
     this.newKeyInput.set('');

@@ -41,6 +41,7 @@ import {
 import { GenerationService } from '../../core/services/generation.service';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { SettingsStore } from '../../core/services/settings-store.service';
 import {
   GenerationEvent,
   ModAddedEvent,
@@ -1648,7 +1649,8 @@ export class GenerationComponent implements OnInit, OnDestroy, AfterViewChecked 
     private api: ApiService,
     private notifications: NotificationService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private settingsStore: SettingsStore,
   ) {}
 
   generationNotFound = signal(false);
@@ -1775,16 +1777,10 @@ export class GenerationComponent implements OnInit, OnDestroy, AfterViewChecked 
     const detection = detectProvider(this.apiKeyInput.trim(), this.providers());
     const providerKey = detection?.providerId ?? 'unknown';
 
-    this.api.saveLlmKeys({ [providerKey]: this.apiKeyInput }).subscribe({
-      next: () => {
-        this.apiKeyInput = '';
-        this.resume();
-      },
-      error: () => {
-        this.resuming.set(false);
-        this.notifications.error('Failed to save API key');
-      },
-    });
+    // Persist to localStorage via SettingsStore — sync, no error path.
+    this.settingsStore.setLlmKey(providerKey, this.apiKeyInput);
+    this.apiKeyInput = '';
+    this.resume();
   }
 
   /** Lookup the lucide icon name for an SSE event type. See EVENT_ICONS map. */

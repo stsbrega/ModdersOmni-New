@@ -27,6 +27,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { GenerationService } from '../../../../core/services/generation.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { FeatureFlagsService } from '../../../../core/services/feature-flags.service';
+import { SettingsStore } from '../../../../core/services/settings-store.service';
 import type { Game } from '../../../../shared/models/game.model';
 
 const SKYRIM_GAME: Game = {
@@ -38,22 +39,21 @@ const SKYRIM_GAME: Game = {
 };
 
 function makeApiStub(): jasmine.SpyObj<ApiService> {
+  // After Plan 3 Task 2, LLM keys live in SettingsStore (localStorage), not
+  // via ApiService.getLlmKeys/saveLlmKeys — those methods are no longer
+  // referenced by the component, so the stub no longer includes them.
   const spy = jasmine.createSpyObj<ApiService>('ApiService', [
     'getPlaystyles',
     'getLlmProviders',
-    'getLlmKeys',
     'getGames',
     'startGeneration',
     'testOllamaConnection',
-    'saveLlmKeys',
   ]);
   spy.getPlaystyles.and.returnValue(of([]));
   spy.getLlmProviders.and.returnValue(of([]));
-  spy.getLlmKeys.and.returnValue(of({}));
   spy.getGames.and.returnValue(of([SKYRIM_GAME]));
   spy.startGeneration.and.returnValue(of({ generation_id: 'gen-legacy-1' }));
   spy.testOllamaConnection.and.returnValue(EMPTY);
-  spy.saveLlmKeys.and.returnValue(EMPTY);
   return spy;
 }
 
@@ -77,10 +77,14 @@ interface Harness {
 }
 
 function setup(opts: { flag: boolean; savedKeys?: Record<string, string> } = { flag: false }): Harness {
-  const api = makeApiStub();
+  // SettingsStore reads from localStorage in its constructor, so seed the
+  // saved-keys fixture there before TestBed.inject builds the singleton.
+  // Always clear first so prior tests don't leak state.
+  localStorage.removeItem('settings.llmKeys');
   if (opts.savedKeys) {
-    api.getLlmKeys.and.returnValue(of(opts.savedKeys));
+    localStorage.setItem('settings.llmKeys', JSON.stringify(opts.savedKeys));
   }
+  const api = makeApiStub();
   const auth = makeAuthStub();
   const generation = jasmine.createSpyObj<GenerationService>(
     'GenerationService',
