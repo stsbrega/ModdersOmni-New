@@ -4,7 +4,6 @@ import { fadeUp, staggerChildren } from '../../core/motion/animations';
 import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { GenerationService } from '../../core/services/generation.service';
-import { AuthService } from '../../core/services/auth.service';
 import { Modlist } from '../../shared/models/mod.model';
 import { GenerationStatusResponse } from '../../shared/models/generation.model';
 import { InProgressBadgeComponent } from '../../shared/components/in-progress-badge/in-progress-badge.component';
@@ -69,11 +68,7 @@ import { DialogRef } from '@angular/cdk/dialog';
         <!-- Welcome -->
         <div class="welcome" @fadeUp>
           <div>
-            @if (modlists().length === 0) {
-              <h1 class="welcome-title">Welcome, {{ auth.user()?.display_name || 'modder' }}</h1>
-            } @else {
-              <h1 class="welcome-title">Welcome back, {{ auth.user()?.display_name || 'modder' }}</h1>
-            }
+            <h1 class="welcome-title">Welcome to ModdersOmni</h1>
             <p class="welcome-sub">Your generated modlists</p>
           </div>
           <a ui-button variant="primary" size="sm" routerLink="/setup" (click)="resetSetupWizard()">
@@ -502,7 +497,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.modlists().reduce((sum, ml) => sum + ml.entries.length, 0)
   );
 
-  constructor(private api: ApiService, private gen: GenerationService, protected auth: AuthService) {}
+  constructor(private api: ApiService, private gen: GenerationService) {}
 
   /** Clear any persisted wizard progress so "New Build" always lands on step 1
    * (game selection). Without this, sessionStorage from a prior run makes the

@@ -15,22 +15,22 @@ import {
 } from 'lucide-angular';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
-import { AuthService } from '../../core/services/auth.service';
 import { HardwareDetectorService } from '../../core/services/hardware-detector.service';
 import { SettingsStore } from '../../core/services/settings-store.service';
 import { LlmProvider } from '../../shared/models/mod.model';
 import { detectProvider } from '../../core/utils/key-detection';
 import { ApiKeyGuideComponent } from '../../shared/components/api-key-guide/api-key-guide.component';
-import { DeleteAccountDialogComponent } from './components/delete-account-dialog.component';
 // Direct primitive imports — same pattern landing/setup adopted in Tasks 5-6
 // to avoid pulling in sibling primitives that may have unrelated TS errors.
 import { UiButtonComponent } from '../../shared/components/ui/button.component';
 import { UiInputComponent } from '../../shared/components/ui/input.component';
 import { UiTextareaComponent } from '../../shared/components/ui/textarea.component';
 import { UiCardComponent } from '../../shared/components/ui/card.component';
-import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
 
-type SettingsTab = 'profile' | 'hardware' | 'notifications';
+// Profile/OAuth/Delete-account tab is gone with auth (Plan 3 Task 3); the
+// remaining tabs are LLM keys + hardware + notifications. Keys live in their
+// own tab so the Hardware tab stays purely about the gaming rig.
+type SettingsTab = 'keys' | 'hardware' | 'notifications';
 
 @Component({
   selector: 'app-settings',
@@ -38,13 +38,11 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
   imports: [
     FormsModule,
     ApiKeyGuideComponent,
-    DeleteAccountDialogComponent,
     LucideAngularModule,
     UiButtonComponent,
     UiInputComponent,
     UiTextareaComponent,
     UiCardComponent,
-    UiBadgeComponent,
   ],
   providers: [
     {
@@ -73,7 +71,7 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
     <div class="settings-page">
       <div class="settings-header">
         <h1>Settings</h1>
-        <p>Manage your profile, hardware, and preferences</p>
+        <p>Manage your AI keys, hardware, and preferences</p>
       </div>
 
       <!-- Tabs -->
@@ -92,122 +90,13 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       <!-- Tab Content -->
       <div class="tab-content">
         @switch (activeTab()) {
-          @case ('profile') {
+          @case ('keys') {
             <div class="tab-panel" @fadeIn>
-              <div class="panel-section">
-                <h3>Display Name</h3>
-                <input
-                  ui-input
-                  type="text"
-                  [(ngModel)]="displayName"
-                  placeholder="Your display name"
-                />
-              </div>
-              <div class="panel-section">
-                <h3>Email</h3>
-                <input ui-input type="email" [value]="email" disabled />
-                <p class="input-hint">Email cannot be changed.</p>
-              </div>
-              @if (!emailVerified) {
-                <div class="panel-section">
-                  <ui-card class="verify-card">
-                    <div class="verify-info">
-                      <lucide-icon name="alert-circle" [size]="16" [strokeWidth]="2"></lucide-icon>
-                      <span>Email not verified.</span>
-                    </div>
-                    <button ui-button variant="primary" size="sm" (click)="resendVerification()">
-                      Resend Link
-                    </button>
-                  </ui-card>
-                </div>
-              }
-              <div class="panel-section">
-                <h3>Connected Accounts</h3>
-                <p class="input-hint" style="margin-bottom: 0.75rem;">Link additional sign-in methods to your account.</p>
-                <div class="connected-list">
-                  @for (p of availableProviders; track p.id) {
-                    <ui-card class="connected-item">
-                      <div class="connected-info">
-                        <span class="provider-name">{{ p.label }}</span>
-                        @if (isProviderConnected(p.id)) {
-                          <ui-badge variant="success">Connected</ui-badge>
-                        }
-                      </div>
-                      @if (isProviderConnected(p.id)) {
-                        <button
-                          ui-button
-                          variant="destructive"
-                          size="sm"
-                          (click)="disconnectProvider(p.id)"
-                          [disabled]="!canDisconnect()"
-                          [title]="canDisconnect() ? 'Disconnect ' + p.label : 'Set a password before disconnecting your only sign-in method'"
-                        >
-                          Disconnect
-                        </button>
-                      } @else {
-                        <button ui-button variant="secondary" size="sm" (click)="connectProvider(p.id)">
-                          Connect
-                        </button>
-                      }
-                    </ui-card>
-                  }
-                </div>
-              </div>
-
-              <!-- Nexus Mods OAuth -->
-              <div class="panel-section">
-                <h3>Nexus Mods Connection</h3>
-                <p class="input-hint" style="margin-bottom: 0.75rem;">
-                  Connect your Nexus account so ModdersOmni can publish generated modlists
-                  as unlisted Nexus Collections under your account — no personal API key required.
-                </p>
-                @if (nexusStatus().loading) {
-                  <p class="input-hint">Loading connection status…</p>
-                } @else if (!nexusStatus().configured) {
-                  <ui-card class="info-banner">
-                    <div class="verify-info info">
-                      <lucide-icon name="alert-circle" [size]="16" [strokeWidth]="2"></lucide-icon>
-                      <span>Nexus Collections publishing is coming soon — ModdersOmni is waiting on OAuth app approval from Nexus Mods. We'll light up this section as soon as it's ready.</span>
-                    </div>
-                  </ui-card>
-                } @else if (nexusStatus().connected) {
-                  <ui-card class="connected-item">
-                    <div class="connected-info">
-                      <span class="provider-name">{{ nexusStatus().username || 'Nexus Mods' }}</span>
-                      <ui-badge variant="success">Connected</ui-badge>
-                    </div>
-                    <button
-                      ui-button
-                      variant="destructive"
-                      size="sm"
-                      [disabled]="nexusBusy()"
-                      (click)="disconnectNexus()"
-                    >
-                      Disconnect
-                    </button>
-                  </ui-card>
-                  @if (nexusStatus().expiresAt) {
-                    <p class="input-hint" style="margin-top: 0.5rem;">
-                      Access renews automatically. Current token expires {{ nexusStatus().expiresAt }}.
-                    </p>
-                  }
-                } @else {
-                  <button
-                    ui-button
-                    variant="primary"
-                    [disabled]="nexusBusy()"
-                    (click)="connectNexus()"
-                  >
-                    Connect to Nexus Mods
-                  </button>
-                }
-              </div>
-
               <div class="panel-section">
                 <h3>AI Provider API Keys</h3>
                 <ui-card class="key-security-notice">
                   <lucide-icon name="lock" [size]="14" [strokeWidth]="1.5"></lucide-icon>
-                  <span>Your API keys are stored securely and only used during modlist generation. Never share your keys with anyone.</span>
+                  <span>Your API keys live only in this browser (localStorage) and are sent directly to the provider during modlist generation.</span>
                 </ui-card>
                 <p class="input-hint" style="margin-bottom: 0.75rem;">
                   Paste an API key below — the provider will be detected automatically.
@@ -366,27 +255,6 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
                   }
                 </div>
               }
-
-              <!-- Danger Zone -->
-              <div class="panel-section">
-                <ui-card class="danger-zone">
-                  <h3>Danger Zone</h3>
-                  <div class="danger-row">
-                    <div class="danger-info">
-                      <strong>Delete account</strong>
-                      <span>Permanently delete your account, modlists, and settings. Cannot be undone.</span>
-                    </div>
-                    <button
-                      ui-button
-                      variant="destructive"
-                      type="button"
-                      (click)="showDeleteDialog.set(true)"
-                    >
-                      Delete account
-                    </button>
-                  </div>
-                </ui-card>
-              </div>
             </div>
           }
           @case ('hardware') {
@@ -567,37 +435,10 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
             <div class="tab-panel" @fadeIn>
               <div class="notif-item">
                 <div class="notif-info">
-                  <h3>Email Alerts</h3>
-                  <p>Get notified about important updates and new features.</p>
+                  <h3>Notify when generation finishes</h3>
+                  <p>Show a browser notification when your modlist is ready (works while the tab is open).</p>
                 </div>
-                <button class="toggle-switch" [class.on]="emailAlerts" (click)="emailAlerts = !emailAlerts">
-                  <span class="toggle-knob"></span>
-                </button>
-              </div>
-              <div class="notif-item">
-                <div class="notif-info">
-                  <h3>New Mod Recommendations</h3>
-                  <p>Receive suggestions when new mods match your preferences.</p>
-                </div>
-                <button class="toggle-switch" [class.on]="modRecommendations" (click)="modRecommendations = !modRecommendations">
-                  <span class="toggle-knob"></span>
-                </button>
-              </div>
-              <div class="notif-item">
-                <div class="notif-info">
-                  <h3>Compatibility Warnings</h3>
-                  <p>Get alerts when mod updates may cause conflicts.</p>
-                </div>
-                <button class="toggle-switch" [class.on]="compatWarnings" (click)="compatWarnings = !compatWarnings">
-                  <span class="toggle-knob"></span>
-                </button>
-              </div>
-              <div class="notif-item">
-                <div class="notif-info">
-                  <h3>Email me when generation finishes</h3>
-                  <p>Start generating on your phone and get an email when your modlist is ready.</p>
-                </div>
-                <button class="toggle-switch" [class.on]="emailOnGenerationComplete" (click)="emailOnGenerationComplete = !emailOnGenerationComplete">
+                <button class="toggle-switch" [class.on]="notifyOnComplete" (click)="notifyOnComplete = !notifyOnComplete">
                   <span class="toggle-knob"></span>
                 </button>
               </div>
@@ -613,10 +454,6 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
         </button>
       </div>
     </div>
-
-    @if (showDeleteDialog()) {
-      <app-delete-account-dialog (cancel)="showDeleteDialog.set(false)" />
-    }
   `,
   styles: [`
     :host { display: block; }
@@ -781,54 +618,6 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       border-radius: 3px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 0.72rem;
-    }
-
-    /* Verify card — overrides ui-card padding for the banner row */
-    .verify-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1rem !important;
-      background: rgba(234, 179, 8, 0.08) !important;
-      border-color: rgba(234, 179, 8, 0.2) !important;
-    }
-    .info-banner {
-      padding: 0.75rem 1rem !important;
-      background: rgba(96, 165, 250, 0.06) !important;
-      border-color: rgba(96, 165, 250, 0.2) !important;
-    }
-    .verify-info {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--color-warning);
-      font-size: 0.8125rem;
-      font-weight: 500;
-    }
-    .verify-info.info {
-      color: var(--color-text);
-    }
-
-    /* Connected accounts — ui-card with custom row layout */
-    .connected-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .connected-item {
-      display: flex !important;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.625rem 0.875rem !important;
-    }
-    .connected-info {
-      display: flex;
-      align-items: center;
-      gap: 0.625rem;
-    }
-    .provider-name {
-      font-size: 0.875rem;
-      font-weight: 500;
     }
 
     /* Storage Drives bars */
@@ -1098,60 +887,22 @@ type SettingsTab = 'profile' | 'hardware' | 'notifications';
       padding-top: 1.5rem;
       border-top: 1px solid var(--color-border);
     }
-
-    /* Danger Zone — ui-card with danger tint */
-    .danger-zone {
-      border-color: rgba(239, 68, 68, 0.35) !important;
-      background: rgba(239, 68, 68, 0.04) !important;
-    }
-    .danger-zone h3 {
-      color: #ef4444;
-      margin-top: 0;
-      margin-bottom: 0.75rem;
-    }
-    .danger-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .danger-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-    .danger-info strong {
-      color: var(--color-text);
-      font-size: 0.875rem;
-    }
-    .danger-info span {
-      color: var(--color-text-muted);
-      font-size: 0.8125rem;
-    }
   `],
 })
 export class SettingsComponent implements OnInit {
-  activeTab = signal<SettingsTab>('profile');
-  showDeleteDialog = signal(false);
+  // Default to the LLM keys tab — that's the only setting users actually
+  // need to revisit after the auth strip (hardware persists per-session;
+  // notifications is one toggle).
+  activeTab = signal<SettingsTab>('keys');
 
   tabs: { id: SettingsTab; label: string }[] = [
-    { id: 'profile', label: 'Profile' },
+    { id: 'keys', label: 'AI Keys' },
     { id: 'hardware', label: 'Hardware' },
     { id: 'notifications', label: 'Notifications' },
   ];
 
-  // Profile
-  displayName = '';
-  email = '';
-  emailVerified = false;
-  hasPassword = false;
-  connectedProviders = signal<string[]>([]);
-  availableProviders = [
-    { id: 'google' as const, label: 'Google' },
-    { id: 'discord' as const, label: 'Discord' },
-  ];
-  // LLM Providers (registry-based)
+  // LLM Providers (registry-based) — fetched from backend; the keys
+  // themselves live entirely in localStorage via SettingsStore.
   llmProviders = signal<LlmProvider[]>([]);
   llmKeys = signal<Record<string, string>>({});
 
@@ -1190,7 +941,10 @@ export class SettingsComponent implements OnInit {
       });
   });
 
-  // Hardware
+  // Hardware — in-memory only this commit. The backend persistence path
+  // (authService.getHardware / saveHardware) was removed with the auth
+  // strip; structured hardware fields will move into SettingsStore in a
+  // follow-on (see Plan 3 Task 4 for the broader API-removal cleanup).
   gpuModel = '';
   vramGb = 8;
   ramGb = 16;
@@ -1218,95 +972,22 @@ export class SettingsComponent implements OnInit {
   commandCopied = signal(false);
   powershellCommand = `$gpu=Get-CimInstance Win32_VideoController|Sort-Object AdapterRAM -Descending|Select -First 1;$g=$gpu.Name;try{$v=[math]::Round((nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>$null|Select -First 1)/1024)}catch{$v=0};if(!$v){$v=[math]::Round($gpu.AdapterRAM/1GB)};$c=(Get-CimInstance Win32_Processor).Name;$r=[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB);$n=(Get-CimInstance Win32_Processor).NumberOfCores;$t=(Get-CimInstance Win32_Processor).NumberOfLogicalProcessors;$d=(Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"|ForEach-Object{"$($_.DeviceID) $([math]::Round($_.FreeSpace/1GB))GB free / $([math]::Round($_.Size/1GB))GB"}) -join ", ";"GPU: $g\`nVRAM: $v GB\`nCPU: $c\`nCores: $n cores / $t threads\`nRAM: $r GB\`nDrives: $d"`;
 
-  // Nexus OAuth
-  nexusStatus = signal<{
-    loading: boolean;
-    configured: boolean;
-    connected: boolean;
-    username: string | null;
-    expiresAt: string | null;
-  }>({ loading: true, configured: false, connected: false, username: null, expiresAt: null });
-  nexusBusy = signal(false);
-
-  // Notifications
-  emailAlerts = true;
-  modRecommendations = true;
-  compatWarnings = true;
-  emailOnGenerationComplete = true;
+  // Notifications — single survivor toggle (the email-coupled toggles went
+  // away with auth; this one shows a browser notification when generation
+  // finishes and is local to this browser).
+  notifyOnComplete = false;
 
   constructor(
     private api: ApiService,
     private notifications: NotificationService,
-    private authService: AuthService,
     private hardwareDetector: HardwareDetectorService,
     private settingsStore: SettingsStore,
   ) {}
 
   ngOnInit(): void {
-    this.loadProfile();
     this.loadSettings();
-    this.loadHardware();
-    this.loadConnectedAccounts();
     this.loadLlmProviders();
     this.loadLlmKeys();
-    this.loadNexusStatus();
-    this.handleNexusCallback();
-  }
-
-  private handleNexusCallback(): void {
-    const params = new URLSearchParams(window.location.search);
-    const nexusResult = params.get('nexus');
-    if (nexusResult === 'connected') {
-      this.notifications.success('Nexus Mods connected successfully');
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (nexusResult === 'error') {
-      this.notifications.error('Nexus connection failed — please try again');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }
-
-  private loadNexusStatus(): void {
-    this.api.getNexusOAuthStatus().subscribe({
-      next: (s) => this.nexusStatus.set({
-        loading: false,
-        configured: s.configured,
-        connected: s.connected,
-        username: s.username,
-        expiresAt: s.expires_at,
-      }),
-      error: () => this.nexusStatus.update((v) => ({ ...v, loading: false })),
-    });
-  }
-
-  connectNexus(): void {
-    this.nexusBusy.set(true);
-    this.api.startNexusOAuth().subscribe({
-      next: (r) => {
-        window.location.href = r.authorize_url;
-      },
-      error: (err) => {
-        this.nexusBusy.set(false);
-        const detail = err?.error?.detail || 'Failed to start Nexus connection';
-        this.notifications.error(detail);
-      },
-    });
-  }
-
-  disconnectNexus(): void {
-    this.nexusBusy.set(true);
-    this.api.disconnectNexusOAuth().subscribe({
-      next: () => {
-        this.nexusBusy.set(false);
-        this.nexusStatus.update((v) => ({
-          ...v, connected: false, username: null, expiresAt: null,
-        }));
-        this.notifications.success('Nexus Mods disconnected');
-      },
-      error: () => {
-        this.nexusBusy.set(false);
-        this.notifications.error('Failed to disconnect Nexus');
-      },
-    });
   }
 
   onKeyPaste(event: ClipboardEvent): void {
@@ -1441,13 +1122,6 @@ export class SettingsComponent implements OnInit {
     this.detectionState.set(null);
   }
 
-  resendVerification(): void {
-    this.authService.resendVerification().subscribe({
-      next: () => this.notifications.success('Verification email sent'),
-      error: () => {}, // Error toast already shown by errorInterceptor
-    });
-  }
-
   async autoDetect(): Promise<void> {
     this.scanLoading.set(true);
     try {
@@ -1523,43 +1197,11 @@ export class SettingsComponent implements OnInit {
     if (response.tier) this.hardwareTier = response.tier;
   }
 
-  private loadProfile(): void {
-    const user = this.authService.user();
-    if (user) {
-      this.displayName = user.display_name || '';
-      this.email = user.email;
-      this.emailVerified = user.email_verified;
-      this.hasPassword = user.auth_provider === 'local';
-    }
-  }
-
-  private loadHardware(): void {
-    this.authService.getHardware().subscribe({
-      next: (hw) => {
-        if (hw) {
-          this.gpuModel = hw.gpu_model || '';
-          this.cpuModel = hw.cpu_model || '';
-          this.ramGb = hw.ram_gb || 16;
-          this.vramGb = hw.vram_mb ? Math.round(hw.vram_mb / 1024) : 8;
-          this.cpuCores = hw.cpu_cores ?? null;
-          this.cpuSpeedGhz = hw.cpu_speed_ghz ?? null;
-          this.hardwareTier = hw.hardware_tier || '';
-          this.hardwareRawText = hw.hardware_raw_text || '';
-          this.storageDrives = hw.storage_drives || '';
-          this.storageDrivesSignal.set(hw.storage_drives || '');
-        }
-      },
-      error: () => {},
-    });
-  }
-
   private loadSettings(): void {
-    // Notification prefs are now localStorage-only (Plan 3 Task 2). The
-    // three email-coupled toggles (alerts, recommendations, compat warnings)
-    // become local-only signals — Task 3's auth strip removes the email
-    // delivery path entirely. `notifyOnComplete` maps onto the SettingsStore
-    // signal because that's the one that survives into the no-auth world.
-    this.emailOnGenerationComplete = this.settingsStore.notifyOnComplete();
+    // Notification prefs are localStorage-only (Plan 3 Task 2). Only the
+    // notify-on-complete toggle survives the auth strip — the email-coupled
+    // toggles went away with the email delivery path.
+    this.notifyOnComplete = this.settingsStore.notifyOnComplete();
   }
 
   private loadLlmProviders(): void {
@@ -1589,69 +1231,10 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  private loadConnectedAccounts(): void {
-    this.authService.getConnectedAccounts().subscribe({
-      next: (accounts) => {
-        this.connectedProviders.set(accounts.map((a) => a.provider));
-      },
-      error: () => {},
-    });
-  }
-
-  isProviderConnected(providerId: string): boolean {
-    return this.connectedProviders().includes(providerId);
-  }
-
-  canDisconnect(): boolean {
-    return this.hasPassword || this.connectedProviders().length > 1;
-  }
-
-  connectProvider(providerId: 'google' | 'discord'): void {
-    this.authService.oauthLogin(providerId);
-  }
-
-  disconnectProvider(providerId: string): void {
-    this.authService.disconnectAccount(providerId).subscribe({
-      next: () => {
-        this.connectedProviders.update((providers) =>
-          providers.filter((p) => p !== providerId),
-        );
-        this.notifications.success(`${providerId.charAt(0).toUpperCase() + providerId.slice(1)} disconnected`);
-      },
-      error: () => {
-        this.notifications.error('Failed to disconnect account');
-      },
-    });
-  }
-
   saveSettings(): void {
-    // Save profile
-    this.authService.updateProfile({ display_name: this.displayName }).subscribe({
-      error: () => this.notifications.error('Failed to save profile'),
-    });
-
-    // Save hardware
-    this.authService.saveHardware({
-      gpu_model: this.gpuModel || undefined,
-      cpu_model: this.cpuModel || undefined,
-      ram_gb: this.ramGb,
-      vram_mb: this.vramGb * 1024,
-      cpu_cores: this.cpuCores ?? undefined,
-      cpu_speed_ghz: this.cpuSpeedGhz ?? undefined,
-      hardware_raw_text: this.hardwareRawText || undefined,
-      storage_drives: this.storageDrives || undefined,
-    }).subscribe({
-      next: (hw) => {
-        this.hardwareTier = hw.hardware_tier || '';
-      },
-      error: () => this.notifications.error('Failed to save hardware'),
-    });
-
     // Notification prefs — only `notifyOnComplete` survives into the no-auth
-    // world (Plan 3 Task 3 strips the email delivery path). The other three
-    // toggles stay in the UI as local-only signals for this task; they're
-    // pruned in Task 3.
-    this.settingsStore.setNotifyOnComplete(this.emailOnGenerationComplete);
+    // world (Plan 3 Task 3 stripped the email delivery path).
+    this.settingsStore.setNotifyOnComplete(this.notifyOnComplete);
 
     // LLM API keys are written to localStorage on every individual edit
     // (saveDetectedKey / deleteKey / reassignKey / Ollama auto-save); the

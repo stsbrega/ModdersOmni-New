@@ -17,7 +17,6 @@ import {
   Folder,
   Tag,
 } from 'lucide-angular';
-import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
 // Import primitives directly (not via the shared/components/ui barrel) so we
@@ -81,12 +80,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
           <a href="#how-it-works" class="nav-link" (click)="scrollTo($event, 'how-it-works')">How It Works</a>
         </div>
         <div class="nav-actions">
-          @if (authService.isLoggedIn()) {
-            <a ui-button variant="primary" size="sm" routerLink="/dashboard">Dashboard</a>
-          } @else {
-            <a routerLink="/auth/login" class="nav-link nav-signin">Sign In</a>
-            <a ui-button variant="primary" size="sm" routerLink="/auth/register">Sign Up</a>
-          }
+          <a ui-button variant="primary" size="sm" routerLink="/dashboard">Dashboard</a>
         </div>
       </div>
     </nav>
@@ -1145,7 +1139,7 @@ export class LandingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private apiService = inject(ApiService);
 
-  constructor(public authService: AuthService) {}
+  constructor() {}
 
   private scrollHandler = () => {
     this.scrolled.set(window.scrollY > 20);

@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { NotificationToastComponent } from './shared/components/notification-toast/notification-toast.component';
-import { EmailVerificationBannerComponent } from './shared/components/email-verification-banner/email-verification-banner.component';
 import { filter, map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -13,12 +12,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
     RouterOutlet,
     HeaderComponent,
     NotificationToastComponent,
-    EmailVerificationBannerComponent,
   ],
   template: `
     <a href="#main-content" class="skip-to-main">Skip to main content</a>
     @if (showHeader()) {
-      <app-email-verification-banner />
       <app-header />
     }
     <main id="main-content" [style.min-height]="showHeader() ? 'calc(100vh - 64px)' : '100vh'">

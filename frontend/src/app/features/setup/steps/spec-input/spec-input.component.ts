@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Output, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
-import { AuthService } from '../../../../core/services/auth.service';
 import { HardwareSpecs, SpecsParseResponse, TierScores } from '../../../../shared/models/specs.model';
 import { trigger, transition, style, animate } from '@angular/animations';
 import {
@@ -468,45 +467,13 @@ export class SpecInputComponent implements OnInit {
   showManualEntry = signal(false);
   savedLoading = signal(false);
 
-  constructor(
-    private api: ApiService,
-    private authService: AuthService,
-  ) {}
+  constructor(private api: ApiService) {}
 
   ngOnInit(): void {
-    const hw = this.authService.savedHardware;
-    if (hw && (hw.gpu_model || hw.cpu_model)) {
-      this.usingSavedHardware.set(true);
-      // Build a text representation of saved hardware and send to backend
-      // to get full tier + tier_scores response
-      const lines: string[] = [];
-      if (hw.gpu_model) lines.push(`GPU: ${hw.gpu_model}`);
-      if (hw.vram_mb) lines.push(`VRAM: ${Math.round(hw.vram_mb / 1024)} GB`);
-      if (hw.cpu_model) lines.push(`CPU: ${hw.cpu_model}`);
-      if (hw.ram_gb) lines.push(`RAM: ${hw.ram_gb} GB`);
-      const formattedText = lines.join('\n');
-      this.rawText = formattedText;
-      this.savedLoading.set(true);
-      this.api.parseSpecs(formattedText).subscribe({
-        next: (response) => {
-          this.fullResponse.set(response);
-          this.savedLoading.set(false);
-        },
-        error: () => {
-          // Fallback: show saved data without tier scores
-          this.fullResponse.set({
-            specs: {
-              gpu: hw.gpu_model || '',
-              cpu: hw.cpu_model || '',
-              ram_gb: hw.ram_gb || 0,
-              vram_mb: hw.vram_mb || 0,
-            },
-            tier: hw.hardware_tier || 'unknown',
-          } as SpecsParseResponse);
-          this.savedLoading.set(false);
-        },
-      });
-    }
+    // Saved-hardware pre-fill went away with auth (Plan 3 Task 3). The
+    // wizard now always starts with an empty form; structured hardware
+    // persistence will be re-added against SettingsStore in a follow-on
+    // (see Plan 3 Task 4 cleanup).
   }
 
   switchToManualEntry(): void {

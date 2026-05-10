@@ -1,11 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output, signal, computed, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../../core/services/api.service';
-import { AuthService } from '../../../../core/services/auth.service';
 import { GenerationService } from '../../../../core/services/generation.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { FeatureFlagsService } from '../../../../core/services/feature-flags.service';
 import { SettingsStore } from '../../../../core/services/settings-store.service';
 import { Game, Playstyle } from '../../../../shared/models/game.model';
 import { HardwareSpecs } from '../../../../shared/models/specs.model';
@@ -217,27 +215,14 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
             <lucide-icon name="bot" [size]="16" [strokeWidth]="1.5"></lucide-icon>
             AI Providers
           </div>
-          @if (isLoggedIn()) {
-            <div class="provider-badge" [class.configured]="configuredCount() > 0">
-              {{ configuredCount() }} configured
-            </div>
-          } @else {
-            <div class="provider-badge">
-              <lucide-icon name="lock" [size]="12" [strokeWidth]="2"></lucide-icon>
-              Account required
-            </div>
-          }
+          <div class="provider-badge" [class.configured]="configuredCount() > 0">
+            {{ configuredCount() }} configured
+          </div>
           <lucide-icon class="chevron" [class.expanded]="providerExpanded()" name="chevron-down" [size]="16" [strokeWidth]="2"></lucide-icon>
         </div>
 
         @if (providerExpanded()) {
           <div class="provider-body">
-            @if (!isLoggedIn()) {
-              <div class="locked-message">
-                <lucide-icon name="lock" [size]="18" [strokeWidth]="1.5"></lucide-icon>
-                <p>Create an account to save optional AI provider keys and generate your modlist.</p>
-              </div>
-            } @else {
               @if (pendingGenerate()) {
                 <p class="pending-prompt">
                   Add an API key if you want to use your own provider account or extra fallbacks.
@@ -367,7 +352,6 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
                   Loading providers...
                 </div>
               }
-            }
           </div>
         }
       </div>
@@ -1011,11 +995,6 @@ export class PlaystyleSelectComponent implements OnInit {
     this.selectedPreset.set(id);
   }
 
-  // Feature flag — when ON, generate() routes through the in-browser
-  // pipeline via GenerationService.start({pipelineArgs}) instead of the
-  // legacy backend-SSE two-step flow. (Plan 1 Task 14 follow-up.)
-  private readonly featureFlags = inject(FeatureFlagsService);
-
   // Cached full Game record — needed by the client pipeline because
   // PipelineStartArgs.game wants {id, name, slug, nexus_domain}, but the
   // wizard only hands us a gameId. We fetch on init and look up at
@@ -1024,7 +1003,6 @@ export class PlaystyleSelectComponent implements OnInit {
 
   constructor(
     private api: ApiService,
-    private authService: AuthService,
     private generationService: GenerationService,
     private notifications: NotificationService,
     private router: Router,
@@ -1221,143 +1199,20 @@ export class PlaystyleSelectComponent implements OnInit {
     }
   }
 
-  isLoggedIn(): boolean {
-    return this.authService.isLoggedIn();
-  }
-
+  /**
+   * Kick off the in-browser pipeline. Plan 3 Task 3 removed the auth gate
+   * and the dual-pipeline feature flag — every generation now runs through
+   * `GenerationService.start({pipelineArgs})` (no backend SSE branch).
+   *
+   * Bails early with a notification if anything required is missing (no
+   * Game record cached yet, no whitelisted LLM key) so the user gets a
+   * clear reason instead of a silent no-op.
+   */
   generate(): void {
     if (!this.hasAnyPreference()) return;
 
-    // Auth check first — guests can't enter keys or generate
-    if (!this.authService.isLoggedIn()) {
-      this.saveWizardState();
-      this.notifications.info('Create an account to generate your modlist');
-      this.router.navigate(['/auth/register'], {
-        queryParams: { returnUrl: '/setup' },
-      });
-      return;
-    }
-
-    // ── Client-pipeline branch (Plan 1 Task 14 follow-up) ──
-    // When the feature flag is on, route through the in-browser pipeline
-    // via GenerationService.start({pipelineArgs}). Bail with a clear
-    // notification if we can't construct the args (no Game record yet,
-    // no whitelisted LLM key, etc.) — DON'T silently fall through to the
-    // legacy SSE path; that would defeat the purpose of the flag (smoke
-    // testing the client pipeline).
-    if (this.featureFlags.useClientPipeline()) {
-      this.startClientPipelineRun();
-      return;
-    }
-
-    const hasOllama = this.ollamaStatus() === 'connected';
-    // Build credentials list from all configured providers
-    const allKeys = this.providerKeys();
-    const credentials: { provider: string; api_key: string; base_url?: string; model?: string }[] =
-      Object.entries(allKeys)
-        .filter(([, key]) => key.length > 0)
-        .map(([provider, api_key]) => ({ provider, api_key }));
-
-    // Include Ollama if connected
-    if (hasOllama) {
-      credentials.push({
-        provider: 'ollama',
-        api_key: '',
-        base_url: this.ollamaUrl(),
-        model: this.ollamaSelectedModel(),
-      });
-    }
-
-    this.loading.set(true);
-
-    // Persist wizard hardware specs to UserSettings before kicking off the
-    // generation. Without this, a new user lands on Settings → Hardware with
-    // empty fields after onboarding (audit finding A.2 / 2026-04-20).
-    this.authService
-      .saveHardware({
-        gpu_model: this.specs.gpu,
-        cpu_model: this.specs.cpu,
-        vram_mb: this.specs.vram_mb,
-        ram_gb: this.specs.ram_gb,
-        cpu_cores: this.specs.cpu_cores,
-        cpu_speed_ghz: this.specs.cpu_speed_ghz,
-        storage_drives: this.specs.storage_drives,
-      })
-      .subscribe({
-        next: () => {
-          /* fire-and-forget */
-        },
-        error: (err) =>
-          console.warn('Hardware persistence failed (non-fatal):', err),
-      });
-
-    const description = this.customDescription().trim() || undefined;
-    const mods = this.requestedMods().length > 0 ? this.requestedMods() : undefined;
-
-    // Fire-and-redirect: POST /start returns immediately with a generation_id.
-    // We then navigate to the generation viewer which streams events via SSE.
-    this.api
-      .startGeneration({
-        game_id: this.gameId,
-        playstyle_id: this.selectedId() ?? undefined,
-        gpu: this.specs.gpu,
-        vram_mb: this.specs.vram_mb,
-        cpu: this.specs.cpu,
-        ram_gb: this.specs.ram_gb,
-        cpu_cores: this.specs.cpu_cores,
-        cpu_speed_ghz: this.specs.cpu_speed_ghz,
-        game_version: this.gameVersion,
-        available_storage_gb: this.getMaxFreeStorageGb(),
-        custom_description: description,
-        requested_mods: mods,
-        llm_credentials: credentials,
-        preset: this.selectedPreset(),
-      })
-      .subscribe({
-        next: (response) => {
-          this.loading.set(false);
-
-          // Wizard is complete — clear the refresh-recovery snapshot so a
-          // future "New Build" starts from step 1 (game selection) instead
-          // of restoring the just-finished run's state.
-          sessionStorage.removeItem('setup_wizard_progress');
-          localStorage.removeItem('setup_wizard_state');
-
-          // Reset any stale generation state and open the SSE connection
-          this.generationService.reset();
-          this.generationService.connectToEvents(response.generation_id);
-
-          // Navigate to the real-time generation viewer
-          this.router.navigate(['/generate', response.generation_id]);
-        },
-        error: (err) => {
-          this.loading.set(false);
-          if (err?.status === 402) {
-            // BYOK gate: user picked Large/Massive/Ultimate without an LLM key
-            this.notifications.error(
-              err?.error?.detail ||
-                'This modlist size requires your own LLM API key. Add one in AI Providers below to unlock Large, Massive, or Ultimate.',
-            );
-          } else if (!err?.error?.detail && err?.status !== 0) {
-            this.notifications.error('Failed to start generation. Check your API keys and try again.');
-          }
-        },
-      });
-  }
-
-  /**
-   * Run the in-browser pipeline via GenerationService.start({pipelineArgs}).
-   * Mirrors the post-success cleanup of the legacy SSE branch (clear wizard
-   * state, persist hardware, navigate to /generate/<id>) but feeds the
-   * client pipeline instead of the backend SSE.
-   *
-   * Bails early with a notification if anything required is missing — we
-   * don't fall through to the legacy path because the user explicitly
-   * opted into the client pipeline via the feature flag.
-   */
-  private startClientPipelineRun(): void {
-    // Resolve the active Game record. games() may be empty if the API call
-    // is still pending — in that case we can't proceed.
+    // Resolve the active Game record. games() may be empty if the API
+    // call is still pending — in that case we can't proceed.
     const game = this.games().find((g) => g.id === this.gameId);
     if (!game) {
       this.notifications.error(
@@ -1366,36 +1221,24 @@ export class PlaystyleSelectComponent implements OnInit {
       return;
     }
 
-    // Construct the LLM config from saved keys + Ollama. Returns null
-    // if there's no whitelisted provider available — the client pipeline
-    // can't talk to gemini_pro/groq_scout/together/etc. (only the 6 in
-    // ProviderId), so we surface a clear error.
+    // Construct the LLM config from saved keys + Ollama. Returns null if
+    // there's no whitelisted provider available — the client pipeline can
+    // only talk to providers in `ProviderId` (anthropic / openai / gemini /
+    // groq / openrouter / ollama), so surface a clear error.
     const llmConfig = this.pickLlmConfig();
     if (!llmConfig) {
       this.notifications.error(
         'Add a supported LLM API key (Anthropic, OpenAI, Gemini, Groq, OpenRouter) ' +
-          'or connect Ollama to use the in-browser pipeline.',
+          'or connect Ollama to start a build.',
       );
       return;
     }
 
     this.loading.set(true);
 
-    // Same hardware persistence as the legacy branch (audit A.2).
-    this.authService
-      .saveHardware({
-        gpu_model: this.specs.gpu,
-        cpu_model: this.specs.cpu,
-        vram_mb: this.specs.vram_mb,
-        ram_gb: this.specs.ram_gb,
-        cpu_cores: this.specs.cpu_cores,
-        cpu_speed_ghz: this.specs.cpu_speed_ghz,
-        storage_drives: this.specs.storage_drives,
-      })
-      .subscribe({ error: (err) => console.warn('Hardware persistence failed (non-fatal):', err) });
-
-    // Optional playstyle — the wizard may have one selected by id but the
-    // pipeline wants the full Playstyle record. Look it up in the cached list.
+    // Optional playstyle — wizard may have one selected by id but the
+    // pipeline wants the full Playstyle record. Look it up in the cached
+    // list.
     const selectedId = this.selectedId();
     const playstyle = selectedId != null
       ? this.playstyles().find((p) => p.id === selectedId) ?? null
@@ -1406,29 +1249,25 @@ export class PlaystyleSelectComponent implements OnInit {
 
     this.generationService
       .start({
-        pipelineArgs: {
-          game,
-          preset: this.selectedPreset(),
-          hardwareSpec: this.specs,
-          availableStorageGb: this.getMaxFreeStorageGb(),
-          llmConfig,
-          playstyle,
-          gameVersion: (this.gameVersion ?? null) as GameVersion | null,
-          customDescription: description ?? null,
-          requestedMods: mods,
-        },
+        game,
+        preset: this.selectedPreset(),
+        hardwareSpec: this.specs,
+        availableStorageGb: this.getMaxFreeStorageGb(),
+        llmConfig,
+        playstyle,
+        gameVersion: (this.gameVersion ?? null) as GameVersion | null,
+        customDescription: description ?? null,
+        requestedMods: mods,
       })
       .then((session) => {
         this.loading.set(false);
 
-        // Wizard is complete — clear refresh-recovery snapshots like the
-        // legacy branch does (otherwise "New Build" would restore the
-        // just-finished run).
+        // Wizard is complete — clear refresh-recovery snapshots so a future
+        // "New Build" starts from step 1 (game selection).
         sessionStorage.removeItem('setup_wizard_progress');
         localStorage.removeItem('setup_wizard_state');
 
         // Navigate to the generation viewer using the pipeline session id.
-        // start() resolves with a StoredSession on the client-pipeline path.
         const sessionId = session?.id ?? this.generationService.generationId();
         if (sessionId) {
           this.router.navigate(['/generate', sessionId]);
@@ -1473,19 +1312,6 @@ export class PlaystyleSelectComponent implements OnInit {
       }
     }
     return null;
-  }
-
-  private saveWizardState(): void {
-    const state = {
-      gameId: this.gameId,
-      gameVersion: this.gameVersion,
-      specs: this.specs,
-      playstyleId: this.selectedId(),
-      customDescription: this.customDescription(),
-      requestedMods: this.requestedMods(),
-      timestamp: Date.now(),
-    };
-    localStorage.setItem('setup_wizard_state', JSON.stringify(state));
   }
 
   private getMaxFreeStorageGb(): number | undefined {

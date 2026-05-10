@@ -1,27 +1,18 @@
 /**
  * Singleton service for managing real-time modlist generation.
  *
- * Holds state across route navigation — for the backend SSE path, the
- * EventSource stays open even when the user navigates away. On return to the
- * generation page, events are replayed from the server (the backend stores
- * all events in memory).
+ * After Plan 3 Task 3 (auth removal), this service has only ONE active
+ * code path: the in-browser pipeline via `GenerationPipelineService`. The
+ * legacy backend-SSE methods (`connectToEvents`, `reconnectIfNeeded`,
+ * `startGeneration`, `getStatus`, `resumeGeneration`, `connected`,
+ * `isConnectedTo`, `disconnectEvents`) are still present because
+ * `generation.component.ts` references them — they get deleted in Plan 3
+ * Task 4 when the broader backend-API surface goes away. They compile but
+ * are functionally dead in the current frontend (no auth means no token,
+ * and the backend itself is removed in Task 7).
  *
- * Two backends, one signal API:
- *  - Backend SSE (default): `connectToEvents(id)` opens an EventSource and
- *    threads events into `events`/`status`/`modlistId`/etc.
- *  - Client pipeline (Plan 1 Task 14, gated by `FeatureFlagsService.useClientPipeline()`):
- *    `startClientPipeline(args)` subscribes to `GenerationPipelineService.events()`
- *    and feeds the SAME signals. UI components don't need to know which is
- *    active.
- *
- * Key design decisions:
- * - Uses signals for reactive state (Angular 17+ pattern)
- * - EventSource for SSE (auto-reconnect built into the browser API).
- *   Constructor goes through `EventSourceFactory` so tests can swap it.
- * - Token passed as query param since EventSource doesn't support headers
- * - The unified `start()` entry point routes by the flag; legacy
- *   `startGeneration` / `connectToEvents` are kept for callers that still
- *   want the explicit two-step (and for SSE reconnect).
+ * Holds state across route navigation — UI components observe these
+ * signals regardless of which path produced them.
  */
 
 import { Injectable, signal, computed, inject } from '@angular/core';
@@ -29,7 +20,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import {
   CompleteEvent,
-  ErrorEvent,
   GenerationEvent,
   GenerationStartResponse,
   GenerationStatusResponse,
@@ -39,36 +29,21 @@ import {
   PhaseStartEvent,
   SizeUpdateEvent,
 } from '../../shared/models/generation.model';
-import { AuthService } from './auth.service';
-import { EventSourceFactory } from './event-source-factory';
-import { FeatureFlagsService } from './feature-flags.service';
 import { GenerationPipelineService, type PipelineStartArgs } from './generation/pipeline.service';
 import type { StoredSession } from './generation/types';
-
-/**
- * Args for the unified `start()` entry. Both fields are optional because
- * each backend needs only one — `start()` validates the right one is
- * present for the active flag.
- */
-export interface GenerationStartArgs {
-  /** Backend SSE path: the generation_id returned by `POST /api/generation/start`. */
-  generationId?: string;
-  /** Client pipeline path: full args fed to `GenerationPipelineService.start`. */
-  pipelineArgs?: PipelineStartArgs;
-}
 
 @Injectable({ providedIn: 'root' })
 export class GenerationService {
   private baseUrl = window.__env?.API_URL || '/api';
   private eventSource: EventSource | null = null;
 
-  /** Active subscription to the client pipeline's events stream (when flag is on). */
+  /** Active subscription to the client pipeline's events stream. */
   private pipelineSub: Subscription | null = null;
 
-  // Injected via inject() to avoid bloating the constructor signature.
-  private readonly featureFlags = inject(FeatureFlagsService);
+  // The pipeline service is the only injected collaborator now — feature
+  // flags + EventSource factory + AuthService all went away with the
+  // auth/dual-pipeline strip.
   private readonly pipeline = inject(GenerationPipelineService);
-  private readonly esFactory = inject(EventSourceFactory);
 
   // ── Observable state ──
   readonly generationId = signal<string | null>(null);
@@ -123,63 +98,22 @@ export class GenerationService {
     return null;
   });
 
-  constructor(
-    private http: HttpClient,
-    private auth: AuthService,
-  ) {}
+  constructor(private http: HttpClient) {}
 
-  // ── Unified entry point (Plan 1 Task 14) ──
+  // ── Unified entry point ──
 
   /**
-   * Kick off a generation run on whichever backend the feature flag selects.
+   * Kick off a generation run via the in-browser pipeline.
    *
-   * Flag OFF (default): expects `args.generationId` (the caller has already
-   * called `api.startGeneration(...)` and obtained it). We `reset()` and
-   * open the SSE stream — equivalent to the legacy two-step.
-   *
-   * Flag ON: expects `args.pipelineArgs`. We `reset()` and start the client
-   * pipeline, subscribing to its events to drive the same signals.
-   *
-   * Returns a Promise that resolves when the run terminates (complete /
-   * paused / error). For the SSE path it resolves once the connection has
-   * been opened (the run continues asynchronously after that).
+   * Plan 3 Task 3 collapsed `start()` from a flag-gated dual-path entry
+   * point down to this single path — the backend SSE branch is gone.
    */
-  async start(args: GenerationStartArgs): Promise<StoredSession | void> {
-    if (this.featureFlags.useClientPipeline()) {
-      if (!args.pipelineArgs) {
-        throw new Error(
-          'start(): useClientPipeline is on but pipelineArgs missing.',
-        );
-      }
-      return this.startClientPipeline(args.pipelineArgs);
-    }
-    if (!args.generationId) {
-      throw new Error(
-        'start(): backend SSE requires generationId (call api.startGeneration first).',
-      );
-    }
-    this.reset();
-    this.connectToEvents(args.generationId);
-  }
-
-  /**
-   * Run the in-browser pipeline and pipe its events into the signal API.
-   *
-   * Mirrors the SSE `onmessage` handler's switch — same status/modlistId
-   * transitions — so UI components observe the same shape regardless of
-   * which backend is active.
-   *
-   * Note: the pipeline service exposes no `stop()`. Once started, an active
-   * run keeps going until it finishes; calling `disconnectEvents()` only
-   * detaches our subscription. (Resume goes through `pipeline.resume()`.)
-   */
-  async startClientPipeline(args: PipelineStartArgs): Promise<StoredSession> {
+  async start(args: PipelineStartArgs): Promise<StoredSession> {
     this.reset();
     this.status.set('running');
-    // Use a synthetic id for the UI's generationId signal — the pipeline
-    // assigns its own session id internally and stamps it on the StoredSession
-    // returned from start(). We update generationId() to the real one as
-    // soon as we have it.
+    // Use a synthetic id while the pipeline assigns its own session id
+    // internally; we update generationId() to the real one as soon as the
+    // StoredSession arrives.
     this.generationId.set('client-pipeline-pending');
 
     // Subscribe BEFORE start() so we don't miss the first events
@@ -213,9 +147,9 @@ export class GenerationService {
   }
 
   /**
-   * Apply an event from EITHER backend to the signal API. Pulled out of the
-   * SSE `onmessage` so the client-pipeline subscription can reuse the same
-   * status/modlistId/runningSize transitions verbatim.
+   * Apply an event to the signal API. Pulled out as a private helper so
+   * both the pipeline subscription path AND the still-extant SSE methods
+   * (dead but compiling — see file header) feed the same state shape.
    */
   private applyEvent(data: GenerationEvent): void {
     this.events.update((prev) => [...prev, data]);
@@ -247,7 +181,7 @@ export class GenerationService {
     }
   }
 
-  // ── API Methods ──
+  // ── API Methods (legacy backend SSE — dead but compiling; deleted in Task 4) ──
 
   startGeneration(request: Record<string, unknown>): Observable<GenerationStartResponse> {
     return this.http.post<GenerationStartResponse>(
@@ -269,9 +203,9 @@ export class GenerationService {
     );
   }
 
-  // ── SSE Connection ──
+  // ── SSE Connection (legacy — dead but compiling; deleted in Task 4) ──
 
-  /** Whether the SSE stream is currently connected */
+  /** Whether the SSE stream is currently connected (legacy; always false post-auth). */
   readonly connected = signal(false);
 
   connectToEvents(generationId: string): void {
@@ -289,12 +223,12 @@ export class GenerationService {
     this.runningSize.set(0);
     this.runningCount.set(0);
 
-    // EventSource doesn't support Authorization headers.
-    // Pass token as query param — the backend validates it the same way.
-    const token = this.auth.getAccessToken();
-    const url = `${this.baseUrl}/generation/${generationId}/events?token=${encodeURIComponent(token || '')}`;
+    // No auth token now — the backend itself is being removed in Task 7,
+    // so this URL is effectively dead. Kept for compile-only continuity
+    // until Task 4 deletes the SSE methods entirely.
+    const url = `${this.baseUrl}/generation/${generationId}/events`;
 
-    this.eventSource = this.esFactory.create(url);
+    this.eventSource = new EventSource(url);
 
     this.eventSource.onopen = () => {
       this.connected.set(true);
