@@ -2,11 +2,69 @@ import { Component, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  AlertCircle,
+  Search,
+  ShieldCheck,
+  Wrench,
+  XCircle,
+} from 'lucide-angular';
+// Direct primitive imports — same pattern Tasks 5-10 adopted to avoid pulling
+// in sibling primitives whose TS errors might surface via the barrel.
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
+import { UiCardComponent } from '../../shared/components/ui/card.component';
+import { UiInputComponent } from '../../shared/components/ui/input.component';
+import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
+import {
+  UiSelectComponent,
+  type UiSelectOption,
+} from '../../shared/components/ui/select.component';
+
+type Severity = 'warning' | 'critical';
+type Confidence = 'high' | 'medium' | 'low';
+
+interface CompatibilityIssue {
+  description: string;
+  severity: Severity | string;
+  source?: string;
+}
+
+interface CompatibilityResult {
+  compatible: boolean;
+  issues: CompatibilityIssue[];
+  suggested_patches: string[];
+  confidence: Confidence | string;
+}
 
 @Component({
   selector: 'app-compatibility',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [
+    FormsModule,
+    CommonModule,
+    LucideAngularModule,
+    UiButtonComponent,
+    UiCardComponent,
+    UiInputComponent,
+    UiBadgeComponent,
+    UiSelectComponent,
+  ],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        AlertCircle,
+        Search,
+        ShieldCheck,
+        Wrench,
+        XCircle,
+      }),
+    },
+  ],
   template: `
     <div class="compatibility-page">
       <div class="page-header">
@@ -14,13 +72,14 @@ import { ApiService } from '../../core/services/api.service';
         <p>Check if two mods are compatible before installing them together</p>
       </div>
 
-      <div class="checker-card">
+      <!-- ui-card surface for the input form (replaces .checker-card) -->
+      <ui-card class="checker-card">
         <div class="input-group">
           <label for="modA">Mod A</label>
           <input
+            ui-input
             id="modA"
             type="text"
-            class="mod-input"
             placeholder="Enter first mod name..."
             [ngModel]="modAName()"
             (ngModelChange)="modAName.set($event)"
@@ -34,9 +93,9 @@ import { ApiService } from '../../core/services/api.service';
         <div class="input-group">
           <label for="modB">Mod B</label>
           <input
+            ui-input
             id="modB"
             type="text"
-            class="mod-input"
             placeholder="Enter second mod name..."
             [ngModel]="modBName()"
             (ngModelChange)="modBName.set($event)"
@@ -44,20 +103,20 @@ import { ApiService } from '../../core/services/api.service';
         </div>
 
         <div class="input-group">
-          <label for="game">Game</label>
-          <select
-            id="game"
-            class="mod-input"
-            [ngModel]="gameSlug()"
-            (ngModelChange)="gameSlug.set($event)"
-          >
-            <option value="skyrimspecialedition">Skyrim Special Edition</option>
-            <option value="fallout4">Fallout 4</option>
-          </select>
+          <label>Game</label>
+          <ui-select
+            placeholder="Select game..."
+            [options]="gameOptions"
+            [value]="gameSlug()"
+            (selectionChange)="gameSlug.set($any($event))"
+          ></ui-select>
         </div>
 
         <button
-          class="check-btn bg-accent text-white rounded-lg px-6 py-3"
+          ui-button
+          variant="primary"
+          size="md"
+          class="self-start"
           [disabled]="loading()"
           (click)="checkCompatibility()"
         >
@@ -65,82 +124,81 @@ import { ApiService } from '../../core/services/api.service';
             <span class="spinner"></span>
             Checking...
           } @else {
+            <lucide-icon name="search" [size]="16" [strokeWidth]="2"></lucide-icon>
             Check Compatibility
           }
         </button>
-      </div>
+      </ui-card>
 
+      <!-- Error state — signal-carrying danger surface, kept inline (custom shape with
+           icon + flex layout); content uses lucide. -->
       @if (error()) {
         <div class="error-card">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="15" y1="9" x2="9" y2="15"/>
-            <line x1="9" y1="9" x2="15" y2="15"/>
-          </svg>
+          <lucide-icon name="x-circle" [size]="20" [strokeWidth]="2"></lucide-icon>
           <span>{{ error() }}</span>
         </div>
       }
 
-      @if (result()) {
-        <div class="results-card">
+      @if (result(); as r) {
+        <ui-card class="results-card">
           <div class="results-header">
             <h2>Results</h2>
-            <button class="clear-btn" (click)="clearResults()">Clear</button>
+            <button
+              ui-button
+              variant="ghost"
+              size="sm"
+              (click)="clearResults()"
+            >
+              Clear
+            </button>
           </div>
 
+          <!-- Top-level summary badges. Compatible = success/danger (semantic).
+               Confidence: high=success, medium=warning, low=default. -->
           <div class="badges-row">
-            <span
-              class="badge"
-              [class.badge-compatible]="result().compatible"
-              [class.badge-incompatible]="!result().compatible"
-            >
-              {{ result().compatible ? 'Compatible' : 'Incompatible' }}
-            </span>
-
-            <span
-              class="badge"
-              [class.badge-high]="result().confidence === 'high'"
-              [class.badge-medium]="result().confidence === 'medium'"
-              [class.badge-low]="result().confidence === 'low'"
-            >
-              {{ result().confidence | titlecase }} Confidence
-            </span>
+            <ui-badge [variant]="r.compatible ? 'success' : 'danger'">
+              {{ r.compatible ? 'Compatible' : 'Incompatible' }}
+            </ui-badge>
+            <ui-badge [variant]="confidenceVariant(r.confidence)">
+              {{ r.confidence | titlecase }} Confidence
+            </ui-badge>
           </div>
 
-          @if (result().issues && result().issues.length > 0) {
+          @if (r.issues && r.issues.length > 0) {
             <div class="issues-section">
               <h3>Issues Found</h3>
-              <ul class="issues-list">
-                @for (issue of result().issues; track issue.description) {
-                  <li class="issue-item">
-                    <span
-                      class="severity-badge"
-                      [class.severity-warning]="issue.severity === 'warning'"
-                      [class.severity-critical]="issue.severity === 'critical'"
-                    >
-                      {{ issue.severity | titlecase }}
-                    </span>
-                    <div class="issue-details">
-                      <span class="issue-description">{{ issue.description }}</span>
-                      @if (issue.source) {
-                        <span class="issue-source">Source: {{ issue.source }}</span>
-                      }
+              <!-- Per-issue ui-card so each rule renders as its own surface,
+                   per Task 11 spec ("results displayed as a list of <ui-card>"). -->
+              <div class="issues-list">
+                @for (issue of r.issues; track issue.description) {
+                  <ui-card class="issue-card">
+                    <div class="issue-row">
+                      <ui-badge [variant]="severityVariant(issue.severity)">
+                        {{ issue.severity | titlecase }}
+                      </ui-badge>
+                      <div class="issue-details">
+                        <span class="issue-description">{{ issue.description }}</span>
+                        @if (issue.source) {
+                          <!-- Source string is often a mod ID / slug — render in font-mono. -->
+                          <span class="issue-source">
+                            Source: <code class="font-mono">{{ issue.source }}</code>
+                          </span>
+                        }
+                      </div>
                     </div>
-                  </li>
+                  </ui-card>
                 }
-              </ul>
+              </div>
             </div>
           }
 
-          @if (result().suggested_patches && result().suggested_patches.length > 0) {
+          @if (r.suggested_patches && r.suggested_patches.length > 0) {
             <div class="patches-section">
               <h3>Suggested Patches</h3>
               <ul class="patches-list">
-                @for (patch of result().suggested_patches; track patch) {
+                @for (patch of r.suggested_patches; track patch) {
                   <li class="patch-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                    </svg>
+                    <lucide-icon name="wrench" [size]="16" [strokeWidth]="2"></lucide-icon>
                     <span>{{ patch }}</span>
                   </li>
                 }
@@ -148,24 +206,20 @@ import { ApiService } from '../../core/services/api.service';
             </div>
           }
 
-          @if (result().issues?.length === 0 && result().compatible) {
+          @if (r.issues.length === 0 && r.compatible) {
+            <!-- "All clear" banner — signal-carrying success surface; custom
+                 shape (icon + tinted bg) so it stays inline rather than ui-card. -->
             <div class="all-clear">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <lucide-icon name="shield-check" [size]="24" [strokeWidth]="2"></lucide-icon>
               <span>No issues detected. These mods should work well together.</span>
             </div>
           }
-        </div>
+        </ui-card>
       }
 
       @if (!result() && !error() && !loading()) {
         <div class="empty-state">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
+          <lucide-icon name="search" [size]="48" [strokeWidth]="1.5"></lucide-icon>
           <p>Enter two mod names above and click "Check Compatibility" to see if they work together.</p>
         </div>
       }
@@ -196,11 +250,8 @@ import { ApiService } from '../../core/services/api.service';
       }
     }
 
+    /* Layout overrides on top of <ui-card> (which gives us the surface) */
     .checker-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 2rem;
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
@@ -215,41 +266,6 @@ import { ApiService } from '../../core/services/api.service';
         color: var(--text-secondary);
         font-size: 0.875rem;
         font-weight: 500;
-      }
-    }
-
-    .mod-input {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      color: var(--text-primary);
-      width: 100%;
-      font-size: 0.95rem;
-      transition: border-color 0.2s ease;
-      box-sizing: border-box;
-
-      &:focus {
-        outline: none;
-        border-color: var(--accent);
-      }
-
-      &::placeholder {
-        color: var(--text-secondary);
-        opacity: 0.6;
-      }
-    }
-
-    select.mod-input {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 1rem center;
-
-      option {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
       }
     }
 
@@ -268,28 +284,6 @@ import { ApiService } from '../../core/services/api.service';
       }
     }
 
-    .check-btn {
-      align-self: flex-start;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: opacity 0.2s ease, transform 0.1s ease;
-
-      &:hover:not(:disabled) {
-        opacity: 0.9;
-        transform: translateY(-1px);
-      }
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-    }
-
     .spinner {
       display: inline-block;
       width: 16px;
@@ -304,6 +298,7 @@ import { ApiService } from '../../core/services/api.service';
       to { transform: rotate(360deg); }
     }
 
+    /* Error banner — signal-carrying danger surface; intentionally inline. */
     .error-card {
       margin-top: 1.5rem;
       background: rgba(239, 68, 68, 0.1);
@@ -319,10 +314,6 @@ import { ApiService } from '../../core/services/api.service';
 
     .results-card {
       margin-top: 1.5rem;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 2rem;
     }
 
     .results-header {
@@ -340,67 +331,11 @@ import { ApiService } from '../../core/services/api.service';
       }
     }
 
-    .clear-btn {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 0.4rem 0.75rem;
-      color: var(--text-secondary);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: border-color 0.2s ease, color 0.2s ease;
-
-      &:hover {
-        border-color: var(--text-secondary);
-        color: var(--text-primary);
-      }
-    }
-
     .badges-row {
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
       margin-bottom: 1.5rem;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.35rem 0.85rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-
-    .badge-compatible {
-      background: rgba(34, 197, 94, 0.15);
-      color: #22c55e;
-      border: 1px solid rgba(34, 197, 94, 0.3);
-    }
-
-    .badge-incompatible {
-      background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .badge-high {
-      background: rgba(34, 197, 94, 0.1);
-      color: #22c55e;
-      border: 1px solid rgba(34, 197, 94, 0.2);
-    }
-
-    .badge-medium {
-      background: rgba(234, 179, 8, 0.1);
-      color: #eab308;
-      border: 1px solid rgba(234, 179, 8, 0.2);
-    }
-
-    .badge-low {
-      background: rgba(156, 163, 175, 0.1);
-      color: #9ca3af;
-      border: 1px solid rgba(156, 163, 175, 0.2);
     }
 
     .issues-section, .patches-section {
@@ -414,44 +349,21 @@ import { ApiService } from '../../core/services/api.service';
       }
     }
 
-    .issues-list, .patches-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .issues-list {
       display: flex;
       flex-direction: column;
       gap: 0.6rem;
     }
 
-    .issue-item {
+    /* Reduce per-issue ui-card padding from default p-6 down to feel "row-like" */
+    .issue-card {
+      padding: 0.75rem 1rem;
+    }
+
+    .issue-row {
       display: flex;
       align-items: flex-start;
       gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-    }
-
-    .severity-badge {
-      flex-shrink: 0;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      margin-top: 0.1rem;
-    }
-
-    .severity-warning {
-      background: rgba(234, 179, 8, 0.15);
-      color: #eab308;
-    }
-
-    .severity-critical {
-      background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
     }
 
     .issue-details {
@@ -470,6 +382,15 @@ import { ApiService } from '../../core/services/api.service';
       font-size: 0.8rem;
     }
 
+    .patches-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
     .patch-item {
       display: flex;
       align-items: center;
@@ -481,12 +402,13 @@ import { ApiService } from '../../core/services/api.service';
       color: var(--text-primary);
       font-size: 0.9rem;
 
-      svg {
+      lucide-icon {
         flex-shrink: 0;
         color: var(--accent);
       }
     }
 
+    /* All-clear banner — signal-carrying success surface; intentionally inline. */
     .all-clear {
       display: flex;
       align-items: center;
@@ -523,10 +445,6 @@ import { ApiService } from '../../core/services/api.service';
         padding: 1.5rem 0.75rem;
       }
 
-      .checker-card, .results-card {
-        padding: 1.25rem;
-      }
-
       .page-header h1 {
         font-size: 1.5rem;
       }
@@ -538,10 +456,32 @@ export class CompatibilityComponent {
 
   modAName = signal('');
   modBName = signal('');
-  gameSlug = signal('skyrimspecialedition');
+  gameSlug = signal<string>('skyrimspecialedition');
   loading = signal(false);
-  result = signal<any>(null);
+  result = signal<CompatibilityResult | null>(null);
   error = signal('');
+
+  // ui-select takes a typed { value, label }[] (option-array driven), unlike
+  // a native <select> with template-projected <option>s. Same pattern used
+  // in playstyle-select.
+  readonly gameOptions: UiSelectOption[] = [
+    { value: 'skyrimspecialedition', label: 'Skyrim Special Edition' },
+    { value: 'fallout4', label: 'Fallout 4' },
+  ];
+
+  /** Map issue severity → ui-badge variant (warning|danger). */
+  severityVariant(severity: string): 'warning' | 'danger' | 'default' {
+    if (severity === 'critical') return 'danger';
+    if (severity === 'warning') return 'warning';
+    return 'default';
+  }
+
+  /** Map confidence level → ui-badge variant. */
+  confidenceVariant(confidence: string): 'success' | 'warning' | 'default' {
+    if (confidence === 'high') return 'success';
+    if (confidence === 'medium') return 'warning';
+    return 'default';
+  }
 
   checkCompatibility(): void {
     const modA = this.modAName().trim();
@@ -558,7 +498,7 @@ export class CompatibilityComponent {
 
     this.api.checkCompatibility(modA, modB, this.gameSlug()).subscribe({
       next: (res) => {
-        this.result.set(res);
+        this.result.set(res as CompatibilityResult);
         this.loading.set(false);
       },
       error: (err) => {
