@@ -1,0 +1,122 @@
+// frontend/src/styles/tokens.scss
+//
+// Single source of truth for v2 design tokens. Imported by styles.scss.
+// Tailwind 4 picks up the @theme block and exposes utilities like
+// `bg-bg`, `text-accent`, `border-border`, `font-display`, etc.
+//
+// Color space: OKLCH everywhere. Use oklch() values (perceptually uniform
+// lightness; predictable contrast). DO NOT mix HEX/RGB into the palette —
+// they break the L-value math when generating hover/active states.
+
+@theme {
+  /* ── Backgrounds & surfaces ── */
+  --color-bg:        oklch(0.16 0.015 260);
+  --color-surface-1: oklch(0.20 0.015 260);
+  --color-surface-2: oklch(0.24 0.015 260);
+  --color-border:    oklch(0.30 0.015 260);
+
+  /* ── Text ── */
+  --color-text:       oklch(0.94 0.01 260);
+  --color-text-muted: oklch(0.70 0.01 260);
+  --color-text-dim:   oklch(0.55 0.01 260);
+
+  /* ── Accents ── */
+  --color-accent:        oklch(0.78 0.18 75);   /* warm amber */
+  --color-accent-muted:  oklch(0.50 0.10 75);
+  --color-secondary:     oklch(0.72 0.09 230);  /* cool blue */
+  --color-secondary-muted: oklch(0.50 0.06 230);
+
+  /* ── Status ── */
+  --color-success: oklch(0.78 0.15 145);
+  --color-warning: oklch(0.85 0.16 95);
+  --color-danger:  oklch(0.65 0.22 25);
+
+  /* ── Typography ── */
+  --font-sans:    'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  /* ── Radii (sharper than v1's 6/10/14/18 — tactile, not soft) ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* ── Shadows (less blur, more definition) ── */
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.40);
+  --shadow-md: 0 2px 4px -1px oklch(0 0 0 / 0.45), 0 4px 8px -2px oklch(0 0 0 / 0.30);
+  --shadow-lg: 0 4px 8px -2px oklch(0 0 0 / 0.50), 0 8px 16px -4px oklch(0 0 0 / 0.35);
+
+  /* ── Easings ── */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Backwards-compat shims
+   ─────────────────────────────────────────────────────────────────────
+   These let pre-migration components keep their existing
+   --color-* / --shadow-* / --font-* / --radius-* references during the
+   per-feature migration (Tasks 5-12). Task 13's polish pass deletes
+   this entire :root block once every feature has been migrated.
+
+   Strategy:
+   - Where a v1 var maps cleanly to a v2 token, use var() reference.
+   - Where v1 has no v2 equivalent (legacy hex hover/glow shades, the
+     grain SVG, layout helpers), preserve the original literal value
+     so visual parity is maintained until per-feature migration.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds — legacy names → new tokens (with literal fallback values
+     so visuals match the v1 dark/gold palette during migration) */
+  --color-bg-base:     var(--color-bg);
+  --color-bg-dark:     #0A0A0C;
+  --color-bg-card:     #131316;
+  --color-bg-elevated: #1A1A1E;
+  --color-bg-surface:  #161619;
+
+  /* Accents — keep the v1 gold/blue palette literal until Task 13 */
+  --color-gold:        #C4A55A;
+  --color-gold-hover:  #D4B86E;
+  --color-gold-glow:   rgba(196, 165, 90, 0.25);
+  --color-gold-subtle: rgba(196, 165, 90, 0.08);
+  --color-blue:        #6B9FBF;
+  --color-blue-hover:  #82B3D2;
+  --color-blue-glow:   rgba(107, 159, 191, 0.2);
+  --color-blue-subtle: rgba(107, 159, 191, 0.08);
+  --color-accent-gold: var(--color-accent);
+  --color-accent-blue: var(--color-secondary);
+
+  /* Text — v1 literals (different palette than v2 OKLCH text token) */
+  --color-text-primary: var(--color-text);
+
+  /* Borders — keep v1 alpha-on-white literals so existing surfaces don't
+     visually shift before per-feature migration. The v2 --color-border
+     OKLCH token still wins for any new code that opts in. */
+  --color-border-hover: rgba(255, 255, 255, 0.13);
+
+  /* Semantic — v1 hex literals (v2 has --color-success/warning/danger
+     in @theme; v1 also exposed --color-error and --color-info which v2
+     does not — preserve them here) */
+  --color-error: #ef4444;
+  --color-info:  #3b82f6;
+
+  /* Typography — v1 also exposed --font-body; v2 calls it --font-sans.
+     Map the alias so existing rules keep resolving. */
+  --font-body: var(--font-sans);
+
+  /* Layout helpers (no v2 equivalent — preserve as-is) */
+  --max-width: 1200px;
+  --header-height: 64px;
+
+  /* Shadows — v1 layered glow system. No direct v2 mapping; preserve
+     literals so card/button shadows render unchanged during migration. */
+  --shadow-card:     0 1px 3px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.2),  0 12px 40px rgba(0, 0, 0, 0.15);
+  --shadow-gold:     0 4px 24px rgba(196, 165, 90, 0.15), 0 0px 6px rgba(196, 165, 90, 0.1);
+  --shadow-blue:     0 4px 24px rgba(107, 159, 191, 0.12), 0 0px 6px rgba(107, 159, 191, 0.08);
+
+  /* Grain texture overlay (used by body::after) */
+  --grain-url: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
