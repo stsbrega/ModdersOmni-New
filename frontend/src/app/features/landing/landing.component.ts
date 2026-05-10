@@ -1,14 +1,56 @@
 import { Component, signal, inject, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  ArrowRight,
+  Monitor,
+  SlidersHorizontal,
+  Star,
+  Shield,
+  Cpu,
+  Download,
+  LayoutGrid,
+  Settings,
+  Folder,
+  Tag,
+} from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
+// Import primitives directly (not via the shared/components/ui barrel) so we
+// don't drag in sibling primitives for type-checking. dialog.component.ts and
+// select.component.ts have unrelated TS errors carried over from Task 4 that
+// would otherwise break this feature's production build. Switch to the
+// barrel import once those are resolved (tracked separately).
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
+import { UiCardComponent } from '../../shared/components/ui/card.component';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterLink, BrandLogoComponent],
+  imports: [RouterLink, BrandLogoComponent, LucideAngularModule, UiButtonComponent, UiCardComponent],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        ArrowRight,
+        Monitor,
+        SlidersHorizontal,
+        Star,
+        Shield,
+        Cpu,
+        Download,
+        LayoutGrid,
+        Settings,
+        Folder,
+        Tag,
+      }),
+    },
+  ],
   animations: [
     trigger('fadeUp', [
       transition(':enter', [
@@ -40,10 +82,10 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
         </div>
         <div class="nav-actions">
           @if (authService.isLoggedIn()) {
-            <a routerLink="/dashboard" class="nav-cta">Dashboard</a>
+            <a ui-button variant="primary" size="sm" routerLink="/dashboard">Dashboard</a>
           } @else {
             <a routerLink="/auth/login" class="nav-link nav-signin">Sign In</a>
-            <a routerLink="/auth/register" class="nav-cta">Sign Up</a>
+            <a ui-button variant="primary" size="sm" routerLink="/auth/register">Sign Up</a>
           }
         </div>
       </div>
@@ -102,13 +144,11 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
           compatible mod list tailored specifically for your setup.
         </p>
         <div class="hero-actions">
-          <a routerLink="/setup" class="btn-primary">
+          <a ui-button variant="primary" size="lg" routerLink="/setup">
             Build My Modlist
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon name="arrow-right" [size]="16" [strokeWidth]="2"></lucide-icon>
           </a>
-          <a href="#how-it-works" class="btn-ghost" (click)="scrollTo($event, 'how-it-works')">
+          <a ui-button variant="secondary" size="lg" href="#how-it-works" (click)="scrollTo($event, 'how-it-works')">
             See How It Works
           </a>
         </div>
@@ -131,18 +171,10 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
           <div class="preview-body">
             <div class="preview-sidebar">
               <div class="preview-sidebar-item active">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="3" y="3" width="7" height="7" rx="1"/>
-                  <rect x="14" y="3" width="7" height="7" rx="1"/>
-                  <rect x="3" y="14" width="7" height="7" rx="1"/>
-                  <rect x="14" y="14" width="7" height="7" rx="1"/>
-                </svg>
+                <lucide-icon name="layout-grid" [size]="14" [strokeWidth]="1.5"></lucide-icon>
               </div>
               <div class="preview-sidebar-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9"/>
-                </svg>
+                <lucide-icon name="settings" [size]="14" [strokeWidth]="1.5"></lucide-icon>
               </div>
             </div>
             <div class="preview-main">
@@ -156,20 +188,14 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
               <div class="preview-stats">
                 <div class="preview-stat">
                   <div class="preview-stat-icon preview-stat-icon--gold">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-                      <rect x="9" y="3" width="6" height="4" rx="1"/>
-                    </svg>
+                    <lucide-icon name="folder" [size]="12" [strokeWidth]="1.5"></lucide-icon>
                   </div>
                   <div class="preview-stat-value">3</div>
                   <div class="preview-stat-label">Modlists</div>
                 </div>
                 <div class="preview-stat">
                   <div class="preview-stat-icon preview-stat-icon--blue">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
-                      <line x1="7" y1="7" x2="7.01" y2="7"/>
-                    </svg>
+                    <lucide-icon name="tag" [size]="12" [strokeWidth]="1.5"></lucide-icon>
                   </div>
                   <div class="preview-stat-value">127</div>
                   <div class="preview-stat-label">Total Mods</div>
@@ -183,9 +209,7 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
                         <span class="preview-card-game" [class]="'preview-card-game--' + card.color">{{ card.game }}</span>
                         <span class="preview-card-provider">{{ card.provider }}</span>
                       </div>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="preview-card-arrow">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
+                      <lucide-icon name="arrow-right" [size]="12" [strokeWidth]="2" class="preview-card-arrow"></lucide-icon>
                     </div>
                     <div class="preview-card-stats">
                       <span class="preview-card-count">{{ card.mods }} mods</span>
@@ -215,40 +239,29 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
             <div class="step stagger-item">
               <div class="step-number">01</div>
               <div class="step-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="2" y="3" width="20" height="14" rx="2"/>
-                  <path d="M8 21h8M12 17v4"/>
-                </svg>
+                <lucide-icon name="monitor" [size]="28" [strokeWidth]="1.5"></lucide-icon>
               </div>
               <h3 class="step-title">Choose Your Game</h3>
               <p class="step-desc">Select Skyrim SE/AE or Fallout 4 and pick your preferred playstyle — survival, combat overhaul, visual enhancement, and more.</p>
             </div>
             <div class="step-divider stagger-item">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
+              <lucide-icon name="arrow-right" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <div class="step stagger-item">
               <div class="step-number">02</div>
               <div class="step-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4"/>
-                </svg>
+                <lucide-icon name="sliders-horizontal" [size]="28" [strokeWidth]="1.5"></lucide-icon>
               </div>
               <h3 class="step-title">Enter Your Specs</h3>
               <p class="step-desc">Paste your hardware info from NVIDIA App or system settings. Our parser auto-detects your GPU, VRAM, CPU, and RAM.</p>
             </div>
             <div class="step-divider stagger-item">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
+              <lucide-icon name="arrow-right" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <div class="step stagger-item">
               <div class="step-number">03</div>
               <div class="step-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
+                <lucide-icon name="star" [size]="28" [strokeWidth]="1.5"></lucide-icon>
               </div>
               <h3 class="step-title">Get Your Modlist</h3>
               <p class="step-desc">AI generates a curated, compatible mod list optimized for your hardware tier. Export directly to MO2 or Vortex.</p>
@@ -267,37 +280,27 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
         </div>
         @if (featuresVisible()) {
           <div class="features-grid" @staggerIn>
-            <div class="feature-card stagger-item">
+            <ui-card class="feature-card stagger-item">
               <div class="feature-icon feature-icon--gold">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
+                <lucide-icon name="shield" [size]="24" [strokeWidth]="1.5"></lucide-icon>
               </div>
               <h3>AI Compatibility Checking</h3>
               <p>Every mod is checked against your full list for conflicts, missing dependencies, and load order issues before you install anything.</p>
-            </div>
-            <div class="feature-card stagger-item">
+            </ui-card>
+            <ui-card class="feature-card stagger-item">
               <div class="feature-icon feature-icon--blue">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="4" y="4" width="16" height="16" rx="2"/>
-                  <path d="M9 9h6v6H9z"/>
-                  <path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>
-                </svg>
+                <lucide-icon name="cpu" [size]="24" [strokeWidth]="1.5"></lucide-icon>
               </div>
               <h3>Hardware-Aware Picks</h3>
               <p>Your GPU, VRAM, and CPU tier directly influence which texture resolutions, ENB presets, and script-heavy mods get recommended.</p>
-            </div>
-            <div class="feature-card stagger-item">
+            </ui-card>
+            <ui-card class="feature-card stagger-item">
               <div class="feature-icon feature-icon--gold">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
+                <lucide-icon name="download" [size]="24" [strokeWidth]="1.5"></lucide-icon>
               </div>
               <h3>One-Click Export</h3>
               <p>Export your final mod list as an MO2 profile or Vortex collection. Or download everything straight from Nexus with one click.</p>
-            </div>
+            </ui-card>
           </div>
         }
       </div>
@@ -323,11 +326,9 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
       <div class="section-container" style="text-align: center;">
         <h2 class="cta-title">Ready to build your<br>perfect mod setup?</h2>
         <p class="cta-subtitle">Create a free account and save your hardware profile for instant modlists.</p>
-        <a routerLink="/auth/register" class="btn-primary btn-primary--lg">
+        <a ui-button variant="primary" size="lg" routerLink="/auth/register">
           Create Free Account
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
+          <lucide-icon name="arrow-right" [size]="16" [strokeWidth]="2"></lucide-icon>
         </a>
       </div>
     </section>
@@ -409,19 +410,6 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
       transition: color 0.15s;
     }
     .nav-signin:hover { color: var(--color-text); }
-    .nav-cta {
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.5rem 1.25rem;
-      border-radius: 8px;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      transition: background 0.2s, box-shadow 0.2s;
-    }
-    .nav-cta:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 4px 20px rgba(196, 165, 90, 0.25);
-    }
 
     /* ===== Hero ===== */
     .hero {
@@ -535,50 +523,6 @@ import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-log
       justify-content: center;
       gap: 1rem;
       margin-bottom: 3rem;
-    }
-
-    /* Buttons */
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.75rem 1.75rem;
-      border-radius: 10px;
-      font-size: 0.9375rem;
-      font-weight: 600;
-      transition: background 0.2s, box-shadow 0.3s, transform 0.15s;
-    }
-    .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 4px 24px rgba(196, 165, 90, 0.3), 0 0 8px rgba(196, 165, 90, 0.15);
-      transform: translateY(-2px);
-    }
-    .btn-primary:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 12px rgba(196, 165, 90, 0.2);
-    }
-    .btn-primary--lg {
-      padding: 0.875rem 2.25rem;
-      font-size: 1rem;
-    }
-    .btn-ghost {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--color-text-muted);
-      padding: 0.75rem 1.5rem;
-      border-radius: 10px;
-      font-size: 0.9375rem;
-      font-weight: 500;
-      border: 1px solid var(--color-border);
-      transition: color 0.2s, border-color 0.2s, background 0.2s;
-    }
-    .btn-ghost:hover {
-      color: var(--color-text);
-      border-color: var(--color-border-hover);
-      background: rgba(255, 255, 255, 0.03);
     }
 
     /* Game tags */

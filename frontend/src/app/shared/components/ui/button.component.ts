@@ -41,7 +41,12 @@ const BASE_CLASSES =
   'focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-50';
 
 @Component({
-  selector: 'button[ui-button]',
+  // Attribute selector covers both <button ui-button> and <a ui-button>.
+  // For anchors, [attr.type] is inert (it's a MIME hint on <a>, harmless),
+  // and [attr.disabled] is non-standard on <a> but coexists with routerLink
+  // without breaking nav. This lets us style routerLink CTAs with the same
+  // primitive without losing anchor semantics (right-click-new-tab, etc).
+  selector: 'button[ui-button], a[ui-button]',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: '<ng-content/>',
