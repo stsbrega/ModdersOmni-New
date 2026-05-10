@@ -4,11 +4,34 @@ import { ApiService } from '../../../../core/services/api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { HardwareSpecs, SpecsParseResponse, TierScores } from '../../../../shared/models/specs.model';
 import { trigger, transition, style, animate } from '@angular/animations';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  ArrowLeft,
+  ArrowRight,
+} from 'lucide-angular';
+import { UiButtonComponent } from '../../../../shared/components/ui/button.component';
+import { UiCardComponent } from '../../../../shared/components/ui/card.component';
+import { UiTextareaComponent } from '../../../../shared/components/ui/textarea.component';
 
 @Component({
   selector: 'app-spec-input',
   standalone: true,
-  imports: [FormsModule],
+  imports: [
+    FormsModule,
+    LucideAngularModule,
+    UiButtonComponent,
+    UiCardComponent,
+    UiTextareaComponent,
+  ],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({ ArrowLeft, ArrowRight }),
+    },
+  ],
   animations: [
     trigger('fadeIn', [
       transition(':enter', [
@@ -36,7 +59,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
         }
 
         @if (fullResponse()) {
-          <div class="results" @fadeIn>
+          <ui-card class="results-card" @fadeIn>
             <div class="tier-row">
               <span class="tier-badge" [class]="'tier-' + (fullResponse()?.tier || 'unknown').toLowerCase()">
                 {{ formatTier(fullResponse()?.tier) }} tier
@@ -46,19 +69,19 @@ import { trigger, transition, style, animate } from '@angular/animations';
             <div class="specs-grid">
               <div class="spec-item">
                 <span class="spec-label">GPU</span>
-                <span class="spec-val">{{ fullResponse()!.specs.gpu || 'Not set' }}</span>
+                <span class="spec-val font-mono">{{ fullResponse()!.specs.gpu || 'Not set' }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">VRAM</span>
-                <span class="spec-val">{{ formatVram(fullResponse()!.specs.vram_mb) }}</span>
+                <span class="spec-val font-mono">{{ formatVram(fullResponse()!.specs.vram_mb) }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">CPU</span>
-                <span class="spec-val">{{ fullResponse()!.specs.cpu || 'Not set' }}</span>
+                <span class="spec-val font-mono">{{ fullResponse()!.specs.cpu || 'Not set' }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">RAM</span>
-                <span class="spec-val">{{ fullResponse()!.specs.ram_gb ? fullResponse()!.specs.ram_gb + ' GB' : 'Not set' }}</span>
+                <span class="spec-val font-mono">{{ fullResponse()!.specs.ram_gb ? fullResponse()!.specs.ram_gb + ' GB' : 'Not set' }}</span>
               </div>
             </div>
 
@@ -97,7 +120,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
                 </div>
               </div>
             }
-          </div>
+          </ui-card>
         }
 
         <button class="btn-different" (click)="switchToManualEntry()">
@@ -107,15 +130,14 @@ import { trigger, transition, style, animate } from '@angular/animations';
         <!-- Manual entry mode -->
         @if (usingSavedHardware()) {
           <button class="btn-back-to-saved" (click)="switchToSavedHardware()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
+            <lucide-icon name="arrow-left" [size]="14" [strokeWidth]="2"></lucide-icon>
             Back to saved hardware
           </button>
         }
 
         <div class="textarea-wrap">
           <textarea
+            ui-textarea
             [(ngModel)]="rawText"
             placeholder="Example:
 GPU: NVIDIA GeForce RTX 4070 Ti
@@ -123,12 +145,12 @@ VRAM: 12 GB GDDR6X
 CPU: AMD Ryzen 7 7800X3D
 RAM: 32 GB DDR5"
             rows="7"
-            class="spec-textarea"
+            class="font-mono spec-textarea-extra"
           ></textarea>
         </div>
 
         @if (fullResponse() && !usingSavedHardware()) {
-          <div class="results" @fadeIn>
+          <ui-card class="results-card" @fadeIn>
             <div class="tier-row">
               <span class="tier-badge" [class]="'tier-' + (fullResponse()?.tier || 'unknown').toLowerCase()">
                 {{ formatTier(fullResponse()?.tier) }} tier
@@ -138,19 +160,19 @@ RAM: 32 GB DDR5"
             <div class="specs-grid">
               <div class="spec-item">
                 <span class="spec-label">GPU</span>
-                <span class="spec-val">{{ fullResponse()!.specs.gpu || 'Not detected' }}</span>
+                <span class="spec-val font-mono">{{ fullResponse()!.specs.gpu || 'Not detected' }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">VRAM</span>
-                <span class="spec-val">{{ formatVram(fullResponse()!.specs.vram_mb) }}</span>
+                <span class="spec-val font-mono">{{ formatVram(fullResponse()!.specs.vram_mb) }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">CPU</span>
-                <span class="spec-val">{{ fullResponse()!.specs.cpu || 'Not detected' }}</span>
+                <span class="spec-val font-mono">{{ fullResponse()!.specs.cpu || 'Not detected' }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">RAM</span>
-                <span class="spec-val">{{ fullResponse()!.specs.ram_gb ? fullResponse()!.specs.ram_gb + ' GB' : 'Not detected' }}</span>
+                <span class="spec-val font-mono">{{ fullResponse()!.specs.ram_gb ? fullResponse()!.specs.ram_gb + ' GB' : 'Not detected' }}</span>
               </div>
             </div>
 
@@ -189,26 +211,22 @@ RAM: 32 GB DDR5"
                 </div>
               </div>
             }
-          </div>
+          </ui-card>
         }
       }
 
       <div class="actions">
-        <button class="btn-back" (click)="back.emit()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
+        <button ui-button variant="ghost" size="sm" (click)="back.emit()">
+          <lucide-icon name="arrow-left" [size]="14" [strokeWidth]="2"></lucide-icon>
           Back
         </button>
         @if (usingSavedHardware() && !showManualEntry() && fullResponse()) {
-          <button class="btn-primary" (click)="confirm()">
+          <button ui-button variant="primary" (click)="confirm()">
             Looks Good, Continue
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon name="arrow-right" [size]="14" [strokeWidth]="2"></lucide-icon>
           </button>
         } @else if (!fullResponse() || showManualEntry()) {
-          <button class="btn-primary" (click)="analyzeSpecs()" [disabled]="loading() || !rawText.trim()">
+          <button ui-button variant="primary" (click)="analyzeSpecs()" [disabled]="loading() || !rawText.trim()">
             @if (loading()) {
               <span class="btn-spinner"></span>
               Scanning...
@@ -217,11 +235,9 @@ RAM: 32 GB DDR5"
             }
           </button>
         } @else {
-          <button class="btn-primary" (click)="confirm()">
+          <button ui-button variant="primary" (click)="confirm()">
             Continue
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon name="arrow-right" [size]="14" [strokeWidth]="2"></lucide-icon>
           </button>
         }
       </div>
@@ -296,33 +312,19 @@ RAM: 32 GB DDR5"
     .textarea-wrap {
       margin-bottom: 1.5rem;
     }
-    .spec-textarea {
-      width: 100%;
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 10px;
-      color: var(--color-text);
-      padding: 1rem 1.25rem;
-      font-family: 'Fira Code', 'Consolas', 'SF Mono', monospace;
+    /* spec-textarea-extra: extra rules layered on top of the ui-textarea
+       primitive's host classes. Things like font-size/line-height that are
+       visually distinctive for the hardware-paste textarea (denser layout). */
+    .spec-textarea-extra {
       font-size: 0.8125rem;
       line-height: 1.7;
-      resize: vertical;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .spec-textarea:focus {
-      border-color: var(--color-gold);
-    }
-    .spec-textarea::placeholder {
-      color: var(--color-text-dim);
     }
 
-    /* Results */
-    .results {
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      padding: 1.5rem;
+    /* Results card — layout container for parsed spec output. The ui-card
+       primitive supplies the surface (bg/border/radius/padding/shadow); we
+       only add the bottom margin to space it from the next section. */
+    .results-card {
+      display: block;
       margin-bottom: 1.5rem;
     }
     .tier-row {
@@ -443,43 +445,6 @@ RAM: 32 GB DDR5"
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-    }
-    .btn-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      padding: 0.5rem 0;
-      cursor: pointer;
-      transition: color 0.15s;
-    }
-    .btn-back:hover { color: var(--color-text); }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.625rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: background 0.2s, box-shadow 0.3s;
-    }
-    .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 0 20px var(--color-gold-glow);
-    }
-    .btn-primary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      box-shadow: none;
     }
     .btn-spinner {
       width: 14px;

@@ -2,10 +2,24 @@ import { Component, EventEmitter, OnInit, Output, signal } from '@angular/core';
 import { ApiService } from '../../../../core/services/api.service';
 import { Game } from '../../../../shared/models/game.model';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  ArrowRight,
+} from 'lucide-angular';
 
 @Component({
   selector: 'app-game-select',
   standalone: true,
+  imports: [LucideAngularModule],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({ ArrowRight }),
+    },
+  ],
   animations: [
     trigger('staggerCards', [
       transition(':enter', [
@@ -35,25 +49,19 @@ import { trigger, transition, style, animate, query, stagger } from '@angular/an
               {{ game.name.charAt(0) }}
             </div>
             <h3>{{ game.name }}</h3>
-            <svg class="game-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon class="game-arrow" name="arrow-right" [size]="18" [strokeWidth]="2"></lucide-icon>
           </button>
         }
         @if (games().length === 0) {
           <button class="game-card skyrim" (click)="selectGame(1)">
             <div class="game-icon icon-skyrim">S</div>
             <h3>Skyrim Special Edition</h3>
-            <svg class="game-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon class="game-arrow" name="arrow-right" [size]="18" [strokeWidth]="2"></lucide-icon>
           </button>
           <button class="game-card fallout" (click)="selectGame(2)">
             <div class="game-icon icon-fallout">F</div>
             <h3>Fallout 4</h3>
-            <svg class="game-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon class="game-arrow" name="arrow-right" [size]="18" [strokeWidth]="2"></lucide-icon>
           </button>
         }
       </div>

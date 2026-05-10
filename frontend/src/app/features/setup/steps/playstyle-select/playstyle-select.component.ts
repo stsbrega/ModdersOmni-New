@@ -12,18 +12,71 @@ import { LlmProvider } from '../../../../shared/models/mod.model';
 import { PRESETS, SizePreset } from '../../../../shared/models/generation.model';
 import { detectProvider } from '../../../../core/utils/key-detection';
 import { ApiKeyGuideComponent } from '../../../../shared/components/api-key-guide/api-key-guide.component';
-import { LucideAngularModule, LucideIconProvider, LUCIDE_ICONS, Sparkles, Tent, Swords, Wand2, Camera, Drama, Hammer, Building2 } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  LucideIconProvider,
+  LUCIDE_ICONS,
+  Sparkles,
+  Tent,
+  Swords,
+  Wand2,
+  Camera,
+  Drama,
+  Hammer,
+  Building2,
+  Check,
+  X,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  ChevronDown,
+  Lock,
+  Bot,
+} from 'lucide-angular';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import type { LLMConfig, ProviderId } from '../../../../core/services/llm/types';
 import { defaultModelFor, PROVIDERS } from '../../../../core/services/llm/registry';
 import type { GameVersion } from '../../../../core/services/knowledge.service';
+import { UiButtonComponent } from '../../../../shared/components/ui/button.component';
+import { UiInputComponent } from '../../../../shared/components/ui/input.component';
+import { UiTextareaComponent } from '../../../../shared/components/ui/textarea.component';
+import { UiSelectComponent, type UiSelectOption } from '../../../../shared/components/ui/select.component';
 
 @Component({
   selector: 'app-playstyle-select',
   standalone: true,
-  imports: [FormsModule, ApiKeyGuideComponent, LucideAngularModule],
+  imports: [
+    FormsModule,
+    ApiKeyGuideComponent,
+    LucideAngularModule,
+    UiButtonComponent,
+    UiInputComponent,
+    UiTextareaComponent,
+    UiSelectComponent,
+  ],
   providers: [
-    { provide: LUCIDE_ICONS, useValue: new LucideIconProvider({ Sparkles, Tent, Swords, Wand2, Camera, Drama, Hammer, Building2 }), multi: true },
+    {
+      provide: LUCIDE_ICONS,
+      useValue: new LucideIconProvider({
+        Sparkles,
+        Tent,
+        Swords,
+        Wand2,
+        Camera,
+        Drama,
+        Hammer,
+        Building2,
+        Check,
+        X,
+        ArrowLeft,
+        ArrowRight,
+        AlertCircle,
+        ChevronDown,
+        Lock,
+        Bot,
+      }),
+      multi: true,
+    },
   ],
   animations: [
     trigger('staggerCards', [
@@ -61,9 +114,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
             </div>
             @if (selectedId() === ps.id) {
               <div class="ps-check">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+                <lucide-icon name="check" [size]="14" [strokeWidth]="2.5"></lucide-icon>
               </div>
             }
           </button>
@@ -104,7 +155,8 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       </div>
       <div class="description-section">
         <textarea
-          class="vision-textarea"
+          ui-textarea
+          class="vision-textarea-extra"
           [value]="customDescription()"
           (input)="customDescription.set($any($event.target).value)"
           placeholder="e.g. I want a dark souls-like combat system with survival mechanics, beautiful graphics, and immersive NPC interactions..."
@@ -122,18 +174,18 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       <div class="requested-mods-section">
         <p class="section-hint">Name specific mods you want included. The AI will find them on Nexus and add patches.</p>
         <div class="mod-input-row">
-          <div class="key-input-wrap">
-            <input
-              type="text"
-              [value]="modInput()"
-              (input)="modInput.set($any($event.target).value)"
-              (keydown.enter)="addRequestedMod()"
-              placeholder="Type a mod name and press Enter..."
-              autocomplete="off"
-              spellcheck="false"
-            />
-          </div>
-          <button class="btn-add-key" (click)="addRequestedMod()" [disabled]="!modInput().trim()">
+          <input
+            ui-input
+            type="text"
+            class="mod-input-field"
+            [value]="modInput()"
+            (input)="modInput.set($any($event.target).value)"
+            (keydown.enter)="addRequestedMod()"
+            placeholder="Type a mod name and press Enter..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button ui-button variant="primary" size="sm" (click)="addRequestedMod()" [disabled]="!modInput().trim()">
             Add
           </button>
         </div>
@@ -141,11 +193,9 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
           <div class="mod-tags">
             @for (mod of requestedMods(); track mod) {
               <div class="mod-tag">
-                <span>{{ mod }}</span>
-                <button class="tag-remove" (click)="removeRequestedMod(mod)">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
+                <span class="font-mono">{{ mod }}</span>
+                <button class="tag-remove" (click)="removeRequestedMod(mod)" aria-label="Remove mod">
+                  <lucide-icon name="x" [size]="10" [strokeWidth]="2.5"></lucide-icon>
                 </button>
               </div>
             }
@@ -155,11 +205,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
 
       @if (!hasAnyPreference()) {
         <div class="preference-hint">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
+          <lucide-icon name="alert-circle" [size]="14" [strokeWidth]="1.5"></lucide-icon>
           Select a preset, describe your vision, or add mods to continue.
         </div>
       }
@@ -167,10 +213,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       <div class="ai-provider-section" [class.pending-highlight]="pendingGenerate()">
         <div class="provider-header" (click)="providerExpanded.set(!providerExpanded())">
           <div class="provider-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4zM18 14h.01M6 14h.01M15 18s-1 2-3 2-3-2-3-2"/>
-              <rect x="3" y="11" width="18" height="10" rx="2"/>
-            </svg>
+            <lucide-icon name="bot" [size]="16" [strokeWidth]="1.5"></lucide-icon>
             AI Providers
           </div>
           @if (isLoggedIn()) {
@@ -179,26 +222,18 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
             </div>
           } @else {
             <div class="provider-badge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
+              <lucide-icon name="lock" [size]="12" [strokeWidth]="2"></lucide-icon>
               Account required
             </div>
           }
-          <svg class="chevron" [class.expanded]="providerExpanded()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 9l6 6 6-6"/>
-          </svg>
+          <lucide-icon class="chevron" [class.expanded]="providerExpanded()" name="chevron-down" [size]="16" [strokeWidth]="2"></lucide-icon>
         </div>
 
         @if (providerExpanded()) {
           <div class="provider-body">
             @if (!isLoggedIn()) {
               <div class="locked-message">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+                <lucide-icon name="lock" [size]="18" [strokeWidth]="1.5"></lucide-icon>
                 <p>Create an account to save optional AI provider keys and generate your modlist.</p>
               </div>
             } @else {
@@ -214,10 +249,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
               }
 
               <div class="key-security-notice">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+                <lucide-icon name="lock" [size]="12" [strokeWidth]="1.5"></lucide-icon>
                 <span>Keys are stored securely and never shared. You can remove them anytime.</span>
               </div>
 
@@ -225,18 +257,18 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
 
               <!-- Add Key Input -->
               <form class="add-key-row" (ngSubmit)="addNewKey()">
-                <div class="key-input-wrap">
-                  <input
-                    type="password"
-                    [value]="newKeyInput()"
-                    (input)="newKeyInput.set($any($event.target).value)"
-                    (paste)="onNewKeyPaste($event)"
-                    placeholder="Paste any AI provider API key..."
-                    autocomplete="new-password"
-                    spellcheck="false"
-                  />
-                </div>
-                <button type="submit" class="btn-add-key" [disabled]="!newKeyInput()">
+                <input
+                  ui-input
+                  type="password"
+                  class="add-key-field font-mono"
+                  [value]="newKeyInput()"
+                  (input)="newKeyInput.set($any($event.target).value)"
+                  (paste)="onNewKeyPaste($event)"
+                  placeholder="Paste any AI provider API key..."
+                  autocomplete="new-password"
+                  spellcheck="false"
+                />
+                <button ui-button type="submit" variant="primary" size="sm" [disabled]="!newKeyInput()">
                   Add
                 </button>
               </form>
@@ -246,41 +278,29 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
                 <div class="detection-feedback" [class.warn]="detectionState()!.type !== 'exact'">
                   @if (detectionState()!.type === 'exact') {
                     <div class="detection-exact">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
+                      <lucide-icon name="check" [size]="12" [strokeWidth]="2.5"></lucide-icon>
                       Detected: <strong>{{ detectionState()!.providerName }}</strong>
                     </div>
                   } @else if (detectionState()!.type === 'ambiguous') {
                     <div class="detection-warn-msg">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
+                      <lucide-icon name="alert-circle" [size]="12" [strokeWidth]="2"></lucide-icon>
                       <span>Multiple providers match. Select one:</span>
                     </div>
-                    <select class="detect-select" (change)="confirmDetectedProvider($any($event.target).value)">
-                      <option value="" disabled selected>Select...</option>
-                      @for (m of detectionState()!.matches; track m.id) {
-                        <option [value]="m.id">{{ m.name }}</option>
-                      }
-                    </select>
+                    <ui-select
+                      placeholder="Select..."
+                      [options]="ambiguousMatchOptions()"
+                      (selectionChange)="confirmDetectedProvider($any($event))"
+                    ></ui-select>
                   } @else {
                     <div class="detection-warn-msg">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
+                      <lucide-icon name="alert-circle" [size]="12" [strokeWidth]="2"></lucide-icon>
                       <span>Unknown key format. Select provider:</span>
                     </div>
-                    <select class="detect-select" (change)="confirmDetectedProvider($any($event.target).value)">
-                      <option value="" disabled selected>Select...</option>
-                      @for (p of providers(); track p.id) {
-                        <option [value]="p.id">{{ p.name }}</option>
-                      }
-                    </select>
+                    <ui-select
+                      placeholder="Select..."
+                      [options]="providerOptions()"
+                      (selectionChange)="confirmDetectedProvider($any($event))"
+                    ></ui-select>
                   }
                 </div>
               }
@@ -291,11 +311,9 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
                   @for (entry of savedKeyEntries(); track entry.providerId) {
                     <div class="saved-key-chip">
                       <span class="chip-provider">{{ entry.providerName }}</span>
-                      <span class="chip-mask">{{ entry.masked }}</span>
+                      <span class="chip-mask font-mono">{{ entry.masked }}</span>
                       <button class="chip-remove" (click)="removeKey(entry.providerId)" title="Remove">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
+                        <lucide-icon name="x" [size]="10" [strokeWidth]="2.5"></lucide-icon>
                       </button>
                     </div>
                   }
@@ -309,16 +327,15 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                   <input
+                    ui-input
                     type="text"
+                    class="font-mono"
+                    style="flex: 1; font-size: 0.85rem;"
                     [value]="ollamaUrl()"
                     (input)="ollamaUrl.set($any($event.target).value)"
                     placeholder="http://localhost:11434/v1"
-                    style="flex: 1; padding: 0.5rem 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); font-size: 0.85rem;"
                   />
-                  <button
-                    (click)="testOllamaConnection()"
-                    style="padding: 0.5rem 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); font-size: 0.8rem; cursor: pointer; white-space: nowrap;"
-                  >
+                  <button ui-button variant="secondary" size="sm" (click)="testOllamaConnection()">
                     Test
                   </button>
                 </div>
@@ -328,15 +345,14 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
                     Connected — {{ ollamaModels().length }} model(s)
                   </div>
                   @if (ollamaModels().length > 0) {
-                    <select
-                      style="margin-top: 0.5rem; width: 100%; padding: 0.4rem 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); font-size: 0.85rem;"
-                      [value]="ollamaSelectedModel()"
-                      (change)="ollamaSelectedModel.set($any($event.target).value)"
-                    >
-                      @for (m of ollamaModels(); track m) {
-                        <option [value]="m">{{ m }}</option>
-                      }
-                    </select>
+                    <div style="margin-top: 0.5rem; width: 100%;">
+                      <ui-select
+                        [options]="ollamaModelOptions()"
+                        [value]="ollamaSelectedModel()"
+                        placeholder="Select a model"
+                        (selectionChange)="ollamaSelectedModel.set($any($event))"
+                      ></ui-select>
+                    </div>
                   }
                 }
                 @if (ollamaStatus() === 'error') {
@@ -356,14 +372,14 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       </div>
 
       <div class="actions">
-        <button class="btn-back" (click)="back.emit()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
+        <button ui-button variant="ghost" size="sm" (click)="back.emit()">
+          <lucide-icon name="arrow-left" [size]="14" [strokeWidth]="2"></lucide-icon>
           Back
         </button>
         <button
-          class="btn-primary"
+          ui-button
+          variant="primary"
+          size="lg"
           (click)="generate()"
           [disabled]="!hasAnyPreference() || loading()"
         >
@@ -372,9 +388,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
             Generating...
           } @else {
             Generate Modlist
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon name="arrow-right" [size]="14" [strokeWidth]="2"></lucide-icon>
           }
         </button>
       </div>
@@ -531,26 +545,13 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
     .description-section {
       margin-bottom: 1.5rem;
     }
-    .vision-textarea {
-      width: 100%;
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      color: var(--color-text);
-      font-family: inherit;
+    /* vision-textarea-extra: layered on top of the ui-textarea primitive's
+       host classes. Smaller font + denser line-height than the default to
+       fit the wizard's compact section rhythm. */
+    .vision-textarea-extra {
       font-size: 0.8125rem;
-      padding: 0.75rem;
-      resize: vertical;
-      min-height: 72px;
-      outline: none;
-      transition: border-color 0.15s;
       line-height: 1.5;
-    }
-    .vision-textarea:focus {
-      border-color: var(--color-gold);
-    }
-    .vision-textarea::placeholder {
-      color: var(--color-text-dim);
+      min-height: 72px;
     }
     .char-count {
       text-align: right;
@@ -572,8 +573,9 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
     .mod-input-row {
       display: flex;
       gap: 0.375rem;
+      align-items: stretch;
     }
-    .mod-input-row .key-input-wrap { flex: 1; }
+    .mod-input-field { flex: 1; }
     .mod-tags {
       display: flex;
       flex-wrap: wrap;
@@ -622,7 +624,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       margin-bottom: 1.5rem;
       line-height: 1.4;
     }
-    .preference-hint svg {
+    .preference-hint lucide-icon {
       flex-shrink: 0;
     }
     .loading-state {
@@ -650,43 +652,6 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-    }
-    .btn-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      padding: 0.5rem 0;
-      cursor: pointer;
-      transition: color 0.15s;
-    }
-    .btn-back:hover { color: var(--color-text); }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.625rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: background 0.2s, box-shadow 0.3s;
-    }
-    .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 0 20px var(--color-gold-glow);
-    }
-    .btn-primary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      box-shadow: none;
     }
     .btn-spinner {
       width: 14px;
@@ -773,7 +738,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       border-radius: 8px;
       color: var(--color-text-muted);
     }
-    .locked-message svg {
+    .locked-message lucide-icon {
       flex-shrink: 0;
       color: var(--color-text-dim);
     }
@@ -832,33 +797,6 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       font-size: 0.6875rem;
       color: var(--color-text-muted);
     }
-    .key-input-wrap {
-      display: flex;
-      align-items: center;
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      overflow: hidden;
-      transition: border-color 0.15s;
-    }
-    .key-input-wrap:focus-within {
-      border-color: var(--color-gold);
-    }
-    .key-input-wrap input {
-      flex: 1;
-      background: none;
-      border: none;
-      color: var(--color-text);
-      font-size: 0.75rem;
-      padding: 0.5rem 0.625rem;
-      outline: none;
-      font-family: monospace;
-      min-width: 0;
-    }
-    .key-input-wrap input::placeholder {
-      color: var(--color-text-dim);
-      font-family: inherit;
-    }
     .key-toggle {
       background: none;
       border: none;
@@ -889,7 +827,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       color: var(--color-text-dim);
       line-height: 1.3;
     }
-    .key-security-notice svg {
+    .key-security-notice lucide-icon {
       flex-shrink: 0;
       color: var(--color-gold);
     }
@@ -899,20 +837,9 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       display: flex;
       gap: 0.375rem;
       margin-bottom: 0.375rem;
+      align-items: stretch;
     }
-    .add-key-row .key-input-wrap { flex: 1; }
-    .btn-add-key {
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.375rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      white-space: nowrap;
-      transition: background 0.2s;
-    }
-    .btn-add-key:hover:not(:disabled) { background: var(--color-gold-hover); }
-    .btn-add-key:disabled { opacity: 0.4; cursor: not-allowed; }
+    .add-key-field { flex: 1; }
 
     /* Detection feedback */
     .detection-feedback {
@@ -942,19 +869,7 @@ import type { GameVersion } from '../../../../core/services/knowledge.service';
       color: var(--color-warning);
       margin-bottom: 0.375rem;
     }
-    .detection-warn-msg svg { flex-shrink: 0; }
-    .detect-select {
-      width: 100%;
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 6px;
-      color: var(--color-text);
-      padding: 0.375rem 0.5rem;
-      font-size: 0.75rem;
-      outline: none;
-      cursor: pointer;
-    }
-    .detect-select:focus { border-color: var(--color-gold); }
+    .detection-warn-msg lucide-icon { flex-shrink: 0; }
 
     /* Saved keys chips */
     .saved-keys-list {
@@ -1061,6 +976,22 @@ export class PlaystyleSelectComponent implements OnInit {
 
   configuredCount = computed(() =>
     Object.values(this.providerKeys()).filter(k => k.length > 0).length
+  );
+
+  // ── ui-select option lists ──
+  // ui-select is option-array driven (typed { value, label }), unlike a
+  // native <select> with template-projected <option>s. Map our existing
+  // models to that shape via computed() so the dropdowns stay reactive
+  // when the underlying signals (providers/matches/ollama models) change.
+  ambiguousMatchOptions = computed<UiSelectOption[]>(() => {
+    const matches = this.detectionState()?.matches ?? [];
+    return matches.map(m => ({ value: m.id, label: m.name }));
+  });
+  providerOptions = computed<UiSelectOption[]>(() =>
+    this.providers().map(p => ({ value: p.id, label: p.name })),
+  );
+  ollamaModelOptions = computed<UiSelectOption[]>(() =>
+    this.ollamaModels().map(m => ({ value: m, label: m })),
   );
 
   // Modlist size preset (Task 24)

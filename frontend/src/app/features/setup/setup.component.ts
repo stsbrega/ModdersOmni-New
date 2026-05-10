@@ -6,11 +6,37 @@ import { HardwareSpecs } from '../../shared/models/specs.model';
 import { ApiService } from '../../core/services/api.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { trigger, transition, style, animate } from '@angular/animations';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  Check,
+  ArrowLeft,
+  ArrowRight,
+  Tag,
+} from 'lucide-angular';
+// Import primitives directly to avoid pulling in sibling primitives that may
+// have unrelated TS errors during type-checking (matches the pattern landing
+// adopted in Task 5).
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
 
 @Component({
   selector: 'app-setup',
   standalone: true,
-  imports: [GameSelectComponent, SpecInputComponent, PlaystyleSelectComponent],
+  imports: [
+    GameSelectComponent,
+    SpecInputComponent,
+    PlaystyleSelectComponent,
+    LucideAngularModule,
+    UiButtonComponent,
+  ],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({ Check, ArrowLeft, ArrowRight, Tag }),
+    },
+  ],
   animations: [
     trigger('fadeUp', [
       transition(':enter', [
@@ -31,9 +57,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
           <div class="step" [class.active]="currentStep() === step.number" [class.completed]="currentStep() > step.number">
             <div class="step-indicator">
               @if (currentStep() > step.number) {
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+                <lucide-icon name="check" [size]="14" [strokeWidth]="2.5"></lucide-icon>
               } @else {
                 {{ step.number }}
               }
@@ -59,10 +83,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
                 @for (version of selectedGameVersions(); track version) {
                   <button class="version-card" (click)="onVersionSelected(version)">
                     <div class="version-icon">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
-                        <line x1="7" y1="7" x2="7.01" y2="7"/>
-                      </svg>
+                      <lucide-icon name="tag" [size]="20" [strokeWidth]="1.5"></lucide-icon>
                     </div>
                     <div class="version-text">
                       <h3>{{ version }}</h3>
@@ -70,16 +91,12 @@ import { trigger, transition, style, animate } from '@angular/animations';
                         <small>{{ versionSubtitle(version) }}</small>
                       }
                     </div>
-                    <svg class="version-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
+                    <lucide-icon class="version-arrow" name="arrow-right" [size]="16" [strokeWidth]="2"></lucide-icon>
                   </button>
                 }
               </div>
-              <button class="btn-back" (click)="goBack()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
+              <button ui-button variant="ghost" size="sm" (click)="goBack()">
+                <lucide-icon name="arrow-left" [size]="14" [strokeWidth]="2"></lucide-icon>
                 Back
               </button>
             </div>
@@ -261,20 +278,6 @@ import { trigger, transition, style, animate } from '@angular/animations';
       color: var(--color-gold);
       transform: translateX(2px);
     }
-
-    .btn-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      padding: 0.5rem 0;
-      transition: color 0.15s;
-    }
-    .btn-back:hover { color: var(--color-text); }
   `],
 })
 export class SetupComponent implements OnInit {
