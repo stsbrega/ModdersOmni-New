@@ -1,8 +1,13 @@
 name: Changelog
 
+# Manual trigger only. Auto-trigger on push was failing because
+# orhun/git-cliff-action@v4 auto-detects the repo from the cloned
+# git remote and fetches GitHub PR metadata even when [remote.github]
+# is removed from cliff.toml — the call hits anonymous rate limit (403).
+# Re-enable the push trigger once a fix is in place (git-cliff version
+# bump that disables auto-detect, or migration to a different action).
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
