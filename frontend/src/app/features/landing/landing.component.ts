@@ -303,9 +303,9 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     <section class="section cta-section">
       <div class="section-container" style="text-align: center;">
         <h2 class="cta-title">Ready to build your<br>perfect mod setup?</h2>
-        <p class="cta-subtitle">Create a free account and save your hardware profile for instant modlists.</p>
-        <a ui-button variant="primary" size="lg" routerLink="/auth/register">
-          Create Free Account
+        <p class="cta-subtitle">Bring your own LLM key, generate a phased modlist in minutes, and export to Mod Organizer 2 or Vortex.</p>
+        <a ui-button variant="primary" size="lg" routerLink="/setup">
+          Start Building
           <lucide-icon name="arrow-right" [size]="16" [strokeWidth]="2"></lucide-icon>
         </a>
       </div>
