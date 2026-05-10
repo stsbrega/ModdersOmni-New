@@ -229,8 +229,8 @@ type TabId = 'mo2' | 'vortex';
       display: inline-block;
       padding: 0.2rem 0.625rem;
       border-radius: 999px;
-      background: rgba(196, 165, 90, 0.12);
-      border: 1px solid rgba(196, 165, 90, 0.25);
+      background: color-mix(in oklch, var(--color-accent) 12%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 25%, transparent);
       color: var(--color-accent);
       font-size: 0.75rem;
       font-weight: 600;
@@ -312,8 +312,8 @@ type TabId = 'mo2' | 'vortex';
     }
     .tab:hover { border-color: var(--color-border); color: var(--color-text); }
     .tab.active {
-      border-color: rgba(196, 165, 90, 0.35);
-      background: rgba(196, 165, 90, 0.05);
+      border-color: color-mix(in oklch, var(--color-accent) 35%, transparent);
+      background: color-mix(in oklch, var(--color-accent) 5%, transparent);
       color: var(--color-text);
     }
     /* Gold strip on the active tab — unambiguous selection indicator */
@@ -369,7 +369,7 @@ type TabId = 'mo2' | 'vortex';
       transition: border-color 0.2s, transform 0.2s var(--ease-out);
     }
     .step-card:hover {
-      border-color: rgba(196, 165, 90, 0.25);
+      border-color: color-mix(in oklch, var(--color-accent) 25%, transparent);
       transform: translateX(2px);
     }
     .step-number {
@@ -380,8 +380,8 @@ type TabId = 'mo2' | 'vortex';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(196, 165, 90, 0.1);
-      border: 1px solid rgba(196, 165, 90, 0.25);
+      background: color-mix(in oklch, var(--color-accent) 10%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 25%, transparent);
       color: var(--color-accent);
       font-family: var(--font-display);
       font-size: 0.8125rem;

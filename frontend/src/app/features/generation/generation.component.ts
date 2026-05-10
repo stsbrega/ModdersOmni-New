@@ -636,7 +636,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
       .icon-green  { color: #22c55e; }
       .icon-amber  { color: #f59e0b; }
       .icon-red    { color: #ef4444; }
-      .icon-blue   { color: #6b9fbf; }
+      .icon-blue   { color: var(--color-secondary); }
       .icon-purple { color: #8b5cf6; }
       .icon-dim    { color: var(--color-text-dim); }
       .banner-icon { flex-shrink: 0; }
@@ -884,7 +884,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         margin-right: -0.375rem;
       }
       .phase-group-header.completed:hover {
-        background: rgba(196, 165, 90, 0.06);
+        background: color-mix(in oklch, var(--color-accent) 6%, transparent);
       }
       .phase-group-header.completed.collapsed {
         opacity: 0.7;
@@ -939,7 +939,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
 
       /* Legacy phase badge (reused in accordion headers) */
       .tl-phase-badge {
-        background: rgba(196, 165, 90, 0.15);
+        background: color-mix(in oklch, var(--color-accent) 15%, transparent);
         color: var(--color-accent);
         font-size: 0.625rem;
         font-weight: 700;
@@ -988,7 +988,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
 
       /* Patch added */
       .tl-patch_added .tl-icon {
-        color: #6b9fbf;
+        color: var(--color-secondary);
       }
       .tl-patch-add strong {
         color: var(--color-text);
@@ -1318,14 +1318,14 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         font-size: 0.625rem;
         font-weight: 700;
         color: var(--color-accent);
-        background: rgba(196, 165, 90, 0.1);
+        background: color-mix(in oklch, var(--color-accent) 10%, transparent);
         padding: 0.1rem 0.35rem;
         border-radius: 3px;
         flex-shrink: 0;
       }
       .patch-badge {
-        color: #6b9fbf !important;
-        background: rgba(107, 159, 191, 0.1) !important;
+        color: var(--color-secondary) !important;
+        background: color-mix(in oklch, var(--color-secondary) 10%, transparent) !important;
       }
       .mod-name {
         font-size: 0.8125rem;
@@ -1342,7 +1342,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         overflow: hidden;
       }
       .patch-card {
-        border-left: 2px solid rgba(107, 159, 191, 0.4);
+        border-left: 2px solid color-mix(in oklch, var(--color-secondary) 40%, transparent);
       }
 
       /* ── Knowledge Flags ── */
@@ -1446,15 +1446,15 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         background: var(--color-accent);
         opacity: 0;
         animation: node-appear 0.6s ease-out forwards, node-glow 3s ease-in-out infinite;
-        box-shadow: 0 0 8px rgba(196, 165, 90, 0.3);
+        box-shadow: 0 0 8px color-mix(in oklch, var(--color-accent) 30%, transparent);
       }
       @keyframes node-appear {
         from { transform: scale(0); opacity: 0; }
         to { transform: scale(1); opacity: 0.25; }
       }
       @keyframes node-glow {
-        0%, 100% { opacity: 0.15; box-shadow: 0 0 6px rgba(196, 165, 90, 0.2); }
-        50% { opacity: 0.35; box-shadow: 0 0 14px rgba(196, 165, 90, 0.4); }
+        0%, 100% { opacity: 0.15; box-shadow: 0 0 6px color-mix(in oklch, var(--color-accent) 20%, transparent); }
+        50% { opacity: 0.35; box-shadow: 0 0 14px color-mix(in oklch, var(--color-accent) 40%, transparent); }
       }
       /* Node positions matching the SVG line endpoints */
       .n1 { left: 12%; top: 19%; animation-delay: 0.2s, 0.5s; }

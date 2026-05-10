@@ -60,7 +60,7 @@ const BRAND_LOGO_SIZES: Record<BrandLogoSize, { icon: number; gap: string; text:
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      filter: drop-shadow(0 10px 24px rgba(196, 165, 90, 0.12));
+      filter: drop-shadow(0 10px 24px color-mix(in oklch, var(--color-accent) 12%, transparent));
     }
 
     .brand-logo__mark img {

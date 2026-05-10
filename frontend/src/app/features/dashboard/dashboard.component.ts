@@ -362,8 +362,8 @@ import { DialogRef } from '@angular/cdk/dialog';
       cursor: pointer;
     }
     .modlist-card:hover {
-      border-color: rgba(196, 165, 90, 0.2);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(196, 165, 90, 0.06);
+      border-color: color-mix(in oklch, var(--color-accent) 20%, transparent);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px color-mix(in oklch, var(--color-accent) 6%, transparent);
       transform: translateY(-2px);
     }
     .card-top {

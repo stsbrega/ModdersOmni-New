@@ -76,7 +76,7 @@ import { RouterLink } from '@angular/router';
     }
     .btn-primary:hover {
       background: var(--color-accent);
-      box-shadow: 0 4px 20px rgba(196, 165, 90, 0.25);
+      box-shadow: 0 4px 20px color-mix(in oklch, var(--color-accent) 25%, transparent);
     }
     .btn-secondary {
       background: transparent;
@@ -84,7 +84,7 @@ import { RouterLink } from '@angular/router';
       border: 1px solid var(--color-border);
     }
     .btn-secondary:hover {
-      border-color: rgba(196, 165, 90, 0.3);
+      border-color: color-mix(in oklch, var(--color-accent) 30%, transparent);
       color: var(--color-accent);
     }
   `],

@@ -282,8 +282,8 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       padding: 1rem 1.25rem;
       width: 100%;
       text-align: left;
-      background: rgba(196, 165, 90, 0.05);
-      border: 1px solid rgba(196, 165, 90, 0.18);
+      background: color-mix(in oklch, var(--color-accent) 5%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 18%, transparent);
       border-radius: var(--radius-md);
       margin-bottom: 1.5rem;
       color: var(--color-accent);
@@ -291,8 +291,8 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       transition: border-color 0.2s, box-shadow 0.25s, transform 0.15s var(--ease-out);
     }
     .guide-banner:hover {
-      border-color: rgba(196, 165, 90, 0.35);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(196, 165, 90, 0.1);
+      border-color: color-mix(in oklch, var(--color-accent) 35%, transparent);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px color-mix(in oklch, var(--color-accent) 10%, transparent);
       transform: translateY(-1px);
     }
     .guide-banner > lucide-icon { flex-shrink: 0; }
@@ -337,8 +337,8 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       transition: border-color 0.2s, box-shadow 0.25s, transform 0.2s var(--ease-out);
     }
     .mod-card:hover {
-      border-color: rgba(196, 165, 90, 0.2);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(196, 165, 90, 0.06);
+      border-color: color-mix(in oklch, var(--color-accent) 20%, transparent);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px color-mix(in oklch, var(--color-accent) 6%, transparent);
       transform: translateX(2px);
     }
 
@@ -444,7 +444,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
     }
     .nexus-link:hover {
       color: var(--color-accent);
-      background: rgba(196, 165, 90, 0.08);
+      background: color-mix(in oklch, var(--color-accent) 8%, transparent);
     }
 
     /* Knowledge flags section */

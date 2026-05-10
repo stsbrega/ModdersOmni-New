@@ -586,15 +586,15 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       background: var(--color-accent);
       opacity: 0;
       animation: nx-node-in 0.6s ease-out forwards, nx-node-glow 4s ease-in-out infinite;
-      box-shadow: 0 0 8px rgba(196, 165, 90, 0.3);
+      box-shadow: 0 0 8px color-mix(in oklch, var(--color-accent) 30%, transparent);
     }
     @keyframes nx-node-in {
       from { transform: scale(0); opacity: 0; }
       to { transform: scale(1); opacity: 0.2; }
     }
     @keyframes nx-node-glow {
-      0%, 100% { opacity: 0.12; box-shadow: 0 0 6px rgba(196, 165, 90, 0.15); }
-      50% { opacity: 0.3; box-shadow: 0 0 14px rgba(196, 165, 90, 0.35); }
+      0%, 100% { opacity: 0.12; box-shadow: 0 0 6px color-mix(in oklch, var(--color-accent) 15%, transparent); }
+      50% { opacity: 0.3; box-shadow: 0 0 14px color-mix(in oklch, var(--color-accent) 35%, transparent); }
     }
     .n1 { left: 12%; top: 19%; animation-delay: 0.2s, 0.5s; }
     .n2 { left: 35%; top: 12.5%; animation-delay: 0.4s, 1.0s; }
@@ -681,9 +681,9 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       color: var(--color-text-dim);
     }
     .preview-sidebar-item.active {
-      background: rgba(196, 165, 90, 0.12);
+      background: color-mix(in oklch, var(--color-accent) 12%, transparent);
       color: var(--color-accent);
-      border: 1px solid rgba(196, 165, 90, 0.2);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 20%, transparent);
     }
     .preview-main {
       flex: 1;
@@ -769,7 +769,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       transition: border-color 0.2s;
     }
     .preview-card:hover {
-      border-color: rgba(196, 165, 90, 0.2);
+      border-color: color-mix(in oklch, var(--color-accent) 20%, transparent);
     }
     .preview-card-top {
       display: flex;
@@ -895,9 +895,9 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
     }
     .step:hover .step-icon {
-      border-color: rgba(196, 165, 90, 0.25);
-      box-shadow: 0 0 20px rgba(196, 165, 90, 0.1);
-      background: rgba(196, 165, 90, 0.06);
+      border-color: color-mix(in oklch, var(--color-accent) 25%, transparent);
+      box-shadow: 0 0 20px color-mix(in oklch, var(--color-accent) 10%, transparent);
+      background: color-mix(in oklch, var(--color-accent) 6%, transparent);
     }
     .step-title {
       font-size: 1.125rem;
@@ -935,15 +935,15 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       position: absolute;
       inset: 0;
       border-radius: inherit;
-      background: radial-gradient(ellipse at 50% 0%, rgba(196, 165, 90, 0.04) 0%, transparent 70%);
+      background: radial-gradient(ellipse at 50% 0%, color-mix(in oklch, var(--color-accent) 4%, transparent) 0%, transparent 70%);
       opacity: 0;
       transition: opacity 0.3s;
       pointer-events: none;
     }
     .feature-card:hover {
-      border-color: rgba(196, 165, 90, 0.15);
+      border-color: color-mix(in oklch, var(--color-accent) 15%, transparent);
       transform: translateY(-4px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(196, 165, 90, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px color-mix(in oklch, var(--color-accent) 8%, transparent);
     }
     .feature-card:hover::before {
       opacity: 1;
@@ -1029,7 +1029,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       transform: translate(-50%, -50%);
       width: 600px;
       height: 400px;
-      background: radial-gradient(ellipse, rgba(196, 165, 90, 0.06) 0%, transparent 70%);
+      background: radial-gradient(ellipse, color-mix(in oklch, var(--color-accent) 6%, transparent) 0%, transparent 70%);
       pointer-events: none;
     }
     .cta-title {

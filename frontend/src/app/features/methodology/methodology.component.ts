@@ -371,8 +371,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--color-accent);
-      background: rgba(196, 165, 90, 0.1);
-      border: 1px solid rgba(196, 165, 90, 0.2);
+      background: color-mix(in oklch, var(--color-accent) 10%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 20%, transparent);
       padding: 0.25rem 0.75rem;
       border-radius: 100px;
       margin-bottom: 1.25rem;
@@ -513,8 +513,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       margin-bottom: 2rem;
     }
     .callout-gold {
-      border-color: rgba(196, 165, 90, 0.2);
-      background: rgba(196, 165, 90, 0.04);
+      border-color: color-mix(in oklch, var(--color-accent) 20%, transparent);
+      background: color-mix(in oklch, var(--color-accent) 4%, transparent);
     }
     .callout-icon {
       flex-shrink: 0;
@@ -726,8 +726,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
 
     /* Honesty Box */
     .honesty-box {
-      background: rgba(196, 165, 90, 0.04);
-      border: 1px solid rgba(196, 165, 90, 0.15);
+      background: color-mix(in oklch, var(--color-accent) 4%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 15%, transparent);
       border-radius: var(--radius-lg);
       padding: 1.5rem;
     }
