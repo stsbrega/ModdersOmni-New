@@ -4,13 +4,38 @@ import { trigger, transition, style, animate, query, stagger } from '@angular/an
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { InstallGuide, GuideSection, GuideStep } from '../../shared/models/mod.model';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  AlertTriangle,
+  ArrowLeft,
+  ChevronRight,
+  Download,
+  HelpCircle,
+} from 'lucide-angular';
+// Direct primitive imports — same pattern Tasks 5-8 adopted.
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
 
 type TabId = 'mo2' | 'vortex';
 
 @Component({
   selector: 'app-modlist-guide',
   standalone: true,
-  imports: [],
+  imports: [LucideAngularModule, UiButtonComponent],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        AlertTriangle,
+        ArrowLeft,
+        ChevronRight,
+        Download,
+        HelpCircle,
+      }),
+    },
+  ],
   animations: [
     trigger('fadeUp', [
       transition(':enter', [
@@ -39,23 +64,19 @@ type TabId = 'mo2' | 'vortex';
       } @else if (guide()) {
         <div class="guide-header" @fadeUp>
           <div>
-            <button class="btn-back" (click)="goBack()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
+            <button ui-button variant="ghost" size="sm" (click)="goBack()">
+              <lucide-icon name="arrow-left" [size]="14" [strokeWidth]="2"></lucide-icon>
               Back to Loadout
             </button>
             <span class="page-label">Install Guide</span>
             <h1>{{ guide()!.game_name }}</h1>
             <p class="subtitle">
               @if (guide()!.game_version) {
-                <span class="version-pill">{{ guide()!.game_version }}</span>
+                <!-- Brand-gold pill, not a semantic status — keep inline. font-mono on the version string. -->
+                <span class="version-pill font-mono">{{ guide()!.game_version }}</span>
               } @else {
                 <button class="version-btn" (click)="promptVersion()">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 16v-4M12 8h.01"/>
-                  </svg>
+                  <lucide-icon name="help-circle" [size]="12" [strokeWidth]="2"></lucide-icon>
                   Set game version for tailored instructions
                 </button>
               }
@@ -64,17 +85,13 @@ type TabId = 'mo2' | 'vortex';
             </p>
           </div>
           <div class="header-actions">
-            <a class="btn-download btn-secondary" [href]="mo2PluginUrl()" download="moddersomni_import.py"
+            <a ui-button variant="secondary" size="md" [href]="mo2PluginUrl()" download="moddersomni_import.py"
                title="MO2 import plugin — needed for step 3">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-              </svg>
+              <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
               Download MO2 plugin
             </a>
-            <a class="btn-download" [href]="markdownUrl()" [download]="'moddersomni-guide-' + shortId() + '.md'">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-              </svg>
+            <a ui-button variant="primary" size="md" [href]="markdownUrl()" [download]="'moddersomni-guide-' + shortId() + '.md'">
+              <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
               Download guide (.md)
             </a>
           </div>
@@ -83,11 +100,7 @@ type TabId = 'mo2' | 'vortex';
         @if (guide()!.version_notes.length) {
           <div class="version-notes" @fadeUp>
             <div class="version-notes-header">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
+              <lucide-icon name="alert-triangle" [size]="16" [strokeWidth]="2"></lucide-icon>
               Before you start
             </div>
             @for (note of guide()!.version_notes; track $index) {
@@ -124,7 +137,7 @@ type TabId = 'mo2' | 'vortex';
         <div class="steps" @staggerSteps>
           @for (step of activeSection().steps; track step.title; let i = $index) {
             <div class="step-card">
-              <div class="step-number">{{ i + 1 }}</div>
+              <div class="step-number font-mono">{{ i + 1 }}</div>
               <div class="step-content">
                 <h3>{{ stripLeadingNumber(step.title) }}</h3>
                 <p class="step-body">{{ step.body }}</p>
@@ -136,10 +149,13 @@ type TabId = 'mo2' | 'vortex';
         @if (guide()!.troubleshooting.length) {
           <div class="troubleshooting" @fadeUp>
             <button class="troubleshoot-toggle" (click)="toggleTroubleshooting()" [attr.aria-expanded]="troubleshootingOpen()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   [class.expanded]="troubleshootingOpen()" class="chevron">
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
+              <lucide-icon
+                name="chevron-right"
+                [size]="16"
+                [strokeWidth]="2"
+                class="chevron"
+                [class.expanded]="troubleshootingOpen()"
+              ></lucide-icon>
               Troubleshooting — common problems
             </button>
             @if (troubleshootingOpen()) {
@@ -157,7 +173,7 @@ type TabId = 'mo2' | 'vortex';
       } @else {
         <div class="empty-state">
           <p>Couldn't load the install guide for this modlist.</p>
-          <button class="btn-primary" (click)="goBack()">Back to Loadout</button>
+          <button ui-button variant="primary" size="md" (click)="goBack()">Back to Loadout</button>
         </div>
       }
     </div>
@@ -250,62 +266,14 @@ type TabId = 'mo2' | 'vortex';
       color: var(--color-gold);
       border-color: var(--color-gold);
     }
-    .btn-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      padding: 0 0 0.5rem;
-      cursor: pointer;
-      transition: color 0.15s;
-    }
-    .btn-back:hover { color: var(--color-text); }
     .header-actions {
       display: flex;
       align-items: center;
       gap: 0.75rem;
       margin-top: 2.25rem;
+      flex-wrap: wrap;
     }
-    .btn-download {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.625rem 1.25rem;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.8125rem;
-      text-decoration: none;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s, box-shadow 0.3s, transform 0.1s;
-    }
-    .btn-download:hover {
-      background: var(--color-gold-hover);
-      box-shadow: var(--shadow-gold);
-      transform: translateY(-1px);
-    }
-    .btn-download:active { transform: translateY(0); }
-
-    /* Secondary variant for the MO2 plugin download — less visual weight than
-       the primary gold CTA, but still clearly a download affordance. */
-    .btn-download.btn-secondary {
-      background: transparent;
-      color: var(--color-text);
-      border: 1px solid var(--color-border-hover);
-      box-shadow: none;
-    }
-    .btn-download.btn-secondary:hover {
-      background: rgba(196, 165, 90, 0.06);
-      border-color: var(--color-gold);
-      color: var(--color-gold);
-      box-shadow: none;
-    }
+    /* btn-back / btn-download / btn-primary CSS removed — replaced by ui-button. */
 
     .version-notes {
       padding: 1rem 1.25rem;
@@ -493,20 +461,7 @@ type TabId = 'mo2' | 'vortex';
       padding: 5rem 2rem;
       color: var(--color-text-muted);
     }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.625rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      font-size: 0.875rem;
-      margin-top: 1.5rem;
-    }
+    .empty-state button[ui-button] { margin-top: 1.5rem; }
   `],
 })
 export class ModlistGuideComponent implements OnInit {

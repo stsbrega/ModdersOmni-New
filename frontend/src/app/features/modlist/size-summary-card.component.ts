@@ -13,25 +13,25 @@ import { SizeSummary } from '../../shared/models/mod.model';
       <div class="totals">
         <div>
           <span class="label">Download</span>
-          <span class="val">{{ formatBytes(summary.download_bytes) }}</span>
+          <span class="val font-mono">{{ formatBytes(summary.download_bytes) }}</span>
         </div>
         <div>
           <span class="label">Installed (est.)</span>
-          <span class="val">~{{ formatBytes(summary.installed_estimate_bytes) }}</span>
+          <span class="val font-mono">~{{ formatBytes(summary.installed_estimate_bytes) }}</span>
         </div>
       </div>
       @if (summary.fit_status === 'comfortable') {
         <p class="ok">
-          Largest free drive: <strong>{{ formatBytes(summary.largest_drive_free_bytes!) }}</strong> ✓ Comfortable fit.
+          Largest free drive: <strong class="font-mono">{{ formatBytes(summary.largest_drive_free_bytes!) }}</strong> ✓ Comfortable fit.
         </p>
       } @else if (summary.fit_status === 'tight') {
         <p class="warn">
-          Largest free drive: <strong>{{ formatBytes(summary.largest_drive_free_bytes!) }}</strong> ⚠ Tight fit — install carefully.
+          Largest free drive: <strong class="font-mono">{{ formatBytes(summary.largest_drive_free_bytes!) }}</strong> ⚠ Tight fit — install carefully.
         </p>
       } @else if (summary.fit_status === 'insufficient') {
         <p class="err">
-          Largest free drive: <strong>{{ formatBytes(summary.largest_drive_free_bytes!) }}</strong> ⚠ Insufficient.
-          You'll need to free ~{{ formatBytes(summary.installed_estimate_bytes - summary.largest_drive_free_bytes!) }} (or install to a different drive) before the modlist will fit.
+          Largest free drive: <strong class="font-mono">{{ formatBytes(summary.largest_drive_free_bytes!) }}</strong> ⚠ Insufficient.
+          You'll need to free <span class="font-mono">~{{ formatBytes(summary.installed_estimate_bytes - summary.largest_drive_free_bytes!) }}</span> (or install to a different drive) before the modlist will fit.
         </p>
       } @else {
         <p class="unknown">

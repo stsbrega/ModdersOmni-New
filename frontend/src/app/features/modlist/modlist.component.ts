@@ -5,11 +5,55 @@ import { NotificationService } from '../../core/services/notification.service';
 import { Modlist, ModEntry, SizeSummary } from '../../shared/models/mod.model';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import { SizeSummaryCardComponent } from './size-summary-card.component';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  AlertTriangle,
+  ArrowLeft,
+  Box,
+  ChevronRight,
+  Copy,
+  Download,
+  ExternalLink,
+  FileText,
+  Plus,
+  Upload,
+  XCircle,
+} from 'lucide-angular';
+// Direct primitive imports — same pattern Tasks 5-8 adopted to avoid pulling
+// in sibling primitives whose TS errors might surface via the barrel.
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
+import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
 
 @Component({
   selector: 'app-modlist',
   standalone: true,
-  imports: [SizeSummaryCardComponent],
+  imports: [
+    SizeSummaryCardComponent,
+    LucideAngularModule,
+    UiButtonComponent,
+    UiBadgeComponent,
+  ],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        AlertTriangle,
+        ArrowLeft,
+        Box,
+        ChevronRight,
+        Copy,
+        Download,
+        ExternalLink,
+        FileText,
+        Plus,
+        Upload,
+        XCircle,
+      }),
+    },
+  ],
   animations: [
     trigger('fadeUp', [
       transition(':enter', [
@@ -47,66 +91,46 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
             }
           </div>
           <div class="header-actions">
-            <button class="btn-back" (click)="goToSetup()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
+            <button ui-button variant="ghost" size="sm" (click)="goToSetup()">
+              <lucide-icon name="arrow-left" [size]="14" [strokeWidth]="2"></lucide-icon>
               New Loadout
             </button>
-            <button class="btn-copy" (click)="copyUrl()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2"/>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-              </svg>
+            <button ui-button variant="secondary" size="sm" (click)="copyUrl()">
+              <lucide-icon name="copy" [size]="14" [strokeWidth]="2"></lucide-icon>
               {{ copied() ? 'Copied!' : 'Copy URL' }}
             </button>
-            <button class="btn-copy" (click)="exportToVortex()" title="Download mod list for Vortex">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
+            <button ui-button variant="secondary" size="sm" (click)="exportToVortex()" title="Download mod list for Vortex">
+              <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
               Export to Vortex
             </button>
             <button
-              class="btn-copy"
+              ui-button
+              variant="secondary"
+              size="sm"
               [disabled]="publishing()"
               (click)="publishToNexus()"
               title="Publish as an unlisted Nexus Collection (requires connecting Nexus in Settings)"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
-                <polyline points="16 6 12 2 8 6"/>
-                <line x1="12" y1="2" x2="12" y2="15"/>
-              </svg>
+              <lucide-icon name="upload" [size]="14" [strokeWidth]="2"></lucide-icon>
               {{ publishing() ? 'Publishing…' : 'Publish to Nexus' }}
             </button>
             @if (modlist()!.has_debug_log) {
-              <button class="btn-copy" (click)="downloadLog()" title="Download generation debug log">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
+              <button ui-button variant="secondary" size="sm" (click)="downloadLog()" title="Download generation debug log">
+                <lucide-icon name="file-text" [size]="14" [strokeWidth]="2"></lucide-icon>
                 Debug Log
               </button>
             }
           </div>
         </div>
 
-        <!-- Install guide CTA -->
+        <!-- Install guide CTA — custom shape (icon + body + chevron); resists ui-button. -->
         <button class="guide-banner" (click)="openGuide()" type="button" @fadeUp>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-          </svg>
+          <lucide-icon name="file-text" [size]="20" [strokeWidth]="1.5"></lucide-icon>
           <div class="guide-banner-body">
             <strong>Open the install guide</strong>
             <p>Step-by-step instructions for Mod Organizer 2 and Vortex, tailored to your game version. Also downloadable as Markdown.</p>
           </div>
-          <svg class="guide-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
+          <lucide-icon class="guide-chevron" name="chevron-right" [size]="16" [strokeWidth]="2"></lucide-icon>
         </button>
 
         @if (sizeSummary(); as s) {
@@ -116,11 +140,9 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
         <div class="mod-list" @staggerMods>
           @for (entry of modlist()!.entries; track $index) {
             <div class="mod-card" [class.patch-card]="entry.is_patch">
-              <div class="mod-order" [class.patch-order]="entry.is_patch">
+              <div class="mod-order font-mono" [class.patch-order]="entry.is_patch">
                 @if (entry.is_patch) {
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M12 5v14M5 12h14"/>
-                  </svg>
+                  <lucide-icon name="plus" [size]="12" [strokeWidth]="2.5"></lucide-icon>
                 } @else {
                   {{ entry.load_order || $index + 1 }}
                 }
@@ -152,9 +174,7 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
                 <a class="nexus-link"
                    [href]="'https://www.nexusmods.com/' + modlist()!.game_domain + '/mods/' + entry.nexus_mod_id"
                    target="_blank" rel="noopener">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-                  </svg>
+                  <lucide-icon name="external-link" [size]="14" [strokeWidth]="2"></lucide-icon>
                 </a>
               }
             </div>
@@ -164,18 +184,16 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
         @if (modlist()!.user_knowledge_flags?.length) {
           <div class="knowledge-section" @fadeUp>
             <h2 class="section-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
+              <lucide-icon name="alert-triangle" [size]="16" [strokeWidth]="2"></lucide-icon>
               Compatibility Notes
             </h2>
             <p class="section-desc">These mod pairs may have compatibility issues. No patches were found on Nexus.</p>
             @for (flag of modlist()!.user_knowledge_flags; track $index) {
               <div class="knowledge-flag" [class.flag-critical]="flag.severity === 'critical'">
                 <div class="flag-header">
-                  <span class="flag-severity" [class]="'severity-' + flag.severity">{{ flag.severity }}</span>
+                  <ui-badge [variant]="flag.severity === 'critical' ? 'danger' : 'warning'">
+                    {{ flag.severity }}
+                  </ui-badge>
                   <span class="flag-mods">{{ flag.mod_a }} + {{ flag.mod_b }}</span>
                 </div>
                 <p class="flag-issue">{{ flag.issue }}</p>
@@ -187,24 +205,19 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
         @if (modlist()!.entries.length === 0) {
           <div class="empty-state" @fadeUp>
             <div class="empty-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-              </svg>
+              <lucide-icon name="box" [size]="32" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <p>No mods in this loadout yet.</p>
-            <button class="btn-primary" (click)="goToSetup()">New Build</button>
+            <button ui-button variant="primary" size="md" (click)="goToSetup()">New Build</button>
           </div>
         }
       } @else {
         <div class="empty-state" @fadeUp>
           <div class="empty-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M15 9l-6 6M9 9l6 6"/>
-            </svg>
+            <lucide-icon name="x-circle" [size]="32" [strokeWidth]="1.5"></lucide-icon>
           </div>
           <p>Loadout not found.</p>
-          <button class="btn-primary" (click)="goToSetup()">New Build</button>
+          <button ui-button variant="primary" size="md" (click)="goToSetup()">New Build</button>
         </div>
       }
     </div>
@@ -272,59 +285,9 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      flex-wrap: wrap;
     }
-    .btn-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      padding: 0.5rem 0;
-      cursor: pointer;
-      transition: color 0.15s;
-    }
-    .btn-back:hover { color: var(--color-text); }
-    .btn-copy {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      background: var(--color-bg-elevated);
-      border: 1px solid var(--color-border);
-      color: var(--color-text-muted);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .btn-copy:hover {
-      color: var(--color-text);
-      border-color: var(--color-border-hover);
-    }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.625rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: background 0.2s, box-shadow 0.3s;
-    }
-    .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: var(--shadow-gold);
-      transform: translateY(-1px);
-    }
-    .btn-primary:active { transform: translateY(0); }
+    /* btn-back / btn-copy / btn-primary CSS removed — replaced by ui-button. */
 
     /* Install guide CTA */
     .guide-banner {
@@ -347,7 +310,7 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(196, 165, 90, 0.1);
       transform: translateY(-1px);
     }
-    .guide-banner > svg { flex-shrink: 0; }
+    .guide-banner > lucide-icon { flex-shrink: 0; }
     .guide-banner-body { flex: 1; }
     .guide-banner strong {
       display: block;
@@ -538,21 +501,11 @@ import { SizeSummaryCardComponent } from './size-summary-card.component';
       gap: 0.5rem;
       margin-bottom: 0.25rem;
     }
-    .flag-severity {
-      font-size: 0.625rem;
-      font-weight: 700;
+    /* flag-severity / severity-warning / severity-critical removed — now ui-badge. */
+    .flag-header ui-badge {
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      padding: 0.1rem 0.375rem;
-      border-radius: 4px;
-    }
-    .severity-warning {
-      background: rgba(234, 179, 8, 0.15);
-      color: var(--color-warning, #eab308);
-    }
-    .severity-critical {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--color-error, #ef4444);
+      flex-shrink: 0;
     }
     .flag-mods {
       font-size: 0.8125rem;
