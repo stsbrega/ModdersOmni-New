@@ -1,10 +1,31 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  Coffee,
+  ExternalLink,
+  Heart,
+  Info,
+} from 'lucide-angular';
 
 @Component({
   selector: 'app-support',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LucideAngularModule],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        Coffee,
+        ExternalLink,
+        Heart,
+        Info,
+      }),
+    },
+  ],
   template: `
     <div class="support-page">
       <div class="page-header">
@@ -18,17 +39,14 @@ import { RouterLink } from '@angular/router';
       </div>
 
       <!-- Donation platforms -->
+      <!-- Donation cards & buttons stay inline: brand-tinted surfaces (Ko-fi #ff5e3a,
+           Patreon #ff6630) and brand-colored CTAs that don't map to ui-card / ui-button
+           semantic variants. The icons themselves swap to lucide. -->
       <div class="donation-grid">
         <!-- Ko-fi -->
         <div class="donation-card donation-card--kofi">
           <div class="platform-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
-              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-              <line x1="6" y1="1" x2="6" y2="4"/>
-              <line x1="10" y1="1" x2="10" y2="4"/>
-              <line x1="14" y1="1" x2="14" y2="4"/>
-            </svg>
+            <lucide-icon name="coffee" [size]="32" [strokeWidth]="1.5"></lucide-icon>
           </div>
           <div class="platform-info">
             <h2 class="platform-name">Ko-fi</h2>
@@ -44,21 +62,14 @@ import { RouterLink } from '@angular/router';
             class="donate-btn donate-btn--kofi"
           >
             Donate on Ko-fi
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
+            <lucide-icon name="external-link" [size]="14" [strokeWidth]="2"></lucide-icon>
           </a>
         </div>
 
         <!-- Patreon -->
         <div class="donation-card donation-card--patreon">
           <div class="platform-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="14" cy="9" r="5"/>
-              <rect x="3" y="3" width="3" height="18" rx="1"/>
-            </svg>
+            <lucide-icon name="heart" [size]="32" [strokeWidth]="1.5"></lucide-icon>
           </div>
           <div class="platform-info">
             <h2 class="platform-name">Patreon</h2>
@@ -74,23 +85,16 @@ import { RouterLink } from '@angular/router';
             class="donate-btn donate-btn--patreon"
           >
             Support on Patreon
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
+            <lucide-icon name="external-link" [size]="14" [strokeWidth]="2"></lucide-icon>
           </a>
         </div>
       </div>
 
-      <!-- BYOK callout -->
+      <!-- BYOK callout — signal-carrying tinted surface (indigo info tint),
+           kept inline (per the migration carve-out for branded/signal surfaces). -->
       <div class="byok-callout">
         <div class="byok-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
+          <lucide-icon name="info" [size]="22" [strokeWidth]="1.5"></lucide-icon>
         </div>
         <div class="byok-body">
           <strong>Using your own API keys?</strong>

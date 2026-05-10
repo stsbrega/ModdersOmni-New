@@ -1,10 +1,33 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  Check,
+  Eye,
+  Info,
+  Star,
+} from 'lucide-angular';
+// Direct primitive imports — same pattern Tasks 5-11 adopted.
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
 
 @Component({
   selector: 'app-methodology',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LucideAngularModule, UiButtonComponent],
+  providers: [
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        Check,
+        Eye,
+        Info,
+        Star,
+      }),
+    },
+  ],
   template: `
     <div class="methodology-page">
       <!-- Hero -->
@@ -32,7 +55,7 @@ import { RouterLink } from '@angular/router';
 
       <!-- Section 1: Pipeline Overview -->
       <section id="pipeline" class="content-section">
-        <div class="section-label">01</div>
+        <div class="section-label font-mono">01</div>
         <h2 class="section-title">The 13-Phase Pipeline</h2>
         <p class="section-intro">
           Instead of asking an AI to generate an entire modlist in one shot (which produces
@@ -44,7 +67,7 @@ import { RouterLink } from '@angular/router';
         <div class="pipeline-grid">
           @for (phase of phases; track phase.name; let i = $index) {
             <div class="phase-card stagger-item">
-              <div class="phase-number">{{ (i + 1).toString().padStart(2, '0') }}</div>
+              <div class="phase-number font-mono">{{ (i + 1).toString().padStart(2, '0') }}</div>
               <div class="phase-info">
                 <span class="phase-name">{{ phase.name }}</span>
                 <span class="phase-complexity" [class]="'complexity-' + phase.complexity">
@@ -58,11 +81,7 @@ import { RouterLink } from '@angular/router';
 
         <div class="callout">
           <div class="callout-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 16v-4"/>
-              <path d="M12 8h.01"/>
-            </svg>
+            <lucide-icon name="info" [size]="20" [strokeWidth]="1.5"></lucide-icon>
           </div>
           <div class="callout-text">
             <strong>Why phases matter:</strong> A single prompt asking for "100 mods for Skyrim"
@@ -76,7 +95,7 @@ import { RouterLink } from '@angular/router';
 
       <!-- Section 2: Smart Dispatch -->
       <section id="smart-dispatch" class="content-section">
-        <div class="section-label">02</div>
+        <div class="section-label font-mono">02</div>
         <h2 class="section-title">Smart Dispatch: Saving You Money</h2>
         <p class="section-intro">
           Not every phase needs the most expensive AI model. Our Smart Dispatcher automatically
@@ -110,9 +129,7 @@ import { RouterLink } from '@angular/router';
 
         <div class="callout callout-gold">
           <div class="callout-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26z"/>
-            </svg>
+            <lucide-icon name="star" [size]="20" [strokeWidth]="1.5"></lucide-icon>
           </div>
           <div class="callout-text">
             <strong>Your keys take priority.</strong> If you bring your own API keys (BYOK),
@@ -124,10 +141,7 @@ import { RouterLink } from '@angular/router';
 
         <div class="transparency-box">
           <h3 class="transparency-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
+            <lucide-icon name="eye" [size]="18" [strokeWidth]="1.5"></lucide-icon>
             What you see during generation
           </h3>
           <p class="transparency-desc">
@@ -137,11 +151,11 @@ import { RouterLink } from '@angular/router';
           </p>
           <div class="event-examples">
             <div class="event-example">
-              <span class="event-label">dispatch_strategy</span>
+              <span class="event-label font-mono">dispatch_strategy</span>
               <span class="event-detail">"Using your BYOK keys for generation phases"</span>
             </div>
             <div class="event-example">
-              <span class="event-label">model_selected</span>
+              <span class="event-label font-mono">model_selected</span>
               <span class="event-detail">"Phase: Gameplay Overhaul → Claude Sonnet (premium) — complex phase needs strong reasoning"</span>
             </div>
           </div>
@@ -150,7 +164,7 @@ import { RouterLink } from '@angular/router';
 
       <!-- Section 3: Model Quality Differences -->
       <section id="quality" class="content-section">
-        <div class="section-label">03</div>
+        <div class="section-label font-mono">03</div>
         <h2 class="section-title">What "Better" Actually Means</h2>
         <p class="section-intro">
           We want to be honest about where premium AI models make a real difference
@@ -225,7 +239,7 @@ import { RouterLink } from '@angular/router';
 
       <!-- Section 4: Cost Breakdown -->
       <section id="cost" class="content-section">
-        <div class="section-label">04</div>
+        <div class="section-label font-mono">04</div>
         <h2 class="section-title">Cost Breakdown</h2>
         <p class="section-intro">
           Generation cost depends on which AI model is used for each phase.
@@ -266,7 +280,7 @@ import { RouterLink } from '@angular/router';
 
       <!-- Section 5: Free Tier -->
       <section id="free-tier" class="content-section">
-        <div class="section-label">05</div>
+        <div class="section-label font-mono">05</div>
         <h2 class="section-title">The Free Tier Is Real</h2>
         <p class="section-intro">
           Free tier modlists use free AI models that cost us nothing to run.
@@ -277,9 +291,7 @@ import { RouterLink } from '@angular/router';
         <div class="free-tier-grid">
           <div class="free-card stagger-item">
             <div class="free-card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 6L9 17l-5-5"/>
-              </svg>
+              <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <h3>Up to ~50 mods</h3>
             <p>Enough for a solid essentials + textures + UI setup. Perfect for trying the app
@@ -287,9 +299,7 @@ import { RouterLink } from '@angular/router';
           </div>
           <div class="free-card stagger-item">
             <div class="free-card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 6L9 17l-5-5"/>
-              </svg>
+              <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <h3>Same search quality</h3>
             <p>Free models search the same Nexus Mods database with the same tools. They find
@@ -297,9 +307,7 @@ import { RouterLink } from '@angular/router';
           </div>
           <div class="free-card stagger-item">
             <div class="free-card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 6L9 17l-5-5"/>
-              </svg>
+              <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <h3>Public modlists</h3>
             <p>Every modlist — free or premium — is publicly viewable. We never paywall content.
@@ -307,9 +315,7 @@ import { RouterLink } from '@angular/router';
           </div>
           <div class="free-card stagger-item">
             <div class="free-card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 6L9 17l-5-5"/>
-              </svg>
+              <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <h3>No time limits</h3>
             <p>Generate as many free-tier modlists as you want. No daily caps, no trial period,
@@ -323,8 +329,8 @@ import { RouterLink } from '@angular/router';
         <h2 class="cta-title">Ready to build?</h2>
         <p class="cta-subtitle">Start with the free tier. Upgrade if you want more.</p>
         <div class="cta-actions">
-          <a routerLink="/setup" class="cta-btn cta-btn-primary">Start Building</a>
-          <a routerLink="/auth/register" class="cta-btn cta-btn-secondary">Create Account</a>
+          <a ui-button variant="primary" size="lg" routerLink="/setup">Start Building</a>
+          <a ui-button variant="secondary" size="lg" routerLink="/auth/register">Create Account</a>
         </div>
       </section>
     </div>
@@ -851,30 +857,8 @@ import { RouterLink } from '@angular/router';
       gap: 0.75rem;
       justify-content: center;
     }
-    .cta-btn {
-      padding: 0.625rem 1.5rem;
-      border-radius: var(--radius-md);
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-    .cta-btn-primary {
-      background: var(--color-gold);
-      color: #0D0D0F;
-    }
-    .cta-btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: 0 4px 20px rgba(196, 165, 90, 0.25);
-    }
-    .cta-btn-secondary {
-      background: var(--color-bg-elevated);
-      color: var(--color-text-muted);
-      border: 1px solid var(--color-border);
-    }
-    .cta-btn-secondary:hover {
-      border-color: var(--color-border-hover);
-      color: var(--color-text);
-    }
+    /* CTA buttons now use the shared ui-button primitive (variant=primary|secondary).
+       Keeping .cta-actions for layout only — the button styling lives in the primitive. */
   `],
 })
 export class MethodologyComponent {
