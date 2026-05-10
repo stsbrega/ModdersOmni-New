@@ -1,6 +1,6 @@
 import { Component, signal, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { fadeUp, staggerChildren } from '../../core/motion/animations';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -49,24 +49,9 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
       }),
     },
   ],
-  animations: [
-    trigger('fadeUp', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(24px)' }),
-        animate('600ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-    ]),
-    trigger('staggerIn', [
-      transition(':enter', [
-        query('.stagger-item', [
-          style({ opacity: 0, transform: 'translateY(20px)' }),
-          stagger(100, [
-            animate('500ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-          ]),
-        ], { optional: true }),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the inline
+  // fadeUp + staggerIn definitions — Plan 3 Task 9 (Plan 2 Task 14 follow-up).
+  animations: [fadeUp, staggerChildren],
   template: `
     <!-- Sticky Navbar -->
     <nav class="navbar" [class.scrolled]="scrolled()">
@@ -228,7 +213,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
           <h2 class="section-title">Three steps to your<br>ideal mod setup</h2>
         </div>
         @if (stepsVisible()) {
-          <div class="steps" @staggerIn>
+          <div class="steps" @staggerChildren>
             <div class="step stagger-item">
               <div class="step-number">01</div>
               <div class="step-icon">
@@ -272,7 +257,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
           <h2 class="section-title">Built for modders<br>who know what they want</h2>
         </div>
         @if (featuresVisible()) {
-          <div class="features-grid" @staggerIn>
+          <div class="features-grid" @staggerChildren>
             <ui-card class="feature-card stagger-item">
               <div class="feature-icon feature-icon--gold">
                 <lucide-icon name="shield" [size]="24" [strokeWidth]="1.5"></lucide-icon>

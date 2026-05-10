@@ -5,7 +5,7 @@ import { PlaystyleSelectComponent } from './steps/playstyle-select/playstyle-sel
 import { HardwareSpecs } from '../../shared/models/specs.model';
 import { GameDataService } from '../../core/services/game-data.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { fadeUp } from '../../core/motion/animations';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -37,14 +37,9 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       useValue: new LucideIconProvider({ Check, ArrowLeft, ArrowRight, Tag }),
     },
   ],
-  animations: [
-    trigger('fadeUp', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(12px)' }),
-        animate('350ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the inline
+  // fadeUp definition — Plan 3 Task 9 (Plan 2 Task 14 follow-up).
+  animations: [fadeUp],
   template: `
     <div class="setup">
       <div class="setup-header" @fadeUp>

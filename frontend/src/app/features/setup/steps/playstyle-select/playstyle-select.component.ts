@@ -33,7 +33,7 @@ import {
   Lock,
   Bot,
 } from 'lucide-angular';
-import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { staggerChildren } from '../../../../core/motion/animations';
 import type { LLMConfig, ProviderId } from '../../../../core/services/llm/types';
 import { defaultModelFor, PROVIDERS } from '../../../../core/services/llm/registry';
 import type { GameVersion } from '../../../../core/services/knowledge.service';
@@ -78,18 +78,9 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       multi: true,
     },
   ],
-  animations: [
-    trigger('staggerCards', [
-      transition(':enter', [
-        query('.playstyle-card', [
-          style({ opacity: 0, transform: 'translateY(12px)' }),
-          stagger(60, [
-            animate('350ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-          ]),
-        ], { optional: true }),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the inline
+  // staggerCards definition — Plan 3 Task 9 (Plan 2 Task 14 follow-up).
+  animations: [staggerChildren],
   template: `
     <div class="playstyle-select">
       <h2>Customize Your Modlist</h2>
@@ -99,7 +90,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
 
       <!-- Quick Presets -->
       <div class="section-label">Quick Presets <span class="optional-tag">optional</span></div>
-      <div class="playstyles-grid" @staggerCards>
+      <div class="playstyles-grid" @staggerChildren>
         @for (ps of playstyles(); track ps.id) {
           <button
             class="playstyle-card"

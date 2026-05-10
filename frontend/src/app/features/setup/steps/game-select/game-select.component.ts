@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnInit, Output, signal } from '@angular/core';
 import { GameDataService } from '../../../../core/services/game-data.service';
 import { Game } from '../../../../shared/models/game.model';
-import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { staggerChildren } from '../../../../core/motion/animations';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -20,24 +20,15 @@ import {
       useValue: new LucideIconProvider({ ArrowRight }),
     },
   ],
-  animations: [
-    trigger('staggerCards', [
-      transition(':enter', [
-        query('.game-card', [
-          style({ opacity: 0, transform: 'translateY(16px)' }),
-          stagger(120, [
-            animate('400ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-          ]),
-        ], { optional: true }),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the inline
+  // staggerCards definition — Plan 3 Task 9 (Plan 2 Task 14 follow-up).
+  animations: [staggerChildren],
   template: `
     <div class="game-select">
       <h2>Choose Your Game</h2>
       <p class="step-desc">Select the game you want to build a modlist for.</p>
 
-      <div class="games-grid" @staggerCards>
+      <div class="games-grid" @staggerChildren>
         @for (game of games(); track game.id) {
           <button
             class="game-card"

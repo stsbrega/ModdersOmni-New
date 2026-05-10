@@ -2,7 +2,7 @@ import { Component, EventEmitter, Output, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SpecParserService } from '../../../../core/services/spec-parser.service';
 import { HardwareSpecs, SpecsParseResponse, TierScores } from '../../../../shared/models/specs.model';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { fadeUp } from '../../../../core/motion/animations';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -31,14 +31,10 @@ import { UiTextareaComponent } from '../../../../shared/components/ui/textarea.c
       useValue: new LucideIconProvider({ ArrowLeft, ArrowRight }),
     },
   ],
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(8px)' }),
-        animate('350ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the inline
+  // fadeIn definition — Plan 3 Task 9 (Plan 2 Task 14 follow-up). The previous
+  // fadeIn was already a fadeUp-style 8px slide, so behavior matches.
+  animations: [fadeUp],
   template: `
     <div class="spec-input">
       <h2>{{ usingSavedHardware() ? 'Verify Your Hardware' : 'Enter Your Hardware' }}</h2>
@@ -58,7 +54,7 @@ import { UiTextareaComponent } from '../../../../shared/components/ui/textarea.c
         }
 
         @if (fullResponse()) {
-          <ui-card class="results-card" @fadeIn>
+          <ui-card class="results-card" @fadeUp>
             <div class="tier-row">
               <span class="tier-badge" [class]="'tier-' + (fullResponse()?.tier || 'unknown').toLowerCase()">
                 {{ formatTier(fullResponse()?.tier) }} tier
@@ -149,7 +145,7 @@ RAM: 32 GB DDR5"
         </div>
 
         @if (fullResponse() && !usingSavedHardware()) {
-          <ui-card class="results-card" @fadeIn>
+          <ui-card class="results-card" @fadeUp>
             <div class="tier-row">
               <span class="tier-badge" [class]="'tier-' + (fullResponse()?.tier || 'unknown').toLowerCase()">
                 {{ formatTier(fullResponse()?.tier) }} tier

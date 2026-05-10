@@ -1,6 +1,6 @@
 import { Component, computed, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { fadeUp } from '../../core/motion/animations';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -60,14 +60,10 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
       }),
     },
   ],
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('250ms ease-out', style({ opacity: 1 })),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the inline
+  // fadeIn definition — Plan 3 Task 9 (Plan 2 Task 14 follow-up). Templates
+  // now use @fadeUp; gains a small translateY(8px) slide on top of the fade.
+  animations: [fadeUp],
   template: `
     <div class="settings-page">
       <div class="settings-header">
@@ -92,7 +88,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
       <div class="tab-content">
         @switch (activeTab()) {
           @case ('keys') {
-            <div class="tab-panel" @fadeIn>
+            <div class="tab-panel" @fadeUp>
               <div class="panel-section">
                 <h3>AI Provider API Keys</h3>
                 <ui-card class="key-security-notice">
@@ -134,7 +130,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                   <ui-card
                     class="detection-feedback"
                     [class.warning]="detectionState()!.type !== 'exact'"
-                    @fadeIn
+                    @fadeUp
                   >
                     @if (detectionState()!.type === 'exact') {
                       <div class="detection-exact">
@@ -230,7 +226,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                   </div>
 
                   @if (ollamaStatus() === 'connected') {
-                    <ui-card class="detection-feedback" @fadeIn>
+                    <ui-card class="detection-feedback" @fadeUp>
                       <div class="detection-exact">
                         <lucide-icon name="check" [size]="14" [strokeWidth]="2.5"></lucide-icon>
                         Connected — {{ ollamaModels().length }} model(s) available
@@ -247,7 +243,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                     }
                   }
                   @if (ollamaStatus() === 'error') {
-                    <ui-card class="detection-feedback warning" @fadeIn>
+                    <ui-card class="detection-feedback warning" @fadeUp>
                       <div class="detection-warn">
                         <lucide-icon name="alert-circle" [size]="14" [strokeWidth]="2"></lucide-icon>
                         <span>{{ ollamaError() }}</span>
@@ -259,7 +255,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
             </div>
           }
           @case ('hardware') {
-            <div class="tab-panel" @fadeIn>
+            <div class="tab-panel" @fadeUp>
               <!-- Auto-Detect Section -->
               <div class="panel-section">
                 <h3>Auto-Detect</h3>
@@ -284,7 +280,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                   </button>
                 </div>
                 @if (showHelpGuide()) {
-                  <ui-card class="help-guide" @fadeIn>
+                  <ui-card class="help-guide" @fadeUp>
                     <div class="help-option">
                       <h4>Option 1: PowerShell Command</h4>
                       <p>Open PowerShell and run this command, then paste the output below:</p>
@@ -433,7 +429,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
             </div>
           }
           @case ('notifications') {
-            <div class="tab-panel" @fadeIn>
+            <div class="tab-panel" @fadeUp>
               <div class="notif-item">
                 <div class="notif-info">
                   <h3>Notify when generation finishes</h3>

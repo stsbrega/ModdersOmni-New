@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ModlistStore } from '../../core/services/modlist-store.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Modlist, ModEntry, SizeSummary } from '../../shared/models/mod.model';
-import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
+import { fadeUp, staggerChildren } from '../../core/motion/animations';
 import { SizeSummaryCardComponent } from './size-summary-card.component';
 import {
   LucideAngularModule,
@@ -54,24 +54,9 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       }),
     },
   ],
-  animations: [
-    trigger('fadeUp', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(12px)' }),
-        animate('350ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-    ]),
-    trigger('staggerMods', [
-      transition(':enter', [
-        query('.mod-card', [
-          style({ opacity: 0, transform: 'translateY(8px)' }),
-          stagger(40, [
-            animate('300ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
-          ]),
-        ], { optional: true }),
-      ]),
-    ]),
-  ],
+  // Centralized triggers from core/motion/animations.ts. Replaces the inline
+  // fadeUp + staggerMods definitions — Plan 3 Task 9 (Plan 2 Task 14 follow-up).
+  animations: [fadeUp, staggerChildren],
   template: `
     <div class="modlist-page">
       @if (loading()) {
@@ -137,7 +122,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
           <app-size-summary-card [summary]="s" />
         }
 
-        <div class="mod-list" @staggerMods>
+        <div class="mod-list" @staggerChildren>
           @for (entry of modlist()!.entries; track $index) {
             <div class="mod-card" [class.patch-card]="entry.is_patch">
               <div class="mod-order font-mono" [class.patch-order]="entry.is_patch">
