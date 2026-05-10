@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
@@ -9,11 +9,56 @@ import { Modlist } from '../../shared/models/mod.model';
 import { GenerationStatusResponse } from '../../shared/models/generation.model';
 import { InProgressBadgeComponent } from '../../shared/components/in-progress-badge/in-progress-badge.component';
 import { DatePipe } from '@angular/common';
+import {
+  LucideAngularModule,
+  LUCIDE_ICONS,
+  LucideIconProvider,
+  ArrowRight,
+  Box,
+  Folder,
+  Plus,
+  Tag,
+  Trash2,
+} from 'lucide-angular';
+// Direct primitive imports — same pattern Tasks 5-9 adopted to avoid pulling
+// in sibling primitives whose TS errors might surface via the barrel.
+import { UiButtonComponent } from '../../shared/components/ui/button.component';
+import { UiCardComponent } from '../../shared/components/ui/card.component';
+import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
+import { UiDialogComponent } from '../../shared/components/ui/dialog.component';
+import { DialogRef } from '@angular/cdk/dialog';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, InProgressBadgeComponent],
+  imports: [
+    RouterLink,
+    DatePipe,
+    InProgressBadgeComponent,
+    LucideAngularModule,
+    UiButtonComponent,
+    UiCardComponent,
+    UiBadgeComponent,
+  ],
+  // Provide UiDialogComponent as a service-like dependency. The wrapper does
+  // `inject(Dialog)` in its own constructor, so we never need to render it
+  // into the template; we just call `uiDialog.open(templateRef)` from code.
+  // This matches the usage example in dialog.component.ts's docstring.
+  providers: [
+    UiDialogComponent,
+    {
+      provide: LUCIDE_ICONS,
+      multi: true,
+      useValue: new LucideIconProvider({
+        ArrowRight,
+        Box,
+        Folder,
+        Plus,
+        Tag,
+        Trash2,
+      }),
+    },
+  ],
   animations: [
     trigger('fadeUp', [
       transition(':enter', [
@@ -46,15 +91,13 @@ import { DatePipe } from '@angular/common';
             }
             <p class="welcome-sub">Your generated modlists</p>
           </div>
-          <a routerLink="/setup" (click)="resetSetupWizard()" class="btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
+          <a ui-button variant="primary" size="sm" routerLink="/setup" (click)="resetSetupWizard()">
+            <lucide-icon name="plus" [size]="16" [strokeWidth]="2"></lucide-icon>
             New Build
           </a>
         </div>
 
+        <!-- Resume banner — custom shape (pulse + body + auto-margin label + arrow); resists ui-button. -->
         @if (activeGenerationId()) {
           <a [routerLink]="['/generate', activeGenerationId()]" class="resume-banner">
             <span class="resume-pulse"></span>
@@ -68,9 +111,7 @@ import { DatePipe } from '@angular/common';
               />
             }
             <strong>Continue watching</strong>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            <lucide-icon name="arrow-right" [size]="14" [strokeWidth]="2"></lucide-icon>
           </a>
         }
 
@@ -82,100 +123,90 @@ import { DatePipe } from '@angular/common';
         } @else if (modlists().length === 0) {
           <div class="empty-state" @fadeUp>
             <div class="empty-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-              </svg>
+              <lucide-icon name="box" [size]="32" [strokeWidth]="1.5"></lucide-icon>
             </div>
             <h2>No modlists yet</h2>
             <p>Generate your first AI-powered modlist by clicking New Build above.</p>
-            <a routerLink="/setup" (click)="resetSetupWizard()" class="btn-primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
+            <a ui-button variant="primary" size="md" routerLink="/setup" (click)="resetSetupWizard()">
+              <lucide-icon name="plus" [size]="16" [strokeWidth]="2"></lucide-icon>
               New Build
             </a>
           </div>
         } @else {
-          <!-- Stats -->
+          <!-- Stats — ui-card surfaces, font-mono on numeric stat values (data) -->
           <div class="stats-row" @staggerCards>
-            <div class="stat-card">
+            <ui-card class="stat-card">
               <div class="stat-icon stat-icon--gold">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-                  <rect x="9" y="3" width="6" height="4" rx="1"/>
-                </svg>
+                <lucide-icon name="folder" [size]="20" [strokeWidth]="1.5"></lucide-icon>
               </div>
-              <div class="stat-value">{{ modlists().length }}</div>
+              <div class="stat-value font-mono">{{ modlists().length }}</div>
               <div class="stat-label">Modlists Generated</div>
-            </div>
-            <div class="stat-card">
+            </ui-card>
+            <ui-card class="stat-card">
               <div class="stat-icon stat-icon--blue">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
-                  <line x1="7" y1="7" x2="7.01" y2="7"/>
-                </svg>
+                <lucide-icon name="tag" [size]="20" [strokeWidth]="1.5"></lucide-icon>
               </div>
-              <div class="stat-value">{{ totalMods() }}</div>
+              <div class="stat-value font-mono">{{ totalMods() }}</div>
               <div class="stat-label">Total Mods</div>
-            </div>
+            </ui-card>
           </div>
 
-          <!-- Modlist cards -->
+          <!-- Modlist preview cards — each card is a routerLink anchor, so we can't
+               use <ui-card> as the wrapper element (ui-card is a non-anchor block).
+               Inline anchor styling preserves clickability + hover micro-motion. -->
           <div class="modlist-grid" @staggerCards>
             @for (ml of modlists(); track ml.id) {
               <a [routerLink]="['/modlist', ml.id]" class="modlist-card">
                 <div class="card-top">
                   <div class="card-meta">
+                    <!-- Brand chips (game/provider) stay inline — not semantic status. -->
                     <span class="card-game">Game {{ ml.game_id }}</span>
                     @if (ml.llm_provider && ml.llm_provider !== 'fallback') {
                       <span class="card-provider">{{ ml.llm_provider }}</span>
                     }
+                    <!-- "Fallback" IS semantic warning state → ui-badge -->
                     @if (ml.used_fallback) {
-                      <span class="card-fallback">Fallback</span>
+                      <ui-badge variant="warning">Fallback</ui-badge>
                     }
                   </div>
                   <div class="card-actions">
+                    <!-- Inline trash button — 28×28 hover-reveal pattern that
+                         ui-button (h-8 = 32px, no group-hover opacity) can't match. -->
                     <button class="btn-delete" title="Delete modlist" (click)="confirmDelete($event, ml)">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                      </svg>
+                      <lucide-icon name="trash-2" [size]="14" [strokeWidth]="2"></lucide-icon>
                     </button>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="card-arrow">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
+                    <lucide-icon class="card-arrow" name="arrow-right" [size]="16" [strokeWidth]="2"></lucide-icon>
                   </div>
                 </div>
                 <div class="card-stats">
-                  <span class="card-mod-count">{{ coreModCount(ml) }} mods</span>
+                  <span class="card-mod-count font-mono">{{ coreModCount(ml) }} mods</span>
                   @if (patchModCount(ml) > 0) {
-                    <span class="card-patch-count">+ {{ patchModCount(ml) }} patches</span>
+                    <span class="card-patch-count font-mono">+ {{ patchModCount(ml) }} patches</span>
                   }
                 </div>
                 @if (ml.created_at) {
-                  <span class="card-date">{{ ml.created_at | date:'MMM d, y' }}</span>
+                  <span class="card-date text-muted font-mono">{{ ml.created_at | date:'MMM d, y' }}</span>
                 }
               </a>
             }
           </div>
-
-          <!-- Delete confirmation overlay -->
-          @if (deleteTarget()) {
-            <div class="confirm-overlay" (click)="cancelDelete()">
-              <div class="confirm-dialog" (click)="$event.stopPropagation()">
-                <h3>Delete modlist?</h3>
-                <p>This will permanently remove this modlist and its {{ deleteTarget()!.entries.length }} mods. This cannot be undone.</p>
-                <div class="confirm-actions">
-                  <button class="btn-cancel" (click)="cancelDelete()">Cancel</button>
-                  <button class="btn-confirm-delete" (click)="executeDelete()" [disabled]="deleting()">
-                    {{ deleting() ? 'Deleting...' : 'Delete' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          }
         }
+
+        <!-- Delete confirmation dialog template — opened via UiDialogComponent
+             wrapper (CDK Dialog under the hood: focus trap, Esc, backdrop click,
+             ARIA, focus restore all handled). -->
+        <ng-template #deleteDialogTpl>
+          <h3 class="dialog-title">Delete modlist?</h3>
+          <p class="dialog-body">
+            This will permanently remove this modlist and its {{ deleteTarget()?.entries?.length ?? 0 }} mods. This cannot be undone.
+          </p>
+          <div class="dialog-actions">
+            <button ui-button variant="secondary" size="sm" (click)="cancelDelete()">Cancel</button>
+            <button ui-button variant="destructive" size="sm" [disabled]="deleting()" (click)="executeDelete()">
+              {{ deleting() ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
+        </ng-template>
       </main>
     </div>
   `,
@@ -209,24 +240,6 @@ import { DatePipe } from '@angular/common';
       color: var(--color-text-muted);
       margin-top: 0.25rem;
     }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--color-gold);
-      color: #0D0D0F;
-      padding: 0.5rem 1.25rem;
-      border-radius: 8px;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      transition: background 0.2s, box-shadow 0.3s;
-    }
-    .btn-primary:hover {
-      background: var(--color-gold-hover);
-      box-shadow: var(--shadow-gold);
-      transform: translateY(-1px);
-    }
-    .btn-primary:active { transform: translateY(0); }
 
     /* Loading */
     .loading-state {
@@ -247,7 +260,7 @@ import { DatePipe } from '@angular/common';
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Resume banner */
+    /* Resume banner — custom layout, intentionally not ui-button */
     .resume-banner {
       display: flex;
       align-items: center;
@@ -311,7 +324,9 @@ import { DatePipe } from '@angular/common';
       margin-bottom: 1.5rem;
     }
 
-    /* Stats */
+    /* Stats — surface itself comes from <ui-card>; we only keep the inner
+       layout (icon + value + label) and override ui-card's default p-6 to a
+       tighter 1.25rem so the stat tiles read as compact data tiles. */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -319,10 +334,7 @@ import { DatePipe } from '@angular/common';
       margin-bottom: 2rem;
     }
     .stat-card {
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      padding: 1.25rem;
+      padding: 1.25rem !important;
       transition: border-color 0.25s, transform 0.25s var(--ease-out), box-shadow 0.25s;
     }
     .stat-card:hover {
@@ -384,6 +396,7 @@ import { DatePipe } from '@angular/common';
       display: flex;
       flex-wrap: wrap;
       gap: 0.375rem;
+      align-items: center;
     }
     .card-game {
       font-size: 0.6875rem;
@@ -400,14 +413,6 @@ import { DatePipe } from '@angular/common';
       border-radius: 100px;
       background: rgba(192, 160, 96, 0.12);
       color: var(--color-gold);
-    }
-    .card-fallback {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      padding: 0.1875rem 0.625rem;
-      border-radius: 100px;
-      background: rgba(234, 179, 8, 0.12);
-      color: var(--color-warning);
     }
     .card-actions {
       display: flex;
@@ -444,69 +449,25 @@ import { DatePipe } from '@angular/common';
       transform: translateX(2px);
     }
 
-    /* Confirm overlay */
-    .confirm-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .confirm-dialog {
-      background: var(--color-bg-card);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      max-width: 380px;
-      width: 90%;
-    }
-    .confirm-dialog h3 {
+    /* Confirm dialog content — the panel surface itself comes from
+       UiDialogComponent's host classes; we only style the inner content. */
+    .dialog-title {
       font-size: 1rem;
       font-weight: 600;
       margin-bottom: 0.5rem;
     }
-    .confirm-dialog p {
+    .dialog-body {
       font-size: 0.8125rem;
       color: var(--color-text-muted);
       line-height: 1.5;
       margin-bottom: 1.25rem;
     }
-    .confirm-actions {
+    .dialog-actions {
       display: flex;
       justify-content: flex-end;
       gap: 0.625rem;
     }
-    .btn-cancel {
-      padding: 0.4375rem 1rem;
-      border-radius: 6px;
-      border: 1px solid var(--color-border);
-      background: transparent;
-      color: var(--color-text-muted);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-cancel:hover {
-      border-color: var(--color-border-hover);
-      color: var(--color-text);
-    }
-    .btn-confirm-delete {
-      padding: 0.4375rem 1rem;
-      border-radius: 6px;
-      border: none;
-      background: #ef4444;
-      color: #fff;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, opacity 0.15s;
-    }
-    .btn-confirm-delete:hover { background: #dc2626; }
-    .btn-confirm-delete:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .card-stats {
       display: flex;
       align-items: baseline;
@@ -525,6 +486,9 @@ import { DatePipe } from '@angular/common';
       font-size: 0.75rem;
       color: var(--color-text-dim);
     }
+    /* text-muted helper — matches Tailwind token used elsewhere; mapped to
+       our existing CSS-var muted color so visuals don't shift. */
+    .text-muted { color: var(--color-text-muted); }
 
     @media (max-width: 640px) {
       .stats-row { grid-template-columns: 1fr; }
@@ -541,6 +505,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activeStatus = signal<GenerationStatusResponse | null>(null);
 
   private pollSub: Subscription | null = null;
+
+  /** Reference to the delete-confirmation template, opened in a CDK Dialog. */
+  @ViewChild('deleteDialogTpl', { static: true }) deleteDialogTpl!: TemplateRef<unknown>;
+  private deleteDialogRef: DialogRef<unknown> | null = null;
+
+  /** Locally-provided UiDialogComponent — used as a service to call .open(). */
+  private uiDialog = inject(UiDialogComponent);
 
   totalMods = computed(() =>
     this.modlists().reduce((sum, ml) => sum + ml.entries.length, 0)
@@ -589,6 +560,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pollSub?.unsubscribe();
+    this.deleteDialogRef?.close();
   }
 
   /**
@@ -645,10 +617,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.deleteTarget.set(ml);
+    // Open the CDK-backed dialog. backdrop click + Esc close handled by CDK;
+    // we route both back through cancelDelete() so signal state stays clean.
+    this.deleteDialogRef = this.uiDialog.open(this.deleteDialogTpl);
+    this.deleteDialogRef.closed.subscribe(() => {
+      // If the user dismissed via Esc/backdrop, executeDelete() never ran —
+      // make sure the target signal is cleared so a future click reopens fresh.
+      if (this.deleteTarget() !== null && !this.deleting()) {
+        this.deleteTarget.set(null);
+      }
+      this.deleteDialogRef = null;
+    });
   }
 
   cancelDelete(): void {
     this.deleteTarget.set(null);
+    this.deleteDialogRef?.close();
   }
 
   executeDelete(): void {
@@ -661,6 +645,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.modlists.update(list => list.filter(ml => ml.id !== target.id));
         this.deleteTarget.set(null);
         this.deleting.set(false);
+        this.deleteDialogRef?.close();
       },
       error: () => {
         this.deleting.set(false);
