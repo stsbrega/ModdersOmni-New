@@ -22,7 +22,11 @@ jobs:
           args: --verbose
         env:
           OUTPUT: CHANGELOG.md
-          GITHUB_REPO: ${{ github.repository }}
+          # GITHUB_REPO intentionally unset — when present, orhun action
+          # auto-configures [remote.github] in cliff.toml, which makes
+          # git-cliff fetch PR metadata via the GitHub API and fail with
+          # 403 (token isn't reliably forwarded). Without the env var,
+          # the action skips the metadata fetch entirely.
 
       - name: Commit changelog
         run: |
