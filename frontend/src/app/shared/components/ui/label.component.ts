@@ -7,17 +7,19 @@
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-const LABEL_CLASSES =
-  'inline-block text-sm font-medium text-text mb-1 ' +
-  'select-none cursor-pointer';
-
 @Component({
   selector: 'label[ui-label]',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: '<ng-content/>',
-  host: {
-    class: LABEL_CLASSES,
-  },
+  styles: [`
+    :host {
+      display: inline-block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      letter-spacing: -0.005em;
+    }
+  `],
 })
 export class UiLabelComponent {}
