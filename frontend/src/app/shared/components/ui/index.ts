@@ -19,3 +19,4 @@ export {
 export { UiBadgeComponent } from './badge.component';
 export { UiSeparatorComponent } from './separator.component';
 export { UiLabelComponent } from './label.component';
+export { UiPhaseCounterComponent } from './phase-counter.component';
