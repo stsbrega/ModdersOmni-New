@@ -36,6 +36,10 @@ tmp/
 *.css.map
 *.js.map
 
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
+
 # IDE
 .idea/
 .vscode/
