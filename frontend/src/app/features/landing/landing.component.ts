@@ -17,7 +17,7 @@ import {
   Folder,
   Tag,
 } from 'lucide-angular';
-import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
+import { BrandMarkComponent } from '../../shared/components/brand-mark/brand-mark.component';
 // Import primitives directly (not via the shared/components/ui barrel) so we
 // don't drag in sibling primitives for type-checking. dialog.component.ts and
 // select.component.ts have unrelated TS errors carried over from Task 4 that
@@ -29,7 +29,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [RouterLink, BrandLogoComponent, LucideAngularModule, UiButtonComponent, UiCardComponent],
+  imports: [RouterLink, BrandMarkComponent, LucideAngularModule, UiButtonComponent, UiCardComponent],
   providers: [
     {
       provide: LUCIDE_ICONS,
@@ -57,7 +57,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     <nav class="navbar" [class.scrolled]="scrolled()">
       <div class="nav-container">
         <a routerLink="/" class="nav-logo">
-          <app-brand-logo></app-brand-logo>
+          <app-brand-mark></app-brand-mark>
         </a>
         <div class="nav-links">
           <a href="#features" class="nav-link" (click)="scrollTo($event, 'features')">Features</a>
@@ -315,7 +315,7 @@ import { UiCardComponent } from '../../shared/components/ui/card.component';
     <footer class="footer">
       <div class="footer-container">
         <div class="footer-brand">
-          <app-brand-logo></app-brand-logo>
+          <app-brand-mark></app-brand-mark>
         </div>
         <div class="footer-links">
           <a routerLink="/dashboard">Dashboard</a>

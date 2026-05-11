@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { BrandLogoComponent } from '../brand-logo/brand-logo.component';
+import { BrandMarkComponent } from '../brand-mark/brand-mark.component';
 import {
   MobileNavDrawerComponent,
   MobileNavLink,
@@ -12,14 +12,14 @@ import {
   imports: [
     RouterLink,
     RouterLinkActive,
-    BrandLogoComponent,
+    BrandMarkComponent,
     MobileNavDrawerComponent,
   ],
   template: `
     <header class="header">
       <div class="header-content">
         <a routerLink="/" class="logo">
-          <app-brand-logo></app-brand-logo>
+          <app-brand-mark></app-brand-mark>
         </a>
         <nav class="nav">
           <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
