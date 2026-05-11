@@ -5,17 +5,16 @@
 // Same trick as UiButtonComponent: keep the real <input> element so that
 // Angular forms (FormControl, ngModel), validation, autofill, and ARIA
 // labelling all flow through unchanged. We only own the visual layer.
+//
+// Styling uses raw CSS custom properties (var(--color-*)) instead of Tailwind
+// utility classes. The Angular 19 esbuild pipeline does NOT run Tailwind's
+// PostCSS plugin, so utility classes that depend on @theme tokens do not
+// resolve in the browser.
+//
+// Because this component uses an attribute selector on the native <input>,
+// :host IS the input element — there is no inner element to style.
 
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-
-const INPUT_CLASSES =
-  'block w-full bg-surface-1 border border-border rounded-md ' +
-  'px-3 py-2 text-base text-text placeholder:text-text-muted ' +
-  'transition-colors ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ' +
-  'focus-visible:border-accent ' +
-  'disabled:opacity-50 disabled:cursor-not-allowed ' +
-  'h-10';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 @Component({
   selector: 'input[ui-input]',
@@ -23,7 +22,50 @@ const INPUT_CLASSES =
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: '',
   host: {
-    class: INPUT_CLASSES,
+    '[class.ui-input--mono]': 'mono()',
   },
+  styles: [`
+    /* ── Base layout & surface ── */
+    :host {
+      display: inline-flex;
+      align-items: center;
+      width: 100%;
+      background: var(--color-surface-1);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9375rem;
+      font-family: inherit;
+      color: var(--color-text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    /* ── Focus state ── */
+    :host(:focus) {
+      border-color: var(--color-accent);
+    }
+
+    /* ── Placeholder ── */
+    :host::placeholder {
+      color: var(--color-text-dim);
+    }
+
+    /* ── Disabled state ── */
+    :host(:disabled) {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ── Mono variant: API keys, file paths, technical strings ── */
+    :host(.ui-input--mono) {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      letter-spacing: 0;
+    }
+  `],
 })
-export class UiInputComponent {}
+export class UiInputComponent {
+  /** When true, switches the field to the mono font (JetBrains Mono). */
+  mono = input<boolean>(false);
+}
