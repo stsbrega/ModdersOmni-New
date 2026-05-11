@@ -36,4 +36,21 @@ describe('GenerationModlistComponent', () => {
     expect(card.textContent).toContain('A Quality World Map');
     expect(card.textContent).toMatch(/1\.5\s*MB/i);
   });
+
+  it('renders patches in a separate section below mods', () => {
+    fixture.componentRef.setInput('mods', [
+      { mod_id: 1, name: 'USSEP', file_size: 12_000_000 },
+    ]);
+    fixture.componentRef.setInput('patches', [
+      { patch_id: 'p1', name: 'USSEP × SkyUI compatibility patch' },
+    ]);
+    fixture.detectChanges();
+    const cards = fixture.nativeElement.querySelectorAll('.gen-modlist__card');
+    expect(cards.length).toBe(2);
+    const patchCard = fixture.nativeElement.querySelector('.gen-modlist__card--patch');
+    expect(patchCard).toBeTruthy();
+    expect(patchCard.textContent).toContain('USSEP × SkyUI');
+    const sectionLabel = fixture.nativeElement.querySelector('.gen-modlist__section-label');
+    expect(sectionLabel.textContent.toLowerCase()).toContain('patches');
+  });
 });

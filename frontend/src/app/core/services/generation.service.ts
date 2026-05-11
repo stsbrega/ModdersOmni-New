@@ -43,6 +43,8 @@ export class GenerationService {
   readonly modlistId = signal<string | null>(null);
   readonly runningSize = signal<number>(0);
   readonly runningCount = signal<number>(0);
+  /** Game slug for the active generation run (e.g. 'skyrim', 'fallout4'). */
+  readonly gameSlug = signal<string>('skyrim');
 
   // ── Derived state ──
   readonly currentPhase = computed<PhaseStartEvent | null>(() => {
@@ -99,6 +101,7 @@ export class GenerationService {
    */
   async start(args: PipelineStartArgs): Promise<StoredSession> {
     this.reset();
+    this.gameSlug.set(args.game.slug ?? 'skyrim');
     this.status.set('running');
     // Use a synthetic id while the pipeline assigns its own session id
     // internally; we update generationId() to the real one as soon as the
@@ -187,5 +190,6 @@ export class GenerationService {
     this.modlistId.set(null);
     this.runningSize.set(0);
     this.runningCount.set(0);
+    this.gameSlug.set('skyrim');
   }
 }

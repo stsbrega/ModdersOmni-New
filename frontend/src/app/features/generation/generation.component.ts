@@ -25,6 +25,7 @@ import {
   GenerationControlsComponent,
   type GenerationStatus,
 } from './components';
+import { type ModlistPatch } from './components/generation-modlist.component';
 
 @Component({
   selector: 'app-generation',
@@ -64,7 +65,10 @@ import {
             <app-generation-log [events]="gen.events()"></app-generation-log>
           </section>
           <aside class="gen-grid__modlist">
-            <app-generation-modlist [mods]="gen.modsAdded()"></app-generation-modlist>
+            <app-generation-modlist
+              [mods]="gen.modsAdded()"
+              [patches]="patchesForModlist()"
+            ></app-generation-modlist>
           </aside>
         </main>
 
@@ -398,20 +402,11 @@ export class GenerationComponent implements OnInit {
   );
 
   /**
-   * Derive game slug from the first phase_start event's payload (or fall back
-   * to the providers_ready event). GenerationService has no standalone game
-   * signal — the game is embedded in pipeline phase data.
+   * Game slug for the active generation run.
+   * GenerationService.gameSlug is set at the start of each run from
+   * PipelineStartArgs.game.slug, so Fallout 4 users see the right label.
    */
-  protected readonly gameSlug = computed(() => {
-    const events = this.gen.events();
-    for (const evt of events) {
-      if (evt.type === 'phase_start' && (evt as any).game) {
-        return (evt as any).game as string;
-      }
-    }
-    // Fallback: derive from providers_ready free_tier hint or default to skyrim.
-    return 'skyrim';
-  });
+  protected readonly gameSlug = computed(() => this.gen.gameSlug());
 
   /**
    * Active provider label derived from the most recent phase_start event's
@@ -455,6 +450,11 @@ export class GenerationComponent implements OnInit {
       | undefined;
     return ready?.count === 0 && ready?.free_tier === true && this.gen.modsAdded().length === 0;
   });
+
+  /** Maps patch_added events to the shape expected by GenerationModlistComponent. */
+  protected readonly patchesForModlist = computed<ModlistPatch[]>(() =>
+    this.gen.patchesAdded().map(p => ({ patch_id: p.mod_id, name: p.name }))
+  );
 
   // ── Not-found: set imperatively in ngOnInit (signal, not computed) ──
   generationNotFound = signal(false);

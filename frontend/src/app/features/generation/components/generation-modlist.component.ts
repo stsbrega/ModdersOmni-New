@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { UiCardComponent } from '../../../shared/components/ui';
 
 // Loose mod shape — accepts whatever GenerationService.modsAdded() emits.
 // Matches the public fields used by the v2 timeline so the parent doesn't
@@ -11,13 +10,18 @@ export interface ModlistItem {
   patches?: number;
 }
 
+export interface ModlistPatch {
+  patch_id?: number | string;
+  name: string;
+}
+
 @Component({
   selector: 'app-generation-modlist',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiCardComponent],
+  imports: [],
   template: `
-    @if (mods().length === 0) {
+    @if (mods().length === 0 && patches().length === 0) {
       <div class="gen-modlist__empty">
         <span class="gen-modlist__empty-text">no mods added yet</span>
       </div>
@@ -35,6 +39,19 @@ export interface ModlistItem {
           </li>
         }
       </ul>
+
+      @if (patches().length > 0) {
+        <div class="gen-modlist__section-header">
+          <span class="gen-modlist__section-label">patches</span>
+        </div>
+        <ul class="gen-modlist__list">
+          @for (patch of patches(); track patch.patch_id ?? patch.name; let i = $index) {
+            <li class="gen-modlist__card gen-modlist__card--patch">
+              <span class="gen-modlist__name">{{ patch.name }}</span>
+            </li>
+          }
+        </ul>
+      }
     }
   `,
   styles: [`
@@ -83,10 +100,28 @@ export interface ModlistItem {
     .gen-modlist__patches {
       color: var(--color-accent);
     }
+    .gen-modlist__section-header {
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--color-border);
+    }
+    .gen-modlist__section-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--color-accent);
+      text-transform: uppercase;
+    }
+    .gen-modlist__card--patch {
+      border-color: color-mix(in oklch, var(--color-accent) 25%, var(--color-border));
+    }
   `],
 })
 export class GenerationModlistComponent {
   mods = input.required<ModlistItem[]>();
+  patches = input<ModlistPatch[]>([]);
 
   formatSize(bytes: number | undefined): string {
     if (!bytes || bytes <= 0) return '—';
