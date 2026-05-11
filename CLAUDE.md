@@ -12,7 +12,7 @@ ModdersOmni is an AI-powered game modding assistant. Users describe their hardwa
 - `frontend/` — Angular 19 SPA (the entire app)
 - `plugins/mo2/moddersomni_import.py` — Mod Organizer 2 plugin (imports a generated modlist JSON; no network call)
 - `docs/superpowers/{plans,specs}/` — feature planning/spec docs
-- `.github/workflows/` — CI (`ci.yml`), Cloudflare Pages deploy (`deploy.yml`), auto-changelog (`changelog.yml`), Claude bots (`claude.yml`, `claude-code-review.yml`)
+- `.github/workflows/` — CI (`ci.yml`), Cloudflare Pages deploy (`deploy.yml`), auto-changelog (`changelog.yml`)
 - `cliff.toml` — git-cliff config for auto-generated CHANGELOG
 
 ## Common Commands
@@ -111,8 +111,6 @@ Workflows in `.github/workflows/`:
 - `ci.yml` — frontend only: `npm ci`, `npx ng test --watch=false --browsers=ChromeHeadless`, `npx ng build --configuration=production`. `ng lint` is soft. No Postgres, no Python, no service containers.
 - `deploy.yml` — on push to `main`: build the production bundle and deploy `frontend/dist/frontend/browser` to Cloudflare Pages via `cloudflare/wrangler-action@v3` (project `moddersomni`).
 - `changelog.yml` — `git-cliff` auto-generates `CHANGELOG.md` on push to main
-- `claude-code-review.yml` — Claude reviews PRs automatically
-- `claude.yml` — Claude responds to `@claude` mentions in comments/reviews
 
 Hard-fail: `ng test`, `ng build --configuration=production`, deploy.
 Soft: `ng lint`.
