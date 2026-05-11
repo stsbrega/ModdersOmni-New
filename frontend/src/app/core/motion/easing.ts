@@ -1,6 +1,6 @@
 // frontend/src/app/core/motion/easing.ts
 //
-// Named easing constants. Mirror the CSS variables in tokens.scss so
+// Named easing constants. Mirror the CSS variables in theme.css so
 // Angular animations + CSS transitions stay in sync.
 export const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
 export const EASE_IN_OUT = 'cubic-bezier(0.65, 0, 0.35, 1)';
