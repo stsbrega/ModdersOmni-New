@@ -93,7 +93,8 @@ JSON shape (see `core/services/install-guide.service.ts`):
 - **LLM API keys live in `localStorage`** via `SettingsStore` (`core/services/settings-store.service.ts`). Three UI entry points (Settings, Setup wizard, Generation pause form) all read/write through the same store — never bypass it with direct `localStorage` calls.
 - **Stale dev server**: After modifying frontend files, if behavior seems stale: `rm -rf frontend/.angular/cache` and restart.
 - **Google Fonts syntax**: Use simple weight syntax (`wght@300;400;500;600;700`), NOT variable font axis syntax — variable syntax causes 400 errors during Angular font inlining.
-- **Fonts**: DM Sans (body) + Playfair Display (headings).
+- **Fonts**: Inter (body + headings) + JetBrains Mono (technical strings only).
+- **Mono usage rule (codified)**: `JetBrains Mono` is reserved for content that is *technically* monospaced — code, file paths, mod/version IDs, log output, keyboard shortcuts, phase counters (e.g. `PHASE 03/13`), and the brand wordmark in lockup. Body copy and headings stay in Inter regardless of how "techy" the surrounding section feels. This keeps mono meaningful — when it appears, the reader knows the content is literal/copyable.
 
 ## Versioning Rules
 
