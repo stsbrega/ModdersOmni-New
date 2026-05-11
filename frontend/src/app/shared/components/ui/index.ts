@@ -19,4 +19,6 @@ export {
 export { UiBadgeComponent } from './badge.component';
 export { UiSeparatorComponent } from './separator.component';
 export { UiLabelComponent } from './label.component';
+export { UiTerminalLogComponent, type TerminalLogEntry, type TerminalLogLevel } from './terminal-log.component';
 export { UiPhaseCounterComponent } from './phase-counter.component';
+export { UiKbdComponent } from './kbd.component';
