@@ -11,7 +11,7 @@
 //   open() { this.uiDialog.open(this.myTemplateRef); }
 //
 // Or — if you don't need a wrapper element — inject the CDK `Dialog` directly
-// and pass `panelClass: 'ui-dialog-panel'`. This component exists primarily
+// and pass `panelClass: 'ui-dialog__panel'`. This component exists primarily
 // to give consumers a single named import alongside the other primitives.
 
 import {
@@ -19,25 +19,43 @@ import {
   Component,
   inject,
   TemplateRef,
+  ViewEncapsulation,
 } from '@angular/core';
 import { Dialog, DialogConfig, DialogRef } from '@angular/cdk/dialog';
 import { ComponentType } from '@angular/cdk/portal';
-
-/** Shared panel classes — kept in sync with the `host.class` on this component. */
-const PANEL_CLASSES =
-  'block bg-surface-1 border border-border rounded-md shadow-lg p-6 max-w-md text-text';
-
-/** Backdrop class — translucent bg, tied to our token. */
-const BACKDROP_CLASSES = 'bg-bg/80';
 
 @Component({
   selector: 'ui-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // ViewEncapsulation.None is required because the panel and backdrop are
+  // rendered by CDK into a .cdk-overlay-container element that lives outside
+  // this component's host. Emulated encapsulation would scope the _ngcontent
+  // attribute only to the host's descendants, leaving the overlay unstyled.
+  // All class names are namespaced with `ui-dialog__` to avoid collisions.
+  encapsulation: ViewEncapsulation.None,
   template: '<ng-content/>',
-  host: {
-    class: PANEL_CLASSES,
-  },
+  styles: [`
+    /* ── Overlay backdrop ── */
+    .ui-dialog__backdrop {
+      position: fixed;
+      inset: 0;
+      background: oklch(0 0 0 / 0.6);
+      backdrop-filter: blur(2px);
+    }
+
+    /* ── Dialog panel ── */
+    .ui-dialog__panel {
+      background: var(--color-surface-1);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 1.5rem;
+      max-width: 28rem;
+      width: 100%;
+      color: var(--color-text);
+    }
+  `],
 })
 export class UiDialogComponent {
   private readonly dialog = inject(Dialog);
@@ -56,8 +74,8 @@ export class UiDialogComponent {
   ): DialogRef<R, C> {
     return this.dialog.open<R, D, C>(template, {
       hasBackdrop: true,
-      backdropClass: BACKDROP_CLASSES,
-      panelClass: PANEL_CLASSES,
+      backdropClass: 'ui-dialog__backdrop',
+      panelClass: 'ui-dialog__panel',
       ...config,
     });
   }

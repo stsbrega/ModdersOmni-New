@@ -18,13 +18,7 @@ import {
   Tag,
 } from 'lucide-angular';
 import { BrandMarkComponent } from '../../shared/components/brand-mark/brand-mark.component';
-// Import primitives directly (not via the shared/components/ui barrel) so we
-// don't drag in sibling primitives for type-checking. dialog.component.ts has
-// an unrelated TS error carried over from Task 4 that would otherwise break
-// this feature's production build. Switch to the barrel import once that is
-// resolved (tracked in Task 13). select.component.ts is now fixed.
-import { UiButtonComponent } from '../../shared/components/ui/button.component';
-import { UiCardComponent } from '../../shared/components/ui/card.component';
+import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
 
 @Component({
   selector: 'app-landing',
