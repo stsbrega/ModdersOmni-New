@@ -26,27 +26,27 @@ describe('UiButtonComponent', () => {
     expect(component.type).toBe('button');
   });
 
-  it('applies primary classes when variant=primary', () => {
+  it('applies primary marker class when variant=primary', () => {
     component.variant = 'primary';
     fixture.detectChanges();
     const cls = (fixture.nativeElement as HTMLElement).className;
-    expect(cls).toContain('bg-accent');
+    expect(cls).toContain('btn-primary');
   });
 
-  it('applies destructive classes when variant=destructive', () => {
+  it('applies destructive marker class when variant=destructive', () => {
     component.variant = 'destructive';
     fixture.detectChanges();
     const cls = (fixture.nativeElement as HTMLElement).className;
-    expect(cls).toContain('bg-danger');
+    expect(cls).toContain('btn-destructive');
   });
 
-  it('reflects size to height class (sm→h-8, lg→h-12)', () => {
+  it('reflects size to marker class (sm→btn-sm, lg→btn-lg)', () => {
     component.size = 'sm';
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).className).toContain('h-8');
+    expect((fixture.nativeElement as HTMLElement).className).toContain('btn-sm');
 
     component.size = 'lg';
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).className).toContain('h-12');
+    expect((fixture.nativeElement as HTMLElement).className).toContain('btn-lg');
   });
 });
