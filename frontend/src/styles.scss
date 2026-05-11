@@ -99,7 +99,7 @@ input, select, textarea { font-family: inherit; }
 
 @keyframes border-glow {
   0%, 100% { border-color: var(--color-border); }
-  50% { border-color: var(--color-accent-muted); }
+  50% { border-color: var(--color-accent-soft); }
 }
 
 @keyframes spin {
