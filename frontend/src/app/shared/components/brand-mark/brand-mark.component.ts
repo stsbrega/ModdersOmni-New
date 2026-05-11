@@ -77,7 +77,7 @@ const BRAND_MARK_SIZES: Record<BrandMarkSize, { icon: string; gap: string; text:
   `],
 })
 export class BrandMarkComponent {
-  size = input<BrandMarkSize>('md');
+  size = input<BrandMarkSize>('sm');
   showText = input<boolean>(true);
 
   iconSize = computed(() => BRAND_MARK_SIZES[this.size()].icon);
