@@ -237,7 +237,7 @@ interface CompatibilityResult {
       margin-bottom: 2rem;
 
       h1 {
-        font-family: 'Playfair Display', serif;
+        font-family: var(--font-display);
         font-size: 2rem;
         font-weight: 700;
         color: var(--text-primary);
@@ -324,7 +324,7 @@ interface CompatibilityResult {
       margin-bottom: 1.25rem;
 
       h2 {
-        font-family: 'Playfair Display', serif;
+        font-family: var(--font-display);
         font-size: 1.35rem;
         font-weight: 600;
         color: var(--text-primary);

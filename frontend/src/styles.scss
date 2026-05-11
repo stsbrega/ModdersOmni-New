@@ -1,9 +1,18 @@
-/* ===== Design System — v2 OKLCH tokens ===== */
-//
-// Design tokens live in styles/tokens.scss. The @theme block is the
-// single source of truth and feeds Tailwind 4. This file owns the global
-// reset, body styles, keyframes, and accessibility helpers.
-@use 'styles/tokens.scss';
+/* ===== Design System — v3 Pip-Tek tokens =====
+ *
+ * Design tokens live in styles/theme.css (a Tailwind 4 @theme block).
+ * This file owns the global reset, body styles, keyframes, and accessibility
+ * helpers. Layout helpers below are plain CSS custom properties that don't
+ * belong inside @theme.
+ */
+
+:root {
+  --max-width: 1200px;
+  --header-height: 64px;
+
+  /* Subtle grain texture overlay (used by body::after) */
+  --grain-url: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 
 /* ===== Global Resets ===== */
 *, *::before, *::after {
@@ -90,7 +99,7 @@ input, select, textarea { font-family: inherit; }
 
 @keyframes border-glow {
   0%, 100% { border-color: var(--color-border); }
-  50% { border-color: var(--color-accent-muted); }
+  50% { border-color: var(--color-accent-soft); }
 }
 
 @keyframes spin {

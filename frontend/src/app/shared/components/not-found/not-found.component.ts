@@ -29,7 +29,7 @@ import { RouterLink } from '@angular/router';
       margin: 0 auto;
     }
     h1 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-display);
       font-size: clamp(4rem, 12vw, 6.5rem);
       font-weight: 700;
       margin: 0;

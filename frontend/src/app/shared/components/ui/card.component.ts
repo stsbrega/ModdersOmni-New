@@ -2,9 +2,10 @@
 //
 // UiCardComponent — generic surface container with content projection.
 //
-// Element selector (<ui-card>) because there's no native equivalent that
-// gives us "elevated surface with border + radius + shadow." Sharp tactile
-// edges per spec Decision 9.e — radius-md, hairline border, low-blur shadow.
+// Styling is applied directly via a :host rule using CSS custom properties
+// (var(--color-*)) so it works without Tailwind's preprocessor. The build
+// pipeline does not run Tailwind, so utility-class strings in host.class
+// produce no styles — this approach avoids that silent failure.
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
@@ -13,9 +14,24 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: '<ng-content/>',
-  host: {
-    class:
-      'block bg-surface-1 border border-border rounded-md shadow-sm p-6 text-text',
-  },
+  styles: [
+    `
+      :host {
+        display: block;
+        background: var(--color-surface-1);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        transition: border-color 0.2s var(--ease-out);
+      }
+      :host(:hover) {
+        border-color: color-mix(
+          in oklch,
+          var(--color-accent-soft) 60%,
+          var(--color-border)
+        );
+      }
+    `,
+  ],
 })
 export class UiCardComponent {}

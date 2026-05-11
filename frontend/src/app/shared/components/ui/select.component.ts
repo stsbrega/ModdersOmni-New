@@ -33,6 +33,7 @@ import {
   ViewChild,
   ViewChildren,
   ViewContainerRef,
+  ViewEncapsulation,
 } from '@angular/core';
 import {
   Overlay,
@@ -61,10 +62,10 @@ export interface UiSelectOption<T = unknown> {
  * `disabled`.
  *
  * The two style methods are intentional no-ops: the active visual state is
- * driven by a `[class.bg-surface-2]="i === keyManager?.activeItemIndex"`
+ * driven by a `[class.ui-select__option--active]="i === keyManager?.activeItemIndex"`
  * binding on the <li> in the template. That binding stays reactive whether
  * the active item changes via mouse, keyboard, or typeahead, and it keeps
- * the styling story declarative (Tailwind classes in the template) instead
+ * the styling story declarative (CSS token classes in the template) instead
  * of imperative DOM mutations here.
  */
 class SelectOptionRef implements Highlightable, FocusableOption {
@@ -94,6 +95,12 @@ class SelectOptionRef implements Highlightable, FocusableOption {
   selector: 'ui-select',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // ViewEncapsulation.None is required because the dropdown panel is
+  // rendered into a CDK overlay container (outside this component's host
+  // element). Emulated encapsulation would scope the _ngcontent attribute
+  // only to elements inside the host, leaving the overlay panel unstyled.
+  // All class names use the `ui-select__` BEM namespace to avoid collisions.
+  encapsulation: ViewEncapsulation.None,
   template: `
     <button
       #trigger
@@ -106,24 +113,20 @@ class SelectOptionRef implements Highlightable, FocusableOption {
       (click)="toggle()"
       (keydown.arrowDown)="open(); $event.preventDefault()"
       (keydown.enter)="toggle(); $event.preventDefault()"
-      class="inline-flex h-10 w-full items-center justify-between gap-2 rounded-md
-             border border-border bg-surface-1 px-3 py-2 text-base text-text
-             transition-colors focus-visible:outline-none focus-visible:ring-2
-             focus-visible:ring-accent focus-visible:border-accent
-             disabled:opacity-50 disabled:cursor-not-allowed"
+      class="ui-select__trigger"
+      [class.ui-select__trigger--disabled]="disabled"
     >
-      <span [class.text-text-muted]="!selectedOption">
+      <span class="ui-select__value" [class.ui-select__value--placeholder]="!selectedOption">
         {{ selectedOption?.label || placeholder }}
       </span>
-      <span class="ml-2 opacity-70" aria-hidden="true">▾</span>
+      <span class="ui-select__chevron" aria-hidden="true">▾</span>
     </button>
 
     <ng-template #panel>
       <ul
         [id]="listboxId"
         role="listbox"
-        class="min-w-[12rem] max-h-72 overflow-y-auto rounded-md border
-               border-border bg-surface-1 py-1 shadow-lg text-text"
+        class="ui-select__panel"
       >
         @for (option of options; track option.value; let i = $index) {
           <li
@@ -134,10 +137,10 @@ class SelectOptionRef implements Highlightable, FocusableOption {
             [id]="listboxId + '-opt-' + i"
             (click)="select(option)"
             (mouseenter)="setActive(i)"
-            class="cursor-pointer px-3 py-2 text-sm transition-colors
-                   hover:bg-surface-2 aria-selected:bg-accent aria-selected:text-bg
-                   aria-disabled:opacity-50 aria-disabled:pointer-events-none"
-            [class.bg-surface-2]="i === keyManager?.activeItemIndex"
+            class="ui-select__option"
+            [class.ui-select__option--active]="i === keyManager?.activeItemIndex"
+            [class.ui-select__option--selected]="option.value === value"
+            [class.ui-select__option--disabled]="option.disabled"
           >
             {{ option.label }}
           </li>
@@ -145,6 +148,91 @@ class SelectOptionRef implements Highlightable, FocusableOption {
       </ul>
     </ng-template>
   `,
+  styles: [`
+    /* ── Host element layout ── */
+    ui-select {
+      display: block;
+      width: 100%;
+    }
+
+    /* ── Trigger button — matches UiInput: surface-1, border, radius-md, 0.5rem 0.75rem ── */
+    .ui-select__trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      width: 100%;
+      background: var(--color-surface-1);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9375rem;
+      font-family: inherit;
+      color: var(--color-text);
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .ui-select__trigger:focus-visible {
+      border-color: var(--color-accent);
+    }
+
+    .ui-select__trigger--disabled,
+    .ui-select__trigger:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ── Value / placeholder text ── */
+    .ui-select__value--placeholder {
+      color: var(--color-text-dim);
+    }
+
+    /* ── Chevron icon ── */
+    .ui-select__chevron {
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+
+    /* ── Dropdown panel (CDK overlay — outside host, global scope applies) ── */
+    .ui-select__panel {
+      min-width: 12rem;
+      max-height: 18rem;
+      overflow-y: auto;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 0.25rem 0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      color: var(--color-text);
+    }
+
+    /* ── Dropdown items ── */
+    .ui-select__option {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.1s;
+      list-style: none;
+    }
+
+    .ui-select__option:hover,
+    .ui-select__option--active {
+      background: var(--color-surface-1);
+    }
+
+    .ui-select__option--selected {
+      color: var(--color-accent);
+    }
+
+    .ui-select__option--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  `],
 })
 export class UiSelectComponent
   implements AfterViewInit, OnDestroy
