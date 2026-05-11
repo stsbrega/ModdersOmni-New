@@ -57,6 +57,7 @@ tmp/
 memory/
 .playwright-mcp/
 .worktrees/
+.superpowers/
 
 # Linting cache
 .ruff_cache/
