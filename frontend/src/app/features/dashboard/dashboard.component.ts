@@ -100,15 +100,13 @@ import { DialogRef } from '@angular/cdk/dialog';
             <p>Loading your modlists...</p>
           </div>
         } @else if (modlists().length === 0) {
-          <div class="empty-state" @fadeUp>
-            <div class="empty-icon">
-              <lucide-icon name="box" [size]="32" [strokeWidth]="1.5"></lucide-icon>
-            </div>
-            <h2>No modlists yet</h2>
-            <p>Generate your first AI-powered modlist by clicking New Build above.</p>
+          <div class="dashboard__empty">
+            <pre class="dashboard__empty-ascii">{{ asciiPlaceholder }}</pre>
+            <h2 class="dashboard__empty-title">No modlists yet.</h2>
+            <p class="dashboard__empty-sub">Start a new build from the setup wizard.</p>
             <a ui-button variant="primary" size="md" routerLink="/setup" (click)="resetSetupWizard()">
-              <lucide-icon name="plus" [size]="16" [strokeWidth]="2"></lucide-icon>
-              New Build
+              + New Build
+              <lucide-icon name="arrow-right" [size]="14"></lucide-icon>
             </a>
           </div>
         } @else {
@@ -164,7 +162,7 @@ import { DialogRef } from '@angular/cdk/dialog';
                   }
                 </div>
                 @if (ml.created_at) {
-                  <span class="card-date text-muted font-mono">{{ ml.created_at | date:'MMM d, y' }}</span>
+                  <span class="card-date">{{ ml.created_at | date:'MMM d, y' }}</span>
                 }
               </a>
             }
@@ -245,8 +243,8 @@ import { DialogRef } from '@angular/cdk/dialog';
       align-items: center;
       gap: 0.625rem;
       padding: 0.75rem 1.125rem;
-      background: rgba(192, 160, 96, 0.08);
-      border: 1px solid rgba(192, 160, 96, 0.2);
+      background: color-mix(in oklch, var(--color-accent) 8%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 20%, transparent);
       border-radius: 10px;
       color: var(--color-text);
       font-size: 0.8125rem;
@@ -255,8 +253,8 @@ import { DialogRef } from '@angular/cdk/dialog';
       transition: background 0.15s, border-color 0.15s;
     }
     .resume-banner:hover {
-      background: rgba(192, 160, 96, 0.14);
-      border-color: rgba(192, 160, 96, 0.35);
+      background: color-mix(in oklch, var(--color-accent) 14%, transparent);
+      border-color: color-mix(in oklch, var(--color-accent) 35%, transparent);
     }
     .resume-banner strong {
       color: var(--color-accent);
@@ -275,32 +273,33 @@ import { DialogRef } from '@angular/cdk/dialog';
       50% { opacity: 0.3; }
     }
 
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-    }
-    .empty-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--color-border);
+    /* Empty state — Pip-Tek treatment */
+    .dashboard__empty {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.25rem;
-      color: var(--color-text-dim);
+      gap: 1.25rem;
+      padding: 5rem 2rem;
+      text-align: center;
     }
-    .empty-state h2 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    .empty-state p {
+    .dashboard__empty-ascii {
+      font-family: var(--font-mono);
       font-size: 0.875rem;
+      color: var(--color-accent);
+      opacity: 0.5;
+      margin: 0;
+      white-space: pre;
+    }
+    .dashboard__empty-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin: 0;
+    }
+    .dashboard__empty-sub {
       color: var(--color-text-muted);
-      margin-bottom: 1.5rem;
+      max-width: 320px;
+      margin: 0;
     }
 
     /* Stats — surface itself comes from <ui-card>; we only keep the inner
@@ -330,8 +329,8 @@ import { DialogRef } from '@angular/cdk/dialog';
       justify-content: center;
       margin-bottom: 0.875rem;
     }
-    .stat-icon--gold { background: rgba(192, 160, 96, 0.12); color: var(--color-accent); }
-    .stat-icon--blue { background: rgba(123, 164, 192, 0.12); color: var(--color-secondary); }
+    .stat-icon--gold { background: color-mix(in oklch, var(--color-accent) 12%, transparent); color: var(--color-accent); }
+    .stat-icon--blue { background: color-mix(in oklch, var(--color-secondary) 12%, transparent); color: var(--color-secondary); }
     .stat-value {
       font-size: 1.375rem;
       font-weight: 700;
@@ -382,7 +381,7 @@ import { DialogRef } from '@angular/cdk/dialog';
       font-weight: 600;
       padding: 0.1875rem 0.625rem;
       border-radius: 100px;
-      background: rgba(123, 164, 192, 0.12);
+      background: color-mix(in oklch, var(--color-secondary) 12%, transparent);
       color: var(--color-secondary);
     }
     .card-provider {
@@ -390,7 +389,7 @@ import { DialogRef } from '@angular/cdk/dialog';
       font-weight: 600;
       padding: 0.1875rem 0.625rem;
       border-radius: 100px;
-      background: rgba(192, 160, 96, 0.12);
+      background: color-mix(in oklch, var(--color-accent) 12%, transparent);
       color: var(--color-accent);
     }
     .card-actions {
@@ -462,12 +461,10 @@ import { DialogRef } from '@angular/cdk/dialog';
       color: var(--color-text-muted);
     }
     .card-date {
+      font-family: var(--font-mono);
       font-size: 0.75rem;
-      color: var(--color-text-dim);
+      color: var(--color-text-muted);
     }
-    /* text-muted helper — matches Tailwind token used elsewhere; mapped to
-       our existing CSS-var muted color so visuals don't shift. */
-    .text-muted { color: var(--color-text-muted); }
 
     @media (max-width: 640px) {
       .stats-row { grid-template-columns: 1fr; }
@@ -476,6 +473,8 @@ import { DialogRef } from '@angular/cdk/dialog';
   `],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  protected readonly asciiPlaceholder = `  [ ─── ]\n  [ ─── ]\n  [ ─── ]`;
+
   modlists = signal<Modlist[]>([]);
   loading = signal(true);
   deleteTarget = signal<Modlist | null>(null);
