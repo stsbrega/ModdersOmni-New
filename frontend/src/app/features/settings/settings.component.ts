@@ -206,7 +206,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                   <h3>Local AI Providers</h3>
                   <p class="input-hint" style="margin-bottom: 0.75rem;">
                     Run AI models on your own hardware with
-                    <a href="https://ollama.com" target="_blank" rel="noopener" style="color: var(--accent);">Ollama</a>
+                    <a href="https://ollama.com" target="_blank" rel="noopener" style="color: var(--color-accent);">Ollama</a>
                     — no API key needed.
                   </p>
 
@@ -306,7 +306,7 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                   [(ngModel)]="hardwareRawText"
                   placeholder="Paste hardware info from PowerShell output, NVIDIA App, HWiNFO, or Task Manager..."
                   rows="4"
-                  class="font-mono text-sm"
+                  class="settings__hw-paste"
                 ></textarea>
                 <button
                   ui-button
@@ -718,8 +718,8 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
       align-items: flex-start;
       gap: 0.5rem;
       padding: 0.625rem 0.75rem !important;
-      background: rgba(192, 160, 96, 0.06) !important;
-      border-color: rgba(192, 160, 96, 0.15) !important;
+      background: color-mix(in oklch, var(--color-accent) 6%, transparent) !important;
+      border-color: color-mix(in oklch, var(--color-accent) 15%, transparent) !important;
       margin-bottom: 0.75rem;
       font-size: 0.75rem;
       color: var(--color-text-muted);
@@ -742,6 +742,11 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
       flex: 1;
       min-width: 0;
       font-family: monospace;
+      font-size: 0.8125rem;
+    }
+    /* Hardware paste textarea — monospaced so pasted spec output aligns cleanly */
+    .settings__hw-paste {
+      font-family: var(--font-mono, ui-monospace, 'Cascadia Code', 'Fira Code', monospace);
       font-size: 0.8125rem;
     }
 
@@ -1232,9 +1237,8 @@ export class SettingsComponent implements OnInit {
     if (ollamaModel) {
       this.ollamaSelectedModel.set(ollamaModel);
     }
-    if (ollamaUrl || keys['ollama']) {
-      this.testOllamaConnection();
-    }
+    // NOTE: no auto-probe here. URL + model are restored above from SettingsStore;
+    // the network probe only fires when the user clicks "Test Connection".
   }
 
   saveSettings(): void {
