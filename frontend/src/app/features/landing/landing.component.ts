@@ -348,14 +348,14 @@ import { UiButtonComponent, UiTerminalLogComponent, type TerminalLogEntry } from
       letter-spacing: 0.03em;
     }
     .game-tag--skyrim {
-      background: rgba(123, 164, 192, 0.12);
+      background: color-mix(in oklch, var(--color-secondary) 12%, transparent);
       color: var(--color-secondary);
-      border: 1px solid rgba(123, 164, 192, 0.2);
+      border: 1px solid color-mix(in oklch, var(--color-secondary) 20%, transparent);
     }
     .game-tag--fallout {
-      background: rgba(192, 160, 96, 0.12);
+      background: color-mix(in oklch, var(--color-accent) 12%, transparent);
       color: var(--color-accent);
-      border: 1px solid rgba(192, 160, 96, 0.2);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 20%, transparent);
     }
 
     /* ===== Terminal Preview Window ===== */
