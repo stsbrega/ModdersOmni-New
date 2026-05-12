@@ -301,7 +301,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
               <!-- Ollama (Local Model) -->
               <div class="ollama-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08);">
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                  <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">Or use a local model</span>
+                  <span style="font-size: 0.85rem; font-weight: 500; color: var(--color-text-muted);">Or use a local model</span>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                   <input
@@ -434,7 +434,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     }
     .playstyle-card.selected {
       border-color: var(--color-accent);
-      background: rgba(192, 160, 96, 0.05);
+      background: color-mix(in oklch, var(--color-accent) 5%, transparent);
     }
     .ps-icon {
       width: 28px;
@@ -450,8 +450,8 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     }
     .ps-icon lucide-icon { display: inline-flex; }
     .playstyle-card.selected .ps-icon {
-      background: rgba(192, 160, 96, 0.12);
-      border-color: rgba(192, 160, 96, 0.3);
+      background: color-mix(in oklch, var(--color-accent) 12%, transparent);
+      border-color: color-mix(in oklch, var(--color-accent) 30%, transparent);
       color: var(--color-accent);
     }
     .ps-content {
@@ -502,7 +502,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
     .size-card:hover { border-color: var(--color-border); transform: translateY(-1px); }
     .size-card.selected {
       border-color: var(--color-accent);
-      background: rgba(192, 160, 96, 0.05);
+      background: color-mix(in oklch, var(--color-accent) 5%, transparent);
     }
     .size-card.locked {
       opacity: 0.62;
@@ -564,8 +564,8 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       align-items: center;
       gap: 0.375rem;
       padding: 0.25rem 0.375rem 0.25rem 0.625rem;
-      background: rgba(192, 160, 96, 0.08);
-      border: 1px solid rgba(192, 160, 96, 0.2);
+      background: color-mix(in oklch, var(--color-accent) 8%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 20%, transparent);
       border-radius: 100px;
       font-size: 0.75rem;
       color: var(--color-text);
@@ -679,9 +679,9 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       border: 1px solid var(--color-border);
     }
     .provider-badge.configured {
-      background: rgba(192, 160, 96, 0.1);
+      background: color-mix(in oklch, var(--color-accent) 10%, transparent);
       color: var(--color-accent);
-      border-color: rgba(192, 160, 96, 0.25);
+      border-color: color-mix(in oklch, var(--color-accent) 25%, transparent);
     }
     .chevron {
       color: var(--color-text-muted);
@@ -742,7 +742,7 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       transition: border-color 0.15s;
     }
     .provider-row.has-key {
-      border-color: rgba(192, 160, 96, 0.3);
+      border-color: color-mix(in oklch, var(--color-accent) 30%, transparent);
     }
     .provider-info {
       display: flex;
@@ -796,8 +796,8 @@ import { UiSelectComponent, type UiSelectOption } from '../../../../shared/compo
       align-items: center;
       gap: 0.375rem;
       padding: 0.375rem 0.625rem;
-      background: rgba(192, 160, 96, 0.06);
-      border: 1px solid rgba(192, 160, 96, 0.12);
+      background: color-mix(in oklch, var(--color-accent) 6%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 12%, transparent);
       border-radius: 6px;
       margin-bottom: 0.625rem;
       font-size: 0.6875rem;

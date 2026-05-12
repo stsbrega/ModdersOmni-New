@@ -169,6 +169,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       justify-content: center;
       font-size: 0.8125rem;
       font-weight: 600;
+      font-family: var(--font-mono);
       color: var(--color-text-muted);
       transition: all 0.25s;
     }
@@ -234,13 +235,13 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
     .version-card:hover {
       border-color: var(--color-accent);
       transform: translateY(-1px);
-      background: rgba(192, 160, 96, 0.04);
+      background: color-mix(in oklch, var(--color-accent) 4%, transparent);
     }
     .version-icon {
       width: 36px;
       height: 36px;
       border-radius: 8px;
-      background: rgba(192, 160, 96, 0.1);
+      background: color-mix(in oklch, var(--color-accent) 10%, transparent);
       color: var(--color-accent);
       display: flex;
       align-items: center;

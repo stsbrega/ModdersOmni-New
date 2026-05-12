@@ -97,11 +97,11 @@ import {
     }
     .game-card.skyrim:hover {
       border-color: var(--color-secondary);
-      background: rgba(123, 164, 192, 0.04);
+      background: color-mix(in oklch, var(--color-secondary) 4%, transparent);
     }
     .game-card.fallout:hover {
       border-color: var(--color-accent);
-      background: rgba(192, 160, 96, 0.04);
+      background: color-mix(in oklch, var(--color-accent) 4%, transparent);
     }
     .game-icon {
       width: 48px;
@@ -117,14 +117,14 @@ import {
       transition: all 0.2s;
     }
     .icon-skyrim {
-      background: rgba(123, 164, 192, 0.12);
+      background: color-mix(in oklch, var(--color-secondary) 12%, transparent);
       color: var(--color-secondary);
-      border: 1px solid rgba(123, 164, 192, 0.2);
+      border: 1px solid color-mix(in oklch, var(--color-secondary) 20%, transparent);
     }
     .icon-fallout {
-      background: rgba(192, 160, 96, 0.12);
+      background: color-mix(in oklch, var(--color-accent) 12%, transparent);
       color: var(--color-accent);
-      border: 1px solid rgba(192, 160, 96, 0.2);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 20%, transparent);
     }
     .game-card h3 {
       flex: 1;
