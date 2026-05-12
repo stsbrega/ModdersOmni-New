@@ -345,18 +345,18 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
     /* Patch card variant */
     .mod-card.patch-card {
       border-left-color: var(--color-secondary, #7ba4c0);
-      background: rgba(123, 164, 192, 0.03);
+      background: color-mix(in oklch, var(--color-secondary) 3%, transparent);
     }
     .mod-card.patch-card:hover {
-      border-color: rgba(123, 164, 192, 0.2);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(123, 164, 192, 0.06);
+      border-color: color-mix(in oklch, var(--color-secondary) 20%, transparent);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 0 1px color-mix(in oklch, var(--color-secondary) 6%, transparent);
     }
 
     .mod-order {
       min-width: 28px;
       height: 28px;
-      background: rgba(192, 160, 96, 0.12);
-      border: 1px solid rgba(192, 160, 96, 0.2);
+      background: color-mix(in oklch, var(--color-accent) 12%, transparent);
+      border: 1px solid color-mix(in oklch, var(--color-accent) 20%, transparent);
       border-radius: 6px;
       display: flex;
       align-items: center;
@@ -368,8 +368,8 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       margin-top: 2px;
     }
     .mod-order.patch-order {
-      background: rgba(123, 164, 192, 0.12);
-      border-color: rgba(123, 164, 192, 0.2);
+      background: color-mix(in oklch, var(--color-secondary) 12%, transparent);
+      border-color: color-mix(in oklch, var(--color-secondary) 20%, transparent);
       color: var(--color-secondary, #7ba4c0);
     }
 
@@ -396,9 +396,9 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       letter-spacing: 0.06em;
       padding: 0.125rem 0.4rem;
       border-radius: 4px;
-      background: rgba(123, 164, 192, 0.15);
+      background: color-mix(in oklch, var(--color-secondary) 15%, transparent);
       color: var(--color-secondary, #7ba4c0);
-      border: 1px solid rgba(123, 164, 192, 0.25);
+      border: 1px solid color-mix(in oklch, var(--color-secondary) 25%, transparent);
     }
     .patches-subtitle {
       font-size: 0.75rem;

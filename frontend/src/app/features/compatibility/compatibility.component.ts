@@ -240,12 +240,12 @@ interface CompatibilityResult {
         font-family: var(--font-display);
         font-size: 2rem;
         font-weight: 700;
-        color: var(--text-primary);
+        color: var(--color-text);
         margin: 0 0 0.5rem;
       }
 
       p {
-        color: var(--text-secondary);
+        color: var(--color-text-muted);
         font-size: 1rem;
         margin: 0;
       }
@@ -264,7 +264,7 @@ interface CompatibilityResult {
       gap: 0.5rem;
 
       label {
-        color: var(--text-secondary);
+        color: var(--color-text-muted);
         font-size: 0.875rem;
         font-weight: 500;
       }
@@ -276,7 +276,7 @@ interface CompatibilityResult {
       justify-content: center;
 
       span {
-        color: var(--text-secondary);
+        color: var(--color-text-muted);
         font-size: 0.8rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -327,7 +327,7 @@ interface CompatibilityResult {
         font-family: var(--font-display);
         font-size: 1.35rem;
         font-weight: 600;
-        color: var(--text-primary);
+        color: var(--color-text);
         margin: 0;
       }
     }
@@ -345,7 +345,7 @@ interface CompatibilityResult {
       h3 {
         font-size: 1rem;
         font-weight: 600;
-        color: var(--text-primary);
+        color: var(--color-text);
         margin: 0 0 0.75rem;
       }
     }
@@ -374,12 +374,12 @@ interface CompatibilityResult {
     }
 
     .issue-description {
-      color: var(--text-primary);
+      color: var(--color-text);
       font-size: 0.9rem;
     }
 
     .issue-source {
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
       font-size: 0.8rem;
     }
 
@@ -398,14 +398,14 @@ interface CompatibilityResult {
       gap: 0.6rem;
       padding: 0.6rem 0.85rem;
       background: rgba(var(--accent-rgb, 99, 102, 241), 0.06);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--color-border);
       border-radius: 8px;
-      color: var(--text-primary);
+      color: var(--color-text);
       font-size: 0.9rem;
 
       lucide-icon {
         flex-shrink: 0;
-        color: var(--accent);
+        color: var(--color-accent);
       }
     }
 
@@ -429,7 +429,7 @@ interface CompatibilityResult {
       align-items: center;
       gap: 1rem;
       padding: 3rem 1rem;
-      color: var(--text-secondary);
+      color: var(--color-text-muted);
       opacity: 0.5;
       text-align: center;
 

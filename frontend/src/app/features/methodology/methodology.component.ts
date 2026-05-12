@@ -67,7 +67,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
         <div class="pipeline-grid">
           @for (phase of phases; track phase.name; let i = $index) {
             <div class="phase-card stagger-item">
-              <div class="phase-number font-mono">{{ (i + 1).toString().padStart(2, '0') }}</div>
+              <span class="methodology-phase__num">[{{ (i + 1).toString().padStart(2, '0') }}]</span>
               <div class="phase-info">
                 <span class="phase-name">{{ phase.name }}</span>
                 <span class="phase-complexity" [class]="'complexity-' + phase.complexity">
@@ -459,10 +459,13 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
     .phase-card:hover {
       border-color: var(--color-border);
     }
-    .phase-number {
+    .methodology-phase__num {
+      display: block;
+      font-family: var(--font-mono);
       font-size: 0.6875rem;
       font-weight: 600;
-      color: var(--color-text-dim);
+      color: var(--color-accent);
+      letter-spacing: 0.06em;
       font-variant-numeric: tabular-nums;
       margin-bottom: 0.375rem;
     }
