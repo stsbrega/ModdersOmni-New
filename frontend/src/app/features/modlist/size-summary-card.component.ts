@@ -46,16 +46,16 @@ import { SizeSummary } from '../../shared/models/mod.model';
     </section>
   `,
   styles: [`
-    .size-card { border: 1px solid var(--border, #2a2c33); border-radius: 0.6rem; padding: 1.25rem; }
+    .size-card { border: 1px solid var(--color-border); border-radius: 0.6rem; padding: 1.25rem; }
     .size-card[data-fit="insufficient"] { border-color: #b33; }
     .size-card[data-fit="tight"] { border-color: #c80; }
     .totals { display: flex; gap: 2rem; margin: 0.5rem 0 1rem; }
-    .label { display: block; font-size: 0.85rem; color: var(--text-muted); }
+    .label { display: block; font-size: 0.85rem; color: var(--color-text-dim); }
     .val { font-size: 1.4rem; font-weight: 600; }
     .ok { color: #7c9; }
     .warn { color: #c80; }
     .err { color: #e55; }
-    .note { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; }
+    .note { font-size: 0.85rem; color: var(--color-text-dim); margin-top: 0.5rem; }
   `],
 })
 export class SizeSummaryCardComponent {
