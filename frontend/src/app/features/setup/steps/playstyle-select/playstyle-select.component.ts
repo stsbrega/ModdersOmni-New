@@ -1237,6 +1237,16 @@ export class PlaystyleSelectComponent implements OnInit {
     const description = this.customDescription().trim() || undefined;
     const mods = this.requestedMods();
 
+    // Wizard is complete — clear refresh-recovery snapshots so a future
+    // "New Build" starts from step 1 (game selection).
+    sessionStorage.removeItem('setup_wizard_progress');
+    localStorage.removeItem('setup_wizard_state');
+
+    // GenerationService.start() synchronously sets generationId() to the
+    // 'client-pipeline-pending' placeholder before any async work, so the
+    // generation viewer can bind to in-memory state the moment it mounts.
+    // Fire-and-forget here; .catch surfaces start-up errors via the global
+    // notification service (the wizard may already be torn down by then).
     this.generationService
       .start({
         game,
@@ -1249,26 +1259,15 @@ export class PlaystyleSelectComponent implements OnInit {
         customDescription: description ?? null,
         requestedMods: mods,
       })
-      .then((session) => {
-        this.loading.set(false);
-
-        // Wizard is complete — clear refresh-recovery snapshots so a future
-        // "New Build" starts from step 1 (game selection).
-        sessionStorage.removeItem('setup_wizard_progress');
-        localStorage.removeItem('setup_wizard_state');
-
-        // Navigate to the generation viewer using the pipeline session id.
-        const sessionId = session?.id ?? this.generationService.generationId();
-        if (sessionId) {
-          this.router.navigate(['/generate', sessionId]);
-        }
-      })
       .catch((err: Error) => {
-        this.loading.set(false);
         this.notifications.error(
           err?.message || 'Failed to start the in-browser generation.',
         );
       });
+
+    // Take the user straight to the pending generation page rather than
+    // making them wait on the wizard while the first phase boots up.
+    this.router.navigate(['/generate', 'client-pipeline-pending']);
   }
 
   /**
