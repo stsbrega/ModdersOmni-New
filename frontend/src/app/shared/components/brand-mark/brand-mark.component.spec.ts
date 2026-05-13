@@ -15,10 +15,12 @@ describe('BrandMarkComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders the Ω SVG mark', () => {
-    const svg = fixture.nativeElement.querySelector('svg');
-    expect(svg).toBeTruthy();
-    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24');
+  it('renders the Ω logo image', () => {
+    const img = fixture.nativeElement.querySelector('img.brand-mark__logo');
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src')).toContain('logo-512.png');
+    // Decorative image — wordmark provides the accessible name.
+    expect(img.getAttribute('alt')).toBe('');
   });
 
   it('renders the wordmark when showText is true (default)', () => {

@@ -21,16 +21,14 @@ const BRAND_MARK_SIZES: Record<BrandMarkSize, { icon: string; gap: string; text:
   template: `
     <span class="brand-mark" [class.brand-mark--icon-only]="!showText()">
       <span class="brand-mark__glyph" aria-hidden="true">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M5 20 L9 20 L9 16 C6 14 5 11 5 9 C5 5 8 3 12 3 C16 3 19 5 19 9 C19 11 18 14 15 16 L15 20 L19 20"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="square"
-            stroke-linejoin="miter"
-          />
-        </svg>
+        <img
+          src="logo-512.png"
+          alt=""
+          class="brand-mark__logo"
+          draggable="false"
+          loading="eager"
+          decoding="async"
+        />
       </span>
       @if (showText()) {
         <span class="brand-mark__text">Modders<span class="brand-mark__text-accent">Omni</span></span>
@@ -60,10 +58,12 @@ const BRAND_MARK_SIZES: Record<BrandMarkSize, { icon: string; gap: string; text:
       align-items: center;
       justify-content: center;
     }
-    .brand-mark__glyph svg {
+    .brand-mark__logo {
       display: block;
       width: 100%;
       height: 100%;
+      object-fit: contain;
+      user-select: none;
     }
     .brand-mark__text {
       white-space: nowrap;
