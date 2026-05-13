@@ -63,9 +63,13 @@ const BASE_CLASSES =
     '[attr.disabled]': 'disabled || null',
   },
   styles: [`
-    /* ── Shared transition ── */
+    /* line-height: 1 overrides the global body line-height so the label
+       sits dead-center inside the fixed-height variants below. */
     :host {
       transition: background 0.15s, border-color 0.15s, color 0.15s;
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap;
     }
 
     /* ── Variant: primary ── */

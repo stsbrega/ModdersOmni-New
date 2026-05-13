@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SpecParserService } from '../../../../core/services/spec-parser.service';
+import { SettingsStore } from '../../../../core/services/settings-store.service';
 import { HardwareSpecs, SpecsParseResponse, TierScores } from '../../../../shared/models/specs.model';
 import { fadeUp } from '../../../../core/motion/animations';
 import {
@@ -463,13 +464,52 @@ export class SpecInputComponent implements OnInit {
   showManualEntry = signal(false);
   savedLoading = signal(false);
 
-  constructor(private specParser: SpecParserService) {}
+  constructor(
+    private specParser: SpecParserService,
+    private settingsStore: SettingsStore,
+  ) {}
 
   ngOnInit(): void {
-    // Saved-hardware pre-fill went away with auth (Plan 3 Task 3). The
-    // wizard now always starts with an empty form; structured hardware
-    // persistence will be re-added against SettingsStore in a follow-on
-    // (see Plan 3 Task 4 cleanup).
+    this.loadSavedHardware();
+  }
+
+  /**
+   * Pre-fill from SettingsStore. Prefer the saved raw paste text — it
+   * round-trips cleanly through the regex parser. If only structured fields
+   * exist (user adjusted Settings via sliders/inputs without pasting), build
+   * a synthetic text block so parseAndClassify can still derive tier scores.
+   */
+  private loadSavedHardware(): void {
+    const savedSpecs = this.settingsStore.hardwareSpecs();
+    const hasSavedSpecs = !!(
+      savedSpecs.gpu || savedSpecs.cpu || savedSpecs.ram_gb || savedSpecs.vram_mb
+    );
+    if (!hasSavedSpecs) return;
+
+    const rawText = this.settingsStore.hardwareSpec().trim()
+      || this.synthesizeRawText(savedSpecs);
+    if (!rawText) return;
+
+    try {
+      const response = this.specParser.parseAndClassify(rawText);
+      this.fullResponse.set(response);
+      this.usingSavedHardware.set(true);
+      this.rawText = rawText;
+    } catch {
+      // Fall through to manual entry — the user can still paste fresh specs.
+    }
+  }
+
+  private synthesizeRawText(specs: HardwareSpecs): string {
+    const lines: string[] = [];
+    if (specs.gpu) lines.push(`GPU: ${specs.gpu}`);
+    if (specs.vram_mb) lines.push(`VRAM: ${Math.round(specs.vram_mb / 1024)} GB`);
+    if (specs.cpu) lines.push(`CPU: ${specs.cpu}`);
+    if (specs.cpu_cores) lines.push(`Cores: ${specs.cpu_cores} cores`);
+    if (specs.cpu_speed_ghz) lines.push(`Speed: ${specs.cpu_speed_ghz} GHz`);
+    if (specs.ram_gb) lines.push(`RAM: ${specs.ram_gb} GB`);
+    if (specs.storage_drives) lines.push(`Drives: ${specs.storage_drives}`);
+    return lines.join('\n');
   }
 
   switchToManualEntry(): void {
@@ -480,8 +520,9 @@ export class SpecInputComponent implements OnInit {
 
   switchToSavedHardware(): void {
     this.showManualEntry.set(false);
-    // Re-trigger the saved hardware load
-    this.ngOnInit();
+    // Re-pull the latest saved hardware (the user may have visited Settings
+    // since this component mounted).
+    this.loadSavedHardware();
   }
 
   formatVram(vramMb: number | undefined): string {

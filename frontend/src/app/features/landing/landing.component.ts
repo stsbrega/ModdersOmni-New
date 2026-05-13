@@ -63,18 +63,6 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
       </div>
     </nav>
 
-    <!-- Brand Banner — cinematic Omega header strip -->
-    <div class="brand-banner" aria-hidden="true">
-      <img
-        src="hero-banner.png"
-        alt=""
-        class="brand-banner__image"
-        draggable="false"
-        decoding="async"
-      />
-      <div class="brand-banner__fade"></div>
-    </div>
-
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-grain"></div>
@@ -394,37 +382,6 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
     }
     .nav-signin:hover { color: var(--color-text); }
 
-    /* ===== Brand Banner (cinematic Omega header) ===== */
-    .brand-banner {
-      position: relative;
-      width: 100%;
-      padding-top: 64px; /* clear fixed navbar (height: 64px) */
-      background: var(--color-bg);
-      overflow: hidden;
-      isolation: isolate;
-    }
-    .brand-banner__image {
-      display: block;
-      width: 100%;
-      max-width: var(--max-width, 1200px);
-      margin: 0 auto;
-      height: auto;
-      user-select: none;
-    }
-    .brand-banner__fade {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 96px;
-      background: linear-gradient(to bottom, transparent 0%, var(--color-bg) 100%);
-      pointer-events: none;
-    }
-    @media (max-width: 768px) {
-      .brand-banner { padding-top: 56px; }
-      .brand-banner__fade { height: 48px; }
-    }
-
     /* ===== Hero ===== */
     .hero {
       position: relative;
@@ -433,7 +390,9 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px 2rem 80px;
+      /* Top padding clears the 64px fixed navbar; the brand-banner image that
+         previously did this was removed. */
+      padding: 104px 2rem 80px;
       overflow: hidden;
     }
     .hero-grain {
