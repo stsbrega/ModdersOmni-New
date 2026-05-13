@@ -42,7 +42,10 @@ jobs:
 
       - name: Serve production build
         working-directory: frontend
-        run: npx http-server dist/frontend/browser -p 4200 -s &
+        # `serve -s` enables SPA fallback (all unknown paths → index.html).
+        # http-server does not support this out of the box, which 404s on
+        # deep links like /setup and breaks the navigation e2e spec.
+        run: npx --yes serve -s dist/frontend/browser -l 4200 &
 
       - name: Wait for server
         run: |
