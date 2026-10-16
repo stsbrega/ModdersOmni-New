@@ -22,13 +22,11 @@ Run from `frontend/`:
 ```bash
 npm install
 npm start                              # Dev server on localhost:4200
-npm run build                          # Runs generate-env.js then ng build
+npm run build                          # ng build (production config by default)
 npx ng build --configuration=production
 npm test                               # Karma + Jasmine, all specs
 npm run test:e2e                       # Playwright smoke + navigation (frontend/e2e/)
 ```
-
-`npm run build` shells out to `node generate-env.js && ng build`. `generate-env.js` writes `public/env-config.js` with the API URL (still used by leftover plumbing; the v2 app itself is backend-less). Skip it locally — `npm start` doesn't need it.
 
 ### Single test
 
@@ -85,16 +83,18 @@ Feature modules: `compatibility`, `dashboard`, `generation`, `landing`, `methodo
 
 `plugins/mo2/moddersomni_import.py` is a standalone Mod Organizer 2 plugin. The user exports a JSON manifest from the web app, then opens it via **Tools → ModdersOmni Import** in MO2. The plugin reads the local JSON file and queues each mod through MO2's existing Nexus integration. There is no network call to ModdersOmni — the web app and the plugin only meet via the downloaded JSON file.
 
-JSON shape (see `core/services/install-guide.service.ts`):
+JSON shape (see `core/services/mo2-export.service.ts`):
 
 ```json
 {
   "version": "2.0.0",
   "game": "skyrim" | "fallout4",
   "name": "...",
-  "mods": [{ "modId": 0, "fileId": 0, "name": "...", "installOrder": 0 }]
+  "mods": [{ "modId": 0, "fileId": 0 | null, "name": "...", "installOrder": 1 }]
 }
 ```
+
+The plugin skips entries with a null `fileId` (older saved modlists lack file ids).
 
 ## Non-Obvious Gotchas
 
