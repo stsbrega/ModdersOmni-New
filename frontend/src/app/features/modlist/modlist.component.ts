@@ -2,6 +2,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModlistStore } from '../../core/services/modlist-store.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { Mo2ExportService } from '../../core/services/mo2-export.service';
 import { Modlist, ModEntry, SizeSummary } from '../../shared/models/mod.model';
 import { fadeUp, staggerChildren } from '../../core/motion/animations';
 import { SizeSummaryCardComponent } from './size-summary-card.component';
@@ -18,7 +19,6 @@ import {
   ExternalLink,
   FileText,
   Plus,
-  Upload,
   XCircle,
 } from 'lucide-angular';
 // Direct primitive imports — same pattern Tasks 5-8 adopted to avoid pulling
@@ -49,7 +49,6 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
         ExternalLink,
         FileText,
         Plus,
-        Upload,
         XCircle,
       }),
     },
@@ -68,7 +67,7 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
         <div class="modlist-header" @fadeUp>
           <div>
             <span class="page-label">Your Loadout</span>
-            <h1>{{ coreMods().length }} Mods @if (patchMods().length) { + {{ patchMods().length }} Patches }</h1>
+            <h1>{{ coreMods().length }} {{ coreMods().length === 1 ? 'Mod' : 'Mods' }}@if (patchMods().length) {<span class="h1-patches"> + {{ patchMods().length }} {{ patchMods().length === 1 ? 'Patch' : 'Patches' }}</span>}</h1>
             @if (modlist()!.used_fallback) {
               <p class="subtitle fallback-label">Curated fallback list (AI generation failed)</p>
             } @else if (modlist()!.llm_provider) {
@@ -80,24 +79,20 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
               <lucide-icon name="arrow-left" [size]="14" [strokeWidth]="2"></lucide-icon>
               New Loadout
             </button>
-            <button ui-button variant="secondary" size="sm" (click)="copyUrl()">
-              <lucide-icon name="copy" [size]="14" [strokeWidth]="2"></lucide-icon>
-              {{ copied() ? 'Copied!' : 'Copy URL' }}
+            <button
+              ui-button
+              variant="primary"
+              size="sm"
+              [disabled]="exporting()"
+              (click)="exportForMo2()"
+              title="Download the modlist file that the ModdersOmni MO2 plugin imports"
+            >
+              <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
+              {{ exporting() ? 'Preparing…' : 'Export for MO2' }}
             </button>
             <button ui-button variant="secondary" size="sm" (click)="exportToVortex()" title="Download mod list for Vortex">
               <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
               Export to Vortex
-            </button>
-            <button
-              ui-button
-              variant="secondary"
-              size="sm"
-              [disabled]="publishing()"
-              (click)="publishToNexus()"
-              title="Publish as an unlisted Nexus Collection (requires connecting Nexus in Settings)"
-            >
-              <lucide-icon name="upload" [size]="14" [strokeWidth]="2"></lucide-icon>
-              {{ publishing() ? 'Publishing…' : 'Publish to Nexus' }}
             </button>
             @if (modlist()!.has_debug_log) {
               <button ui-button variant="secondary" size="sm" (click)="downloadLog()" title="Download generation debug log">
@@ -269,9 +264,13 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      justify-content: flex-end;
+      gap: 0.5rem;
       flex-wrap: wrap;
     }
+    .modlist-header { gap: 1rem; }
+    .h1-patches { color: var(--color-text-muted); }
+
     /* btn-back / btn-copy / btn-primary CSS removed — replaced by ui-button. */
 
     /* Install guide CTA */
@@ -525,14 +524,24 @@ import { UiBadgeComponent } from '../../shared/components/ui/badge.component';
       margin-bottom: 1.25rem;
       font-size: 0.9375rem;
     }
+
+    /* Phones — kept last so it overrides the base rules above. */
+    @media (max-width: 640px) {
+      .modlist-page { padding: 1.5rem 1rem; }
+      .modlist-header { flex-direction: column; align-items: stretch; }
+      .header-actions { justify-content: flex-start; }
+      h1 { font-size: 1.5rem; }
+      .mod-card { padding: 0.875rem 0.875rem 0.875rem 0.75rem; gap: 0.75rem; }
+      .mod-card:hover { transform: none; }
+      .guide-banner { padding: 0.875rem 1rem; }
+    }
   `],
 })
 export class ModlistComponent implements OnInit {
   modlist = signal<Modlist | null>(null);
   sizeSummary = signal<SizeSummary | null>(null);
   loading = signal(true);
-  copied = signal(false);
-  publishing = signal(false);
+  exporting = signal(false);
 
   coreMods = computed(() => {
     const ml = this.modlist();
@@ -549,6 +558,7 @@ export class ModlistComponent implements OnInit {
     private router: Router,
     private modlistStore: ModlistStore,
     private notifications: NotificationService,
+    private mo2Export: Mo2ExportService,
   ) {}
 
   ngOnInit(): void {
@@ -567,13 +577,6 @@ export class ModlistComponent implements OnInit {
     }
   }
 
-  copyUrl(): void {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 2000);
-    });
-  }
-
   downloadLog(): void {
     // Backend log endpoint is gone. The pipeline keeps its event log in
     // memory for the active session only — there's nothing to download
@@ -582,12 +585,29 @@ export class ModlistComponent implements OnInit {
     this.notifications.info('Generation log is only available while a build is running.');
   }
 
-  publishToNexus(): void {
-    // Nexus Collection publishing required server-side OAuth. Without the
-    // backend there's no way to authenticate the publish call from the
-    // browser, so the feature is disabled until we add a client-side
-    // OAuth path. Surface the limitation rather than silently no-op.
-    this.notifications.info('Publishing to Nexus Collections is disabled in v2.0.');
+  /**
+   * Download the JSON manifest the MO2 plugin imports. Older modlists don't
+   * store Nexus file ids, so missing ones are looked up first.
+   */
+  async exportForMo2(): Promise<void> {
+    const ml = this.modlist();
+    if (!ml || this.exporting()) return;
+    this.exporting.set(true);
+    try {
+      const { manifest, unresolved } = await this.mo2Export.exportManifest(ml);
+      this.mo2Export.download(manifest, ml.id);
+      if (unresolved > 0) {
+        this.notifications.warning(
+          `${unresolved} mod(s) have no downloadable file on Nexus and will be skipped by MO2. Install those by hand.`,
+        );
+      } else {
+        this.notifications.success('Modlist file downloaded. Open it in MO2 via Tools → ModdersOmni Import.');
+      }
+    } catch {
+      this.notifications.error('Could not prepare the MO2 file. Check your connection and try again.');
+    } finally {
+      this.exporting.set(false);
+    }
   }
 
   exportToVortex(): void {

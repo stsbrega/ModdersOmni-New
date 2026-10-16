@@ -35,8 +35,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
         <div class="hero-badge">Transparency</div>
         <h1 class="hero-title">How We Build Your Modlist</h1>
         <p class="hero-subtitle">
-          An honest look at how ModdersOmni selects mods, routes AI models,
-          and works to minimize your costs while maximizing quality.
+          An honest look at how ModdersOmni selects mods, checks its own work,
+          and what it costs you to run.
         </p>
       </section>
 
@@ -44,24 +44,25 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       <nav class="toc">
         <a href="#pipeline" class="toc-link" (click)="scrollTo($event, 'pipeline')">The Pipeline</a>
         <span class="toc-dot"></span>
-        <a href="#smart-dispatch" class="toc-link" (click)="scrollTo($event, 'smart-dispatch')">Smart Dispatch</a>
+        <a href="#review" class="toc-link" (click)="scrollTo($event, 'review')">Overseer Review</a>
         <span class="toc-dot"></span>
         <a href="#quality" class="toc-link" (click)="scrollTo($event, 'quality')">Model Quality</a>
         <span class="toc-dot"></span>
-        <a href="#cost" class="toc-link" (click)="scrollTo($event, 'cost')">Cost Breakdown</a>
+        <a href="#cost" class="toc-link" (click)="scrollTo($event, 'cost')">Costs</a>
         <span class="toc-dot"></span>
-        <a href="#free-tier" class="toc-link" (click)="scrollTo($event, 'free-tier')">Free Tier</a>
+        <a href="#free" class="toc-link" (click)="scrollTo($event, 'free')">Free to Use</a>
       </nav>
 
       <!-- Section 1: Pipeline Overview -->
       <section id="pipeline" class="content-section">
         <div class="section-label font-mono">01</div>
-        <h2 class="section-title">The 13-Phase Pipeline</h2>
+        <h2 class="section-title">The Phased Pipeline</h2>
         <p class="section-intro">
           Instead of asking an AI to generate an entire modlist in one shot (which produces
           generic, low-quality results), we break the build into specialized phases. Each phase
           focuses on a specific category, giving the AI time to search, evaluate, and reason
-          about compatibility within that domain.
+          about compatibility within that domain. Skyrim builds run the 10 phases below;
+          Fallout 4 builds run a similar set of 9.
         </p>
 
         <div class="pipeline-grid">
@@ -71,7 +72,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
               <div class="phase-info">
                 <span class="phase-name">{{ phase.name }}</span>
                 <span class="phase-complexity" [class]="'complexity-' + phase.complexity">
-                  {{ phase.complexity }}
+                  {{ phase.label }}
                 </span>
               </div>
               <p class="phase-desc">{{ phase.description }}</p>
@@ -93,35 +94,25 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
         </div>
       </section>
 
-      <!-- Section 2: Smart Dispatch -->
-      <section id="smart-dispatch" class="content-section">
+      <!-- Section 2: Overseer Review -->
+      <section id="review" class="content-section">
         <div class="section-label font-mono">02</div>
-        <h2 class="section-title">Smart Dispatch: Saving You Money</h2>
+        <h2 class="section-title">A Second Opinion on Every Phase</h2>
         <p class="section-intro">
-          Not every phase needs the most expensive AI model. Our Smart Dispatcher automatically
-          routes each phase to the most cost-effective model that can handle its complexity —
-          so you only pay premium prices when premium reasoning actually matters.
+          After each phase, a separate overseer pass reviews the mods that were just added.
+          It starts fresh, without the builder's search history, so it judges the picks on
+          their merits instead of defending them.
         </p>
 
         <div class="dispatch-visual">
           <div class="dispatch-tiers">
-            @for (tier of dispatchTiers; track tier.name) {
-              <div class="tier-card stagger-item" [class]="'tier-' + tier.level">
+            @for (step of reviewSteps; track step.name) {
+              <div class="tier-card stagger-item" [class]="'tier-' + step.level">
                 <div class="tier-header">
-                  <span class="tier-badge" [class]="'badge-' + tier.level">{{ tier.level }}</span>
-                  <span class="tier-name">{{ tier.name }}</span>
+                  <span class="tier-badge" [class]="'badge-' + step.level">{{ step.badge }}</span>
+                  <span class="tier-name">{{ step.name }}</span>
                 </div>
-                <p class="tier-desc">{{ tier.description }}</p>
-                <div class="tier-phases">
-                  <span class="tier-phase-label">Used for:</span>
-                  @for (p of tier.phases; track p) {
-                    <span class="tier-phase-tag">{{ p }}</span>
-                  }
-                </div>
-                <div class="tier-cost">
-                  <span class="tier-cost-label">Approx. cost</span>
-                  <span class="tier-cost-value">{{ tier.cost }}</span>
-                </div>
+                <p class="tier-desc">{{ step.description }}</p>
               </div>
             }
           </div>
@@ -132,10 +123,10 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
             <lucide-icon name="star" [size]="20" [strokeWidth]="1.5"></lucide-icon>
           </div>
           <div class="callout-text">
-            <strong>Your keys take priority.</strong> If you bring your own API keys (BYOK),
-            we'll always use those first — at no server cost. Smart Dispatch only
-            uses server-side free models when you don't have a suitable key
-            for the phase's complexity level.
+            <strong>Reviews never break your build.</strong> If the overseer errors out or
+            returns something unreadable, the modlist is left exactly as it was. It is told
+            that a wrong rejection is worse than a wrong approval, so it only removes mods
+            it is confident about.
           </div>
         </div>
 
@@ -145,18 +136,18 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
             What you see during generation
           </h3>
           <p class="transparency-desc">
-            Every generation shows you exactly which model handles each phase, why it was chosen,
-            and how many tokens it used. We emit real-time events so you can
-            watch the routing decisions as they happen — no hidden costs.
+            Every search, every mod page the AI reads, and every mod it adds shows up in a
+            live timeline as it happens. If your provider rate-limits or errors, the build
+            pauses with its progress saved so you can switch keys and resume.
           </p>
           <div class="event-examples">
             <div class="event-example">
-              <span class="event-label font-mono">dispatch_strategy</span>
-              <span class="event-detail">"Using your BYOK keys for generation phases"</span>
+              <span class="event-label font-mono">searching</span>
+              <span class="event-detail">"Searching Nexus: weather overhaul"</span>
             </div>
             <div class="event-example">
-              <span class="event-label font-mono">model_selected</span>
-              <span class="event-detail">"Phase: Gameplay Overhaul → Claude Sonnet (premium) — complex phase needs strong reasoning"</span>
+              <span class="event-label font-mono">mod_added</span>
+              <span class="event-detail">"Added Cathedral Weathers (Lighting &amp; Weather)"</span>
             </div>
           </div>
         </div>
@@ -167,9 +158,9 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
         <div class="section-label font-mono">03</div>
         <h2 class="section-title">What "Better" Actually Means</h2>
         <p class="section-intro">
-          We want to be honest about where premium AI models make a real difference
-          versus where they're overkill. Not every phase benefits equally from a
-          more expensive model.
+          You pick which model builds your list. We want to be honest about where premium
+          AI models make a real difference versus where they're overkill. Not every phase
+          benefits equally from a more expensive model.
         </p>
 
         <div class="quality-grid">
@@ -231,32 +222,28 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
             For the first ~50 mods (essentials, UI, textures, bug fixes), you'll get a solid
             modlist from any model — free or premium. The quality difference shows most when
             building larger, more complex lists where mod interactions compound. If you're just
-            building a lightweight setup, the free tier is genuinely fine. We'd rather be honest
-            about this than oversell premium tiers.
+            building a lightweight setup, a free model is genuinely fine. We'd rather be honest
+            about this than push you toward expensive models.
           </p>
         </div>
       </section>
 
-      <!-- Section 4: Cost Breakdown -->
+      <!-- Section 4: Costs -->
       <section id="cost" class="content-section">
         <div class="section-label font-mono">04</div>
-        <h2 class="section-title">Cost Breakdown</h2>
+        <h2 class="section-title">What It Costs</h2>
         <p class="section-intro">
-          Generation cost depends on which AI model is used for each phase.
-        </p>
-
-        <p class="cost-note">
-          Free-tier generations use server-hosted models (Gemini Flash, Groq, Cerebras)
-          at no cost to you. BYOK users consume their own provider quota.
+          ModdersOmni has no servers in the middle. Your browser talks to your AI provider
+          directly, using your key, so the only cost is what that provider charges you.
         </p>
 
         <div class="cost-details">
           <div class="cost-detail stagger-item">
-            <div class="cost-detail-label">How tokens convert to credits</div>
+            <div class="cost-detail-label">What you pay for</div>
             <p>
-              Output tokens cost ~3x input tokens (they're harder to generate). We apply
-              per-model rates: budget models ≈ $0.50/M tokens, standard ≈ $2/M, premium ≈ $8/M.
-              Smart Dispatch minimizes cost by using cheaper models where they're sufficient.
+              Providers bill per token. Output tokens usually cost several times more than input
+              tokens. Larger size presets run more searches and add more mods, so they use
+              more tokens.
             </p>
           </div>
           <div class="cost-detail stagger-item">
@@ -268,24 +255,22 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
             </p>
           </div>
           <div class="cost-detail stagger-item">
-            <div class="cost-detail-label">BYOK savings</div>
+            <div class="cost-detail-label">Keeping it cheap</div>
             <p>
-              Bringing your own API keys means zero credit cost for those phases. If you have
-              keys for Anthropic + Groq, for example, Smart Dispatch routes premium phases
-              to your Claude key and budget phases to Groq — all at no credit cost to you.
+              Start with a small or medium size preset and a fast, low-cost model. Or use a
+              provider's free tier, or a local Ollama model, and pay nothing at all.
             </p>
           </div>
         </div>
       </section>
 
-      <!-- Section 5: Free Tier -->
-      <section id="free-tier" class="content-section">
+      <!-- Section 5: Free to Use -->
+      <section id="free" class="content-section">
         <div class="section-label font-mono">05</div>
-        <h2 class="section-title">The Free Tier Is Real</h2>
+        <h2 class="section-title">Free to Use</h2>
         <p class="section-intro">
-          Free tier modlists use free AI models that cost us nothing to run.
-          We're not losing money on free users — so there's no catch, no
-          bait-and-switch, and no artificial degradation.
+          ModdersOmni itself is free and open source. There are no accounts, no paid tiers,
+          and no paywalled features.
         </p>
 
         <div class="free-tier-grid">
@@ -293,33 +278,33 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
             <div class="free-card-icon">
               <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
-            <h3>Up to ~50 mods</h3>
-            <p>Enough for a solid essentials + textures + UI setup. Perfect for trying the app
-              or building lightweight modlists.</p>
+            <h3>No account needed</h3>
+            <p>Your keys, hardware specs and modlists are saved in this browser only.
+              Nothing is uploaded to us.</p>
           </div>
           <div class="free-card stagger-item">
             <div class="free-card-icon">
               <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
-            <h3>Same search quality</h3>
-            <p>Free models search the same Nexus Mods database with the same tools. They find
-              the same mods — just with less nuanced selection for complex phases.</p>
+            <h3>Free AI options</h3>
+            <p>Groq, Gemini and OpenRouter offer free tiers, and Ollama runs models on your own
+              machine. Any of them can build a complete modlist.</p>
           </div>
           <div class="free-card stagger-item">
             <div class="free-card-icon">
               <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
-            <h3>Public modlists</h3>
-            <p>Every modlist — free or premium — is publicly viewable. We never paywall content.
-              Paid tiers unlock larger lists and one-click install via mod manager plugins.</p>
+            <h3>Every size, every feature</h3>
+            <p>All size presets, the overseer review, and the Mod Organizer 2 import plugin are
+              available to everyone.</p>
           </div>
           <div class="free-card stagger-item">
             <div class="free-card-icon">
               <lucide-icon name="check" [size]="24" [strokeWidth]="1.5"></lucide-icon>
             </div>
-            <h3>No time limits</h3>
-            <p>Generate as many free-tier modlists as you want. No daily caps, no trial period,
-              no "free for 7 days" tricks.</p>
+            <h3>No limits from us</h3>
+            <p>Generate as many modlists as you like. The only limits are your AI provider's
+              own rate limits.</p>
           </div>
         </div>
       </section>
@@ -327,10 +312,10 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       <!-- CTA -->
       <section class="cta-section">
         <h2 class="cta-title">Ready to build?</h2>
-        <p class="cta-subtitle">Start with the free tier. Upgrade if you want more.</p>
+        <p class="cta-subtitle">Add an AI key and have a modlist in minutes.</p>
         <div class="cta-actions">
           <a ui-button variant="primary" size="lg" routerLink="/setup">Start Building</a>
-          <a ui-button variant="secondary" size="lg" routerLink="/auth/register">Create Account</a>
+          <a ui-button variant="secondary" size="lg" routerLink="/settings">Add an AI Key</a>
         </div>
       </section>
     </div>
@@ -862,43 +847,38 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
   `],
 })
 export class MethodologyComponent {
+  /** Mirrors public/data/build-phases.skyrim.json. Colour shows what drives the picks. */
   phases = [
-    { name: 'Essentials', complexity: 'low', description: 'Core frameworks and must-have utilities (SKSE, USSEP, etc.)' },
-    { name: 'UI Improvements', complexity: 'low', description: 'HUD, menus, inventory, and quality-of-life interface mods' },
-    { name: 'Bug Fixes', complexity: 'low', description: 'Stability patches and engine-level fixes beyond the unofficial patch' },
-    { name: 'Textures', complexity: 'low', description: 'Visual overhauls matched to your VRAM budget' },
-    { name: 'Lighting & Weather', complexity: 'medium', description: 'ENB presets, weather systems, and interior lighting matched to your GPU' },
-    { name: 'Environment', complexity: 'medium', description: 'Landscape, flora, water, and world-space visual improvements' },
-    { name: 'Audio', complexity: 'medium', description: 'Sound overhauls, ambient audio, and music replacements' },
-    { name: 'Animations', complexity: 'medium', description: 'Movement, combat animations, and character behavior' },
-    { name: 'Gameplay Overhaul', complexity: 'high', description: 'Core gameplay systems tailored to your playstyle preferences' },
-    { name: 'Combat', complexity: 'high', description: 'Combat mechanics, enemy AI, and difficulty tuned to your style' },
-    { name: 'Quests & Content', complexity: 'high', description: 'New quests, locations, and story content that fit your build' },
-    { name: 'Followers & NPCs', complexity: 'medium', description: 'NPC overhauls, followers, and character enhancements' },
-    { name: 'Compatibility Patches', complexity: 'high', description: 'Conflict resolution, load order fixes, and inter-mod patches' },
+    { name: 'Essentials & Frameworks', complexity: 'low', label: 'core', description: 'Script extenders, engine fixes and the frameworks other mods depend on (SKSE, USSEP, etc.)' },
+    { name: 'UI & Interface', complexity: 'low', label: 'core', description: 'Inventory, HUD, map and mod-configuration menus' },
+    { name: 'Fixes & Bug Patches', complexity: 'low', label: 'core', description: 'Stability patches and engine-level fixes beyond the unofficial patch' },
+    { name: 'Foundation Textures & Meshes', complexity: 'medium', label: 'hardware', description: 'Landscape, architecture and gear textures sized to your VRAM' },
+    { name: 'Animation & Physics', complexity: 'high', label: 'playstyle', description: 'Skeleton, movement and combat animations, and physics' },
+    { name: 'Audio', complexity: 'low', label: 'core', description: 'Sound overhauls, ambient audio, and music' },
+    { name: 'Gameplay & Playstyle', complexity: 'high', label: 'playstyle', description: 'Combat, skills, survival and economy mods matched to how you play' },
+    { name: 'Locations & World', complexity: 'high', label: 'playstyle', description: 'City overhauls, town expansions and new places to explore' },
+    { name: 'Lighting & Weather', complexity: 'medium', label: 'hardware', description: 'Weather, interior lighting, and an ENB only if your GPU can take it' },
+    { name: 'Compatibility Patches', complexity: 'medium', label: 'review', description: 'Reviews the whole list and finds patches for mods that touch the same systems' },
   ];
 
-  dispatchTiers = [
+  reviewSteps = [
     {
-      name: 'Budget Models',
-      level: 'budget',
-      description: 'Fast, cost-effective models for straightforward phases where the "right" mods are well-established.',
-      phases: ['Essentials', 'UI', 'Textures', 'Bug Fixes'],
-      cost: '~$0.50/M tokens',
-    },
-    {
-      name: 'Standard Models',
+      name: 'Build',
       level: 'standard',
-      description: 'Balanced models for phases that need some reasoning about hardware compatibility and preferences.',
-      phases: ['Lighting', 'Environment', 'Audio', 'Animations', 'Followers'],
-      cost: '~$2/M tokens',
+      badge: 'step 1',
+      description: 'Your chosen model searches Nexus Mods, reads mod pages and adds the best fits for the phase.',
     },
     {
-      name: 'Premium Models',
-      level: 'premium',
-      description: 'Strongest reasoning for complex phases involving mod interactions, playstyle interpretation, and conflict resolution.',
-      phases: ['Gameplay', 'Combat', 'Quests', 'Compatibility'],
-      cost: '~$8/M tokens',
+      name: 'Phase review',
+      level: 'standard',
+      badge: 'step 2',
+      description: 'The overseer checks the new additions for conflicts, duplicates and poor fits, then approves, flags or rejects each one.',
+    },
+    {
+      name: 'Final review',
+      level: 'standard',
+      badge: 'step 3',
+      description: 'Once every phase is done, a last pass looks at the whole list together for cross-phase problems.',
     },
   ];
 

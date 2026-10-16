@@ -1,6 +1,6 @@
 import { Component, signal, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { fadeUp, staggerChildren } from '../../core/motion/animations';
+import { fadeUp } from '../../core/motion/animations';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -45,7 +45,7 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
   ],
   // Centralized triggers from core/motion/animations.ts. Replaces the inline
   // fadeUp + staggerIn definitions — Plan 3 Task 9 (Plan 2 Task 14 follow-up).
-  animations: [fadeUp, staggerChildren],
+  animations: [fadeUp],
   template: `
     <!-- Sticky Navbar -->
     <nav class="navbar" [class.scrolled]="scrolled()">
@@ -206,8 +206,7 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
           <span class="section-label">How It Works</span>
           <h2 class="section-title">Three steps to your<br>ideal mod setup</h2>
         </div>
-        @if (stepsVisible()) {
-          <div class="steps" @staggerChildren>
+        <div class="steps reveal" [class.is-visible]="stepsVisible()">
             <div class="step stagger-item">
               <div class="step-number">01</div>
               <div class="step-icon">
@@ -239,7 +238,6 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
               <p class="step-desc">AI generates a curated, compatible mod list optimized for your hardware tier. Export directly to MO2 or Vortex.</p>
             </div>
           </div>
-        }
       </div>
     </section>
 
@@ -250,8 +248,7 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
           <span class="section-label">Features</span>
           <h2 class="section-title">Built for modders<br>who know what they want</h2>
         </div>
-        @if (featuresVisible()) {
-          <div class="features-grid" @staggerChildren>
+          <div class="features-grid reveal" [class.is-visible]="featuresVisible()">
             <ui-card class="feature-card stagger-item">
               <div class="feature-icon feature-icon--gold">
                 <lucide-icon name="shield" [size]="24" [strokeWidth]="1.5"></lucide-icon>
@@ -274,7 +271,6 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
               <p>Export your final mod list as an MO2 profile or Vortex collection. Or download everything straight from Nexus with one click.</p>
             </ui-card>
           </div>
-        }
       </div>
     </section>
 
@@ -282,13 +278,18 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
     <section class="proof-bar">
       <div class="proof-container">
         <div class="proof-item">
-          <span class="proof-number">{{ modlistsGenerated() }}</span>
-          <span class="proof-label">Modlists Generated</span>
+          <span class="proof-number">{{ gamesSupported() }}</span>
+          <span class="proof-label">Games Supported</span>
         </div>
         <div class="proof-divider"></div>
         <div class="proof-item">
-          <span class="proof-number">{{ gamesSupported() }}</span>
-          <span class="proof-label">Games Supported</span>
+          <span class="proof-number">{{ providersSupported }}</span>
+          <span class="proof-label">AI Providers</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-item">
+          <span class="proof-number">0</span>
+          <span class="proof-label">Accounts Needed</span>
         </div>
       </div>
     </section>
@@ -973,6 +974,19 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
     }
 
     /* ===== Social Proof Bar ===== */
+    /* Scroll reveal: content is always in the DOM (keeps page height stable
+       and content indexable); it just fades up once scrolled into view. */
+    .reveal .stagger-item {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+    }
+    .reveal.is-visible .stagger-item { opacity: 1; transform: none; }
+    .reveal.is-visible .stagger-item:nth-child(2) { transition-delay: 0.08s; }
+    .reveal.is-visible .stagger-item:nth-child(3) { transition-delay: 0.16s; }
+    .reveal.is-visible .stagger-item:nth-child(4) { transition-delay: 0.24s; }
+    .reveal.is-visible .stagger-item:nth-child(5) { transition-delay: 0.32s; }
+
     .proof-bar {
       border-top: 1px solid var(--color-border);
       border-bottom: 1px solid var(--color-border);
@@ -1078,21 +1092,15 @@ import { UiButtonComponent, UiCardComponent } from '../../shared/components/ui';
         flex-direction: column;
         align-items: center;
       }
-      .step-divider {
-        padding-top: 0;
-        transform: rotate(90deg);
-      }
+      .step-divider { padding-top: 0; }
+      .step-divider lucide-icon { display: inline-flex; transform: rotate(90deg); }
       .features-grid {
         grid-template-columns: 1fr;
       }
-      .proof-container {
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-      .proof-divider {
-        width: 40px;
-        height: 1px;
-      }
+      .proof-container { gap: 1.25rem; align-items: flex-start; }
+      .proof-divider { display: none; }
+      .proof-item { flex: 1; text-align: center; }
+      .proof-number { font-size: 1.75rem; }
       .footer-container {
         flex-direction: column;
         gap: 1.5rem;
@@ -1108,8 +1116,9 @@ export class LandingComponent implements OnInit, OnDestroy, AfterViewInit {
   scrolled = signal(false);
   stepsVisible = signal(false);
   featuresVisible = signal(false);
-  modlistsGenerated = signal('0');
   gamesSupported = signal('2');
+  /** Browser-direct providers in core/services/llm/registry.ts. */
+  readonly providersSupported = 6;
 
   readonly previewCards = [
     { game: 'Skyrim SE', color: 'blue', provider: 'groq', mods: 48, patches: 12, date: 'Feb 24, 2026' },

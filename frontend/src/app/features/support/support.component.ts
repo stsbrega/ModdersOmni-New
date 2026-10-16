@@ -52,7 +52,7 @@ import {
             <h2 class="platform-name">Ko-fi</h2>
             <p class="platform-desc">
               Buy me a coffee — one-time or recurring. Every donation goes directly
-              toward server compute.
+              toward development and hosting.
             </p>
           </div>
           <a
@@ -97,12 +97,13 @@ import {
           <lucide-icon name="info" [size]="22" [strokeWidth]="1.5"></lucide-icon>
         </div>
         <div class="byok-body">
-          <strong>Using your own API keys?</strong>
+          <strong>About AI costs</strong>
           <p>
-            If you add your own Groq, Gemini, Anthropic, or OpenAI keys in
-            <a routerLink="/settings" class="inline-link">Settings</a>, generations
-            run on your account and may be subject to charges from that provider
-            depending on your plan with them.
+            ModdersOmni runs entirely in your browser using the AI key you add in
+            <a routerLink="/settings" class="inline-link">Settings</a>. Generations
+            run on your account with that provider and may be subject to charges
+            depending on your plan. Groq, Gemini and OpenRouter offer free tiers,
+            and Ollama runs locally for free.
           </p>
         </div>
       </div>

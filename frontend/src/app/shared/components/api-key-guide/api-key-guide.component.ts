@@ -23,8 +23,9 @@ import { LlmProvider } from '../../models/mod.model';
           <section class="guide-section">
             <h4>What are API keys?</h4>
             <p>
-              API keys are optional. Add one if you want ModdersOmni to use your own AI provider
-              account instead of the free hosted model pool (Gemini, Groq, Cerebras).
+              An API key lets ModdersOmni talk to an AI provider on your behalf. You need at
+              least one to build a modlist (or a local Ollama server). Keys stay in this
+              browser and are sent only to that provider. Several providers have free tiers.
             </p>
           </section>
 
@@ -203,15 +204,13 @@ export class ApiKeyGuideComponent {
   providers = input.required<LlmProvider[]>();
   expanded = signal(false);
 
-  private readonly FREE_IDS = new Set(['groq', 'gemini', 'together']);
+  private readonly FREE_IDS = new Set(['groq', 'gemini', 'openrouter']);
   private readonly NOTES: Record<string, string> = {
     groq: 'Fast inference, generous free tier',
     gemini: 'Free quota, good quality',
-    together: 'Free models available',
+    openrouter: 'One key, many models; some free',
     anthropic: 'Claude — highest quality',
     openai: 'GPT-4o — widely used',
-    deepseek: 'Very affordable pricing',
-    mistral: 'European provider, strong models',
   };
 
   freeProviders() {

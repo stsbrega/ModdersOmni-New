@@ -51,6 +51,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "moddersomni_import.py",
+                "input": "../plugins/mo2",
+                "output": "plugins"
               }
             ],
             "styles": [

@@ -71,25 +71,25 @@ export class InstallGuideService {
       {
         title: '3. Install the ModdersOmni MO2 plugin',
         body:
-          "Click the 'Download MO2 plugin' button at the top of this page to save " +
-          'moddersomni_import.py. Copy it into your MO2 installation\'s plugins/ folder. ' +
-          'Restart MO2 — you should now see "Import from ModdersOmni" under the Tools menu ' +
-          '(the puzzle-piece icon in the toolbar).',
+          "Click 'Download MO2 plugin' at the top of this page to save moddersomni_import.py. " +
+          "Copy it into the plugins/ folder inside your MO2 installation, then restart MO2. " +
+          "You should now see 'ModdersOmni Import' under the Tools menu (the puzzle-piece icon " +
+          'in the toolbar).',
       },
       {
-        title: '4. Create a plugin token on your account',
+        title: '4. Download your modlist file',
         body:
-          'In your ModdersOmni account, go to Settings → Plugin Tokens → Create New. Copy the ' +
-          "token — you'll paste it into the MO2 import dialog. Tokens are long-lived but can be " +
-          'revoked at any time from the same page.',
+          "Click 'Download modlist for MO2' at the top of this page. This saves a small .json file " +
+          'listing every mod and the exact Nexus file to fetch. Nothing is uploaded; the file ' +
+          'stays on your computer.',
       },
       {
         title: '5. Import the modlist',
         body:
-          `In MO2: Tools → Import from ModdersOmni. Paste this modlist's URL (${this.modlistUrl(modlist)}) ` +
-          'and your plugin token. Enter your Nexus personal API key (get it from nexusmods.com/users/myaccount' +
-          '?tab=api+access) so downloads resolve correctly. Click Import. MO2 will queue all ' +
-          `${modCount} mod downloads and install them in order.`,
+          'Make sure MO2 is logged in to Nexus Mods (Settings → Nexus → Connect to Nexus). ' +
+          'Then choose Tools → ModdersOmni Import and select the .json file. MO2 will queue all ' +
+          `${modCount + patchCount} downloads in install order. When they finish, install each one ` +
+          'from the Downloads tab, top to bottom.',
       },
       {
         title: '6. Enable plugins in the right pane and resolve conflicts',
@@ -111,7 +111,7 @@ export class InstallGuideService {
       title: 'Mod Organizer 2 (recommended)',
       summary:
         'MO2 uses a virtualized file system that keeps your game folder clean and lets you manage ' +
-        'multiple profiles. The ModdersOmni MO2 plugin automates the download and install of this ' +
+        'multiple profiles. The ModdersOmni MO2 plugin queues every download for this ' +
         'entire modlist in one pass.',
       steps: mo2Steps,
     };
@@ -133,8 +133,8 @@ export class InstallGuideService {
       {
         title: "3. Download each mod via 'Mod Manager Download'",
         body:
-          `Open the downloadable modlist file (modlist-${this.shortId(modlist)}.md) and click each ` +
-          "Nexus Mods link in order. On each mod page, click the 'Mod Manager Download' button " +
+          "Open the downloaded guide (.md), which lists every mod with its Nexus link, or use the " +
+          "link icons on your modlist page. Visit each mod in order. On each mod page, click the 'Mod Manager Download' button " +
           'on the main file. Vortex will intercept the download and queue it automatically. ' +
           `You will repeat this ${modCount} times — Vortex does not support bulk URL import.`,
       },
@@ -418,13 +418,5 @@ export class InstallGuideService {
       summary: section.summary,
       steps: section.steps.map((s) => ({ title: s.title, body: s.body })),
     };
-  }
-
-  private shortId(modlist: Modlist): string {
-    return modlist.id.slice(0, 8);
-  }
-
-  private modlistUrl(modlist: Modlist): string {
-    return `https://moddersomni.com/modlist/${modlist.id}`;
   }
 }

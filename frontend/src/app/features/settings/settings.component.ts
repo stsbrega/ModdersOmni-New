@@ -97,7 +97,8 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                 </ui-card>
                 <p class="input-hint" style="margin-bottom: 0.75rem;">
                   Paste an API key below — the provider will be detected automatically.
-                  If one provider hits a rate limit during generation, the next is used.
+                  If a provider hits a rate limit during generation, the build pauses so you
+                  can switch keys and resume.
                 </p>
 
                 <app-api-key-guide [providers]="llmProviders()" />
@@ -220,8 +221,8 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
                       autocomplete="off"
                       class="key-input"
                     />
-                    <button ui-button variant="primary" (click)="testOllamaConnection()">
-                      Test Connection
+                    <button ui-button variant="primary" (click)="testOllamaConnection()" [disabled]="ollamaTesting()">
+                      {{ ollamaTesting() ? 'Testing…' : 'Test Connection' }}
                     </button>
                   </div>
 
@@ -738,6 +739,11 @@ type SettingsTab = 'keys' | 'hardware' | 'notifications';
       margin-bottom: 0.5rem;
       align-items: stretch;
     }
+    /* Phones: stack input over button so pasted keys / URLs aren't clipped. */
+    @media (max-width: 480px) {
+      .add-key-row { flex-direction: column; }
+      .add-key-row > button { width: 100%; }
+    }
     .key-input {
       flex: 1;
       min-width: 0;
@@ -906,6 +912,7 @@ export class SettingsComponent implements OnInit {
   // Ollama (local providers)
   ollamaUrl = signal('http://localhost:11434/v1');
   ollamaStatus = signal<'unknown' | 'connected' | 'error'>('unknown');
+  ollamaTesting = signal(false);
   ollamaModels = signal<string[]>([]);
   ollamaSelectedModel = signal('gemma4:26b');
   ollamaError = signal('');
@@ -1028,8 +1035,13 @@ export class SettingsComponent implements OnInit {
     this.notifications.success('API key removed');
   }
 
-  testOllamaConnection(): void {
+  /**
+   * @param silent  Background re-check on page load: no toast on success and
+   *                no warning on failure (Ollama simply may not be running).
+   */
+  testOllamaConnection(silent = false): void {
     this.ollamaStatus.set('unknown');
+    this.ollamaTesting.set(true);
     // Direct browser fetch to Ollama's `/api/tags`. Ollama runs locally so
     // CORS is fine in practice; an unreachable URL falls into the catch.
     const baseUrl = this.ollamaUrl().replace(/\/v1\/?$/, '').replace(/\/$/, '');
@@ -1047,12 +1059,14 @@ export class SettingsComponent implements OnInit {
         this.settingsStore.setOllamaUrl(this.ollamaUrl());
         this.settingsStore.setOllamaModel(model);
         this.llmKeys.update(k => ({ ...k, ollama: this.ollamaUrl(), ollama_model: model }));
-        this.notifications.success('Connected to Ollama!');
+        if (!silent) this.notifications.success('Connected to Ollama!');
       })
       .catch(() => {
+        if (silent) return;
         this.ollamaStatus.set('error');
-        this.ollamaError.set('Could not reach the server');
-      });
+        this.ollamaError.set(`Could not reach Ollama at ${baseUrl}. Is it running?`);
+      })
+      .finally(() => this.ollamaTesting.set(false));
   }
 
   onOllamaModelChange(model: string): void {
@@ -1232,8 +1246,11 @@ export class SettingsComponent implements OnInit {
     if (ollamaModel) {
       this.ollamaSelectedModel.set(ollamaModel);
     }
-    if (ollamaUrl || keys['ollama']) {
-      this.testOllamaConnection();
+    // ollamaUrl() always has a default, so it can't tell us whether the user
+    // ever set Ollama up. Only re-check when they have connected before;
+    // otherwise every visitor saw a "could not reach" warning on load.
+    if (ollamaModel || keys['ollama']) {
+      this.testOllamaConnection(true);
     }
   }
 
