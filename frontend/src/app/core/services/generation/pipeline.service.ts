@@ -877,6 +877,9 @@ export class GenerationPipelineService {
       load_order: e.load_order,
       is_patch: isPatch,
       patches_mods: e['patches_mods'] as string[] | undefined,
+      // Carried through so the MO2 export doesn't have to re-resolve them.
+      file_id: (e['file_id'] as number | undefined) ?? undefined,
+      file_size_bytes: e.file_size_bytes ?? undefined,
     };
   }
 

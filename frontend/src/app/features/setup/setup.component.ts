@@ -196,6 +196,15 @@ import { UiButtonComponent } from '../../shared/components/ui/button.component';
       transition: background 0.25s;
     }
     .step-line.active { background: var(--color-success); }
+    .step-indicator { flex-shrink: 0; }
+
+    /* Phones: four labelled steps don't fit in 390px. Keep every number,
+       show only the current step's label, and let the lines flex. */
+    @media (max-width: 560px) {
+      .stepper { margin-bottom: 2rem; }
+      .step:not(.active) .step-label { display: none; }
+      .step-line { flex: 1 1 12px; width: auto; min-width: 12px; max-width: 36px; }
+    }
 
     /* Version Select */
     .version-select {

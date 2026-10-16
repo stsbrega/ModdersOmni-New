@@ -196,6 +196,8 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
         </div>
       }
 
+      <!-- Hide the empty progress/timeline shell when there's nothing to show. -->
+      @if (!generationNotFound()) {
       <!-- ── Top: Phase Progress ── -->
       <header class="phase-bar" @fadeUp>
         <div class="phase-bar-inner">
@@ -593,6 +595,7 @@ const FALLBACK_EVENT_ICON: EventIcon = { name: 'circle', cls: 'icon-dim' };
           }
         </section>
       </div>
+      }
     </div>
   `,
   styles: [

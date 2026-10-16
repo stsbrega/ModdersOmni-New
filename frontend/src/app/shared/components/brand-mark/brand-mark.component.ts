@@ -57,12 +57,21 @@ const BRAND_MARK_SIZES: Record<BrandMarkSize, { icon: string; gap: string; text:
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* The source PNG has ~25% dark padding around the Omega. Zoom it
+         inside a rounded tile so the glyph stays legible at 32px. */
+      border-radius: 24%;
+      overflow: hidden;
+      /* The Omega in logo-512.png is a transparent cut-out. Without a light
+         backing it shows the page's near-black background and vanishes. */
+      background: var(--color-text);
+      box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-accent) 18%, transparent);
     }
     .brand-mark__logo {
       display: block;
       width: 100%;
       height: 100%;
       object-fit: contain;
+      transform: scale(1.5);
       user-select: none;
     }
     .brand-mark__text {

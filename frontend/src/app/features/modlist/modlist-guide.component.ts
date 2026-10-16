@@ -5,7 +5,8 @@ import { InstallGuideService } from '../../core/services/install-guide.service';
 import { ModlistStore } from '../../core/services/modlist-store.service';
 import { GameDataService } from '../../core/services/game-data.service';
 import { NotificationService } from '../../core/services/notification.service';
-import { InstallGuide, GuideSection, GuideStep } from '../../shared/models/mod.model';
+import { Mo2ExportService } from '../../core/services/mo2-export.service';
+import { InstallGuide, GuideSection, GuideStep, Modlist } from '../../shared/models/mod.model';
 import {
   LucideAngularModule,
   LUCIDE_ICONS,
@@ -67,8 +68,7 @@ type TabId = 'mo2' | 'vortex';
                   Set game version for tailored instructions
                 </button>
               }
-              · {{ guide()!.mod_count }} mods
-              @if (guide()!.patch_count) { + {{ guide()!.patch_count }} patches }
+              <span class="count-text">{{ guide()!.mod_count }} {{ guide()!.mod_count === 1 ? 'mod' : 'mods' }}@if (guide()!.patch_count) { + {{ guide()!.patch_count }} {{ guide()!.patch_count === 1 ? 'patch' : 'patches' }}}</span>
             </p>
           </div>
           <div class="header-actions">
@@ -77,7 +77,12 @@ type TabId = 'mo2' | 'vortex';
               <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
               Download MO2 plugin
             </a>
-            <a ui-button variant="primary" size="md" [href]="markdownUrl()" [download]="'moddersomni-guide-' + shortId() + '.md'">
+            <button ui-button variant="primary" size="md" [disabled]="exporting()" (click)="downloadManifest()"
+                    title="The file you open with Tools → ModdersOmni Import (step 4)">
+              <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
+              {{ exporting() ? 'Preparing…' : 'Download modlist for MO2' }}
+            </button>
+            <a ui-button variant="secondary" size="md" [href]="markdownUrl()" [download]="'moddersomni-guide-' + shortId() + '.md'">
               <lucide-icon name="download" [size]="14" [strokeWidth]="2"></lucide-icon>
               Download guide (.md)
             </a>
@@ -218,8 +223,9 @@ type TabId = 'mo2' | 'vortex';
     }
     .subtitle {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 0.625rem;
+      gap: 0.5rem 0.625rem;
       font-size: 0.875rem;
       color: var(--color-text-muted);
       margin: 0;
@@ -453,6 +459,8 @@ type TabId = 'mo2' | 'vortex';
 })
 export class ModlistGuideComponent implements OnInit {
   guide = signal<InstallGuide | null>(null);
+  exporting = signal(false);
+  private storedModlist: Modlist | null = null;
   loading = signal(true);
   activeTab = signal<TabId>('mo2');
   troubleshootingOpen = signal(false);
@@ -485,8 +493,8 @@ export class ModlistGuideComponent implements OnInit {
   });
 
   /**
-   * Static path served from `frontend/public/plugins/`. Plan 3 Task 5
-   * lands the rewritten plugin file there.
+   * Copied from `plugins/mo2/` into the build output by the `assets`
+   * entry in angular.json.
    */
   mo2PluginUrl = computed(() => '/plugins/moddersomni_import.py');
 
@@ -502,7 +510,27 @@ export class ModlistGuideComponent implements OnInit {
     private modlistStore: ModlistStore,
     private gameData: GameDataService,
     private notifications: NotificationService,
+    private mo2Export: Mo2ExportService,
   ) {}
+
+  async downloadManifest(): Promise<void> {
+    const ml = this.storedModlist;
+    if (!ml || this.exporting()) return;
+    this.exporting.set(true);
+    try {
+      const { manifest, unresolved } = await this.mo2Export.exportManifest(ml);
+      this.mo2Export.download(manifest, ml.id);
+      if (unresolved > 0) {
+        this.notifications.warning(
+          `${unresolved} mod(s) have no downloadable file on Nexus and will be skipped by MO2. Install those by hand.`,
+        );
+      }
+    } catch {
+      this.notifications.error('Could not prepare the MO2 file. Check your connection and try again.');
+    } finally {
+      this.exporting.set(false);
+    }
+  }
 
   ngOnInit(): void {
     this.modlistId = this.route.snapshot.paramMap.get('id');
@@ -522,6 +550,7 @@ export class ModlistGuideComponent implements OnInit {
    */
   private async loadGuide(modlistId: string, versionOverride: string | null): Promise<void> {
     const ml = this.modlistStore.get(modlistId);
+    this.storedModlist = ml;
     if (!ml) {
       this.loading.set(false);
       this.notifications.error('Modlist not found in local storage.');

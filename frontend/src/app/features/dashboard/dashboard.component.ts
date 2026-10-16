@@ -139,7 +139,7 @@ import { DialogRef } from '@angular/cdk/dialog';
                 <div class="card-top">
                   <div class="card-meta">
                     <!-- Brand chips (game/provider) stay inline — not semantic status. -->
-                    <span class="card-game">Game {{ ml.game_id }}</span>
+                    <span class="card-game">{{ gameLabel(ml) }}</span>
                     @if (ml.llm_provider && ml.llm_provider !== 'fallback') {
                       <span class="card-provider">{{ ml.llm_provider }}</span>
                     }
@@ -158,9 +158,9 @@ import { DialogRef } from '@angular/cdk/dialog';
                   </div>
                 </div>
                 <div class="card-stats">
-                  <span class="card-mod-count font-mono">{{ coreModCount(ml) }} mods</span>
+                  <span class="card-mod-count font-mono">{{ coreModCount(ml) }} {{ coreModCount(ml) === 1 ? 'mod' : 'mods' }}</span>
                   @if (patchModCount(ml) > 0) {
-                    <span class="card-patch-count font-mono">+ {{ patchModCount(ml) }} patches</span>
+                    <span class="card-patch-count font-mono">+ {{ patchModCount(ml) }} {{ patchModCount(ml) === 1 ? 'patch' : 'patches' }}</span>
                   }
                 </div>
                 @if (ml.created_at) {
@@ -200,6 +200,7 @@ import { DialogRef } from '@angular/cdk/dialog';
     .dashboard-main {
       padding: 2rem 2.5rem;
       max-width: 1000px;
+      margin: 0 auto;
     }
 
     /* Welcome */
@@ -470,7 +471,10 @@ import { DialogRef } from '@angular/cdk/dialog';
     .text-muted { color: var(--color-text-muted); }
 
     @media (max-width: 640px) {
-      .stats-row { grid-template-columns: 1fr; }
+      .dashboard-main { padding: 1.5rem 1rem; }
+      .welcome { flex-wrap: wrap; gap: 1rem; }
+      .welcome-title { font-size: 1.375rem; }
+      .stats-row { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
       .modlist-grid { grid-template-columns: 1fr; }
     }
   `],
@@ -494,6 +498,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /** Locally-provided UiDialogComponent — used as a service to call .open(). */
   private uiDialog = inject(UiDialogComponent);
+
+  /** Human-readable game chip, e.g. "Skyrim SE" or "Fallout 4 Next-Gen". */
+  gameLabel(ml: Modlist): string {
+    const base =
+      ml.game_domain === 'fallout4' ? 'Fallout 4'
+      : ml.game_domain === 'skyrimspecialedition' ? 'Skyrim'
+      : ml.game_id === 2 ? 'Fallout 4' : 'Skyrim';
+    return ml.game_version ? `${base} ${ml.game_version}` : base;
+  }
 
   totalMods = computed(() =>
     this.modlists().reduce((sum, ml) => sum + ml.entries.length, 0)

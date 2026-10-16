@@ -9,6 +9,9 @@ export interface ModEntry {
   is_patch?: boolean;
   patches_mods?: string[];
   compatibility_notes?: string;
+  /** Nexus primary file id — required by the MO2 import plugin. */
+  file_id?: number;
+  file_size_bytes?: number;
 }
 
 export interface UserKnowledgeFlag {
