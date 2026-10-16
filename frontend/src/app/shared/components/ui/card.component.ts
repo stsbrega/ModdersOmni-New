@@ -3,9 +3,10 @@
 // UiCardComponent — generic surface container with content projection.
 //
 // Styling is applied directly via a :host rule using CSS custom properties
-// (var(--color-*)) so it works without Tailwind's preprocessor. The build
-// pipeline does not run Tailwind, so utility-class strings in host.class
-// produce no styles — this approach avoids that silent failure.
+// (var(--color-*)). Tailwind now runs in the build (see frontend/.postcssrc.json), but primitives
+// keep their visual layer in their own styles array: it keeps them
+// self-contained, and Tailwind utilities sit in a CSS @layer that unlayered
+// component styles override anyway.
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 

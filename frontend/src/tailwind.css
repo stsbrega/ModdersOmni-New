@@ -1,2 +1,7 @@
-@import "tailwindcss";
+/*
+ * Tailwind entry. Processed by @tailwindcss/postcss (see .postcssrc.json).
+ * source(".") limits class scanning to src/ so words in public/knowledge/*.md
+ * or e2e specs don't generate stray utilities.
+ */
+@import "tailwindcss" source(".");
 @import "./styles/theme.css";

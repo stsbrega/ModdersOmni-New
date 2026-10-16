@@ -101,6 +101,8 @@ JSON shape (see `core/services/install-guide.service.ts`):
 ### Frontend
 
 - **LLM API keys live in `localStorage`** via `SettingsStore` (`core/services/settings-store.service.ts`). Three UI entry points (Settings, Setup wizard, Generation pause form) all read/write through the same store — never bypass it with direct `localStorage` calls.
+- **Tailwind is live**: Tailwind 4 runs through `@tailwindcss/postcss`, wired by `frontend/.postcssrc.json` (Angular's builder picks it up). Tokens in `src/styles/theme.css` are an `@theme static` block, so they are always emitted as `:root` variables *and* generate utilities (`bg-accent`, `text-text-muted`, `rounded-md`, `font-mono`). Utilities sit in `@layer utilities`, so unlayered component styles win on conflicts. Any class name that matches a Tailwind utility (`hidden`, `container`, `grid`, `font-mono`...) now gets styled — pick distinctive names for custom classes.
+- **Lazy routes**: every page except the landing page is lazy-loaded via `loadComponent` in `app.routes.ts`, with `PreloadAllModules` fetching the chunks in the background. Keep new pages lazy so the initial bundle stays under the 750 kB budget.
 - **Stale dev server**: After modifying frontend files, if behavior seems stale: `rm -rf frontend/.angular/cache` and restart.
 - **Google Fonts syntax**: Use simple weight syntax (`wght@300;400;500;600;700`), NOT variable font axis syntax — variable syntax causes 400 errors during Angular font inlining.
 - **Fonts**: Inter (body + headings) + JetBrains Mono (technical strings only).

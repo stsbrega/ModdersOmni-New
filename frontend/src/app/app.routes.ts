@@ -1,28 +1,61 @@
 import { Routes } from '@angular/router';
 import { LandingComponent } from './features/landing/landing.component';
-import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { SetupComponent } from './features/setup/setup.component';
-import { ModlistComponent } from './features/modlist/modlist.component';
-import { ModlistGuideComponent } from './features/modlist/modlist-guide.component';
-import { SettingsComponent } from './features/settings/settings.component';
-import { GenerationComponent } from './features/generation/generation.component';
-import { SupportComponent } from './features/support/support.component';
-import { CompatibilityComponent } from './features/compatibility/compatibility.component';
-import { MethodologyComponent } from './features/methodology/methodology.component';
 
+// The landing page ships in the initial bundle because it's the first thing
+// most visitors see. Every other page is lazy-loaded into its own chunk, and
+// app.config.ts preloads those chunks in the background once the app is
+// idle, so in-app navigation stays instant.
 export const routes: Routes = [
   { path: '', component: LandingComponent },
 
   // All routes are public — no auth concept after Plan 3 Task 3.
-  { path: 'setup', component: SetupComponent },
-  { path: 'support', component: SupportComponent },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'settings', component: SettingsComponent },
-  { path: 'generate/:id', component: GenerationComponent },
-  { path: 'modlist/:id', component: ModlistComponent },
-  { path: 'modlist/:id/guide', component: ModlistGuideComponent },
-  { path: 'compatibility', component: CompatibilityComponent },
-  { path: 'methodology', component: MethodologyComponent },
+  {
+    path: 'setup',
+    loadComponent: () =>
+      import('./features/setup/setup.component').then((m) => m.SetupComponent),
+  },
+  {
+    path: 'support',
+    loadComponent: () =>
+      import('./features/support/support.component').then((m) => m.SupportComponent),
+  },
+  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+  },
+  {
+    path: 'generate/:id',
+    loadComponent: () =>
+      import('./features/generation/generation.component').then((m) => m.GenerationComponent),
+  },
+  {
+    path: 'modlist/:id',
+    loadComponent: () =>
+      import('./features/modlist/modlist.component').then((m) => m.ModlistComponent),
+  },
+  {
+    path: 'modlist/:id/guide',
+    loadComponent: () =>
+      import('./features/modlist/modlist-guide.component').then((m) => m.ModlistGuideComponent),
+  },
+  {
+    path: 'compatibility',
+    loadComponent: () =>
+      import('./features/compatibility/compatibility.component').then(
+        (m) => m.CompatibilityComponent,
+      ),
+  },
+  {
+    path: 'methodology',
+    loadComponent: () =>
+      import('./features/methodology/methodology.component').then((m) => m.MethodologyComponent),
+  },
 
   // Redirect old pricing/credits routes to support
   { path: 'pricing', redirectTo: 'support', pathMatch: 'full' },

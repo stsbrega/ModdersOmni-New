@@ -2,22 +2,21 @@
  * frontend/src/styles/theme.css
  *
  * Design token declarations — v3 Pip-Tek palette.
- * Imported by tailwind.css so esbuild bundles it alongside Tailwind's layers.
+ * Imported by tailwind.css, which Tailwind's PostCSS plugin processes
+ * (wired via frontend/.postcssrc.json — Angular's builder picks it up).
  *
- * Declared as plain :root custom properties. The Angular 19 esbuild pipeline
- * does NOT run Tailwind's PostCSS/Vite plugin, so @theme { } blocks pass
- * through verbatim and are silently ignored by browsers. :root { } is the
- * correct primitive that reaches the browser and resolves var(--color-*).
+ * `@theme static` does two things:
+ *   1. Emits every token below as a :root custom property, whether or not a
+ *      utility uses it. Components read these directly via var(--color-*),
+ *      so they must always be present ("static" disables tree-shaking).
+ *   2. Generates matching utilities: bg-accent, text-text-muted,
+ *      border-border, rounded-md, font-mono, shadow-glow, ease-out, ...
  *
  * Color space: OKLCH everywhere — perceptually uniform lightness keeps
  * hover/active state math predictable.
- *
- * If future tasks require @theme semantics (e.g. generating bg-accent utility
- * classes), add @tailwindcss/postcss to devDependencies and wire a
- * postcss.config.js — that is a separate scoped change.
  */
 
-:root {
+@theme static {
   /* ── Backgrounds & surfaces — warm-tinted dark ── */
   --color-bg:        oklch(0.14 0.012 80);
   --color-surface-1: oklch(0.18 0.014 80);
