@@ -5,9 +5,10 @@
 // form binding via ngModel/FormControl) all preserved.
 //
 // Styling uses raw CSS custom properties (var(--color-*)) instead of Tailwind
-// utility classes. The Angular 19 esbuild pipeline does NOT run Tailwind's
-// PostCSS plugin, so utility classes that depend on @theme tokens do not
-// resolve in the browser.
+// utility classes. Tailwind now runs in the build (see frontend/.postcssrc.json), but primitives
+// keep their visual layer in their own styles array: it keeps them
+// self-contained, and Tailwind utilities sit in a CSS @layer that unlayered
+// component styles override anyway.
 //
 // Because this component uses an attribute selector on the native <textarea>,
 // :host IS the textarea element — there is no inner element to style.

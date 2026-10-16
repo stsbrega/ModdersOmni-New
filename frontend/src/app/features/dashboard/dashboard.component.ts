@@ -112,20 +112,20 @@ import { DialogRef } from '@angular/cdk/dialog';
             </a>
           </div>
         } @else {
-          <!-- Stats — ui-card surfaces, font-mono on numeric stat values (data) -->
+          <!-- Stats — ui-card surfaces. Inter, not mono: counts are not literal/copyable (see CLAUDE.md mono rule). -->
           <div class="stats-row" @staggerChildren>
             <ui-card class="stat-card">
               <div class="stat-icon stat-icon--gold">
                 <lucide-icon name="folder" [size]="20" [strokeWidth]="1.5"></lucide-icon>
               </div>
-              <div class="stat-value font-mono">{{ modlists().length }}</div>
+              <div class="stat-value">{{ modlists().length }}</div>
               <div class="stat-label">Modlists Generated</div>
             </ui-card>
             <ui-card class="stat-card">
               <div class="stat-icon stat-icon--blue">
                 <lucide-icon name="tag" [size]="20" [strokeWidth]="1.5"></lucide-icon>
               </div>
-              <div class="stat-value font-mono">{{ totalMods() }}</div>
+              <div class="stat-value">{{ totalMods() }}</div>
               <div class="stat-label">Total Mods</div>
             </ui-card>
           </div>
@@ -158,13 +158,13 @@ import { DialogRef } from '@angular/cdk/dialog';
                   </div>
                 </div>
                 <div class="card-stats">
-                  <span class="card-mod-count font-mono">{{ coreModCount(ml) }} {{ coreModCount(ml) === 1 ? 'mod' : 'mods' }}</span>
+                  <span class="card-mod-count">{{ coreModCount(ml) }} {{ coreModCount(ml) === 1 ? 'mod' : 'mods' }}</span>
                   @if (patchModCount(ml) > 0) {
-                    <span class="card-patch-count font-mono">+ {{ patchModCount(ml) }} {{ patchModCount(ml) === 1 ? 'patch' : 'patches' }}</span>
+                    <span class="card-patch-count">+ {{ patchModCount(ml) }} {{ patchModCount(ml) === 1 ? 'patch' : 'patches' }}</span>
                   }
                 </div>
                 @if (ml.created_at) {
-                  <span class="card-date text-muted font-mono">{{ ml.created_at | date:'MMM d, y' }}</span>
+                  <span class="card-date text-muted">{{ ml.created_at | date:'MMM d, y' }}</span>
                 }
               </a>
             }
