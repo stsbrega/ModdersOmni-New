@@ -12,8 +12,8 @@ export interface DetectionResult {
  * Auto-detect which LLM provider an API key belongs to based on known prefixes.
  *
  * Uses longest-prefix-match: `sk-ant-` uniquely matches Anthropic even though
- * `sk-` also matches OpenAI and DeepSeek. When the longest matching prefix is
- * shared by multiple providers (e.g., bare `sk-` → OpenAI + DeepSeek), the
+ * `sk-` also matches OpenAI. When the longest matching prefix is
+ * shared by multiple providers (two providers registering the same prefix), the
  * result is marked `ambiguous` so the UI can prompt the user to choose.
  */
 export function detectProvider(
