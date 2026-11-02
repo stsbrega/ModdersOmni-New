@@ -36,9 +36,18 @@ describe('HardwareDetectorService', () => {
   });
 
   describe('detect', () => {
-    it('never includes CPU cores in the formatted text', async () => {
-      const hw = await svc.detect();
-      expect(hw.formatted).not.toContain('CPU');
+    it('keeps CPU cores out of the formatted text but exposes them directly', async () => {
+      Object.defineProperty(navigator, 'hardwareConcurrency', { value: 16, configurable: true });
+      Object.defineProperty(navigator, 'deviceMemory', { value: 4, configurable: true });
+      try {
+        const hw = await svc.detect();
+        expect(hw.cpuCores).toBe(16);
+        expect(hw.formatted.split('\n')).not.toContain('CPU Cores: 16');
+        expect(hw.formatted.split('\n').every((l) => /^(GPU|RAM): /.test(l))).toBeTrue();
+      } finally {
+        delete (navigator as unknown as Record<string, unknown>)['hardwareConcurrency'];
+        delete (navigator as unknown as Record<string, unknown>)['deviceMemory'];
+      }
     });
 
     it('formats RAM when deviceMemory is available', async () => {

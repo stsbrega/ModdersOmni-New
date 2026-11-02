@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
@@ -13,21 +13,23 @@ describe('NotificationService', () => {
     expect(svc.notifications()).toEqual([]);
   });
 
-  it('show() appends notifications with unique ids', () => {
+  it('show() appends notifications with unique ids', fakeAsync(() => {
     svc.info('a');
     svc.warning('b');
     const list = svc.notifications();
     expect(list.map((n) => n.message)).toEqual(['a', 'b']);
     expect(list[0].id).not.toBe(list[1].id);
     expect(list.map((n) => n.type)).toEqual(['info', 'warning']);
-  });
+    flush();
+  }));
 
-  it('dismiss() removes only the matching notification', () => {
+  it('dismiss() removes only the matching notification', fakeAsync(() => {
     svc.success('a');
     svc.success('b');
     svc.dismiss(svc.notifications()[0].id);
     expect(svc.notifications().map((n) => n.message)).toEqual(['b']);
-  });
+    flush();
+  }));
 
   it('auto-dismisses after the default duration', fakeAsync(() => {
     svc.info('temp');
@@ -49,5 +51,6 @@ describe('NotificationService', () => {
     svc.show('info', 'sticky', 0);
     tick(60_000);
     expect(svc.notifications().length).toBe(1);
+    flush();
   }));
 });
