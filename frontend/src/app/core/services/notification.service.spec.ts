@@ -46,14 +46,14 @@ describe('NotificationService', () => {
     expect(svc.notifications().map((n) => n.message)).toEqual(['b']);
   }));
 
-  it('helpers set type and error lingers longer than the others', fakeAsync(() => {
+  it('helpers set type and duration (error lingers 8000ms, others 5000ms)', fakeAsync(() => {
     svc.success('s');
     svc.error('e');
     svc.warning('w');
     svc.info('i');
     const list = svc.notifications();
     expect(list.map((n) => n.type)).toEqual(['success', 'error', 'warning', 'info']);
-    expect(list[1].duration).toBeGreaterThan(list[0].duration!);
+    expect(list.map((n) => n.duration)).toEqual([5000, 8000, 5000, 5000]);
     tick(10_000);
   }));
 });
