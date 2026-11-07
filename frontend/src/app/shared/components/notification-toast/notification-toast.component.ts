@@ -5,10 +5,12 @@ import { NotificationService, Notification } from '../../../core/services/notifi
   selector: 'app-notification-toast',
   standalone: true,
   template: `
-    <div class="toast-container">
+    <div class="toast-container" aria-live="polite" aria-atomic="false">
       @for (n of notifications.notifications(); track n.id) {
-        <div class="toast" [class]="'toast-' + n.type" (click)="notifications.dismiss(n.id)">
-          <span class="toast-icon">
+        <div class="toast" [class]="'toast-' + n.type"
+             [attr.role]="n.type === 'error' ? 'alert' : 'status'"
+             (click)="notifications.dismiss(n.id)">
+          <span class="toast-icon" aria-hidden="true">
             @switch (n.type) {
               @case ('success') { &#10003; }
               @case ('error') { &#10007; }
