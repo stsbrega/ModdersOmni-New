@@ -27,6 +27,8 @@ import {
   OverlayRef,
 } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { hasModifierKey } from '@angular/cdk/keycodes';
+import { filter } from 'rxjs';
 
 export type SheetSide = 'right' | 'left' | 'bottom';
 
@@ -133,6 +135,15 @@ export class UiSheetComponent {
 
     // Close on backdrop click — matches dialog behavior consumers expect.
     overlayRef.backdropClick().subscribe(() => overlayRef.dispose());
+
+    // CDK Overlay (unlike Dialog) does not close on Escape by default.
+    overlayRef
+      .keydownEvents()
+      .pipe(filter((e) => e.key === 'Escape' && !hasModifierKey(e)))
+      .subscribe((e) => {
+        e.preventDefault();
+        overlayRef.dispose();
+      });
 
     return overlayRef;
   }
