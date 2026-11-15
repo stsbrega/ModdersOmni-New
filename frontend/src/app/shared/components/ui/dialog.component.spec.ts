@@ -1,5 +1,6 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Dialog } from '@angular/cdk/dialog';
 import { UiDialogComponent } from './dialog.component';
 
 @Component({
@@ -22,8 +23,11 @@ describe('UiDialogComponent', () => {
     host = fixture.componentInstance;
   });
 
+  // Close through the CDK service rather than wiping the overlay DOM: clearing
+  // innerHTML leaves the Dialog's openDialogs list, focus traps and keydown
+  // listeners alive, so a failure in one spec could leak into the next.
   afterEach(() => {
-    document.querySelectorAll('.cdk-overlay-container').forEach((el) => (el.innerHTML = ''));
+    TestBed.inject(Dialog).closeAll();
   });
 
   const body = () => document.querySelector('.dialog-body');
@@ -50,6 +54,14 @@ describe('UiDialogComponent', () => {
     ref.closed.subscribe((r) => (result = r));
     ref.close('done');
     expect(result).toBe('done');
+    expect(body()).toBeNull();
+  });
+
+  it('closes on Escape', () => {
+    host.dialog.open(host.tpl);
+    fixture.detectChanges();
+    const panel = document.querySelector('.ui-dialog__panel') as HTMLElement;
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }));
     expect(body()).toBeNull();
   });
 
