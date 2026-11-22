@@ -1,0 +1,80 @@
+[
+  [
+    "Wildcat - Combat of Skyrim",
+    "Valhalla Combat",
+    "conflicts",
+    "Both overhaul combat mechanics. Choose one."
+  ],
+  [
+    "Climates Of Tamriel",
+    "Obsidian Weathers and Seasons",
+    "conflicts",
+    "Both overhaul weather. Choose one."
+  ],
+  [
+    "Apocalypse - Magic of Skyrim",
+    "Ordinator - Perks of Skyrim",
+    "patch_available",
+    "Use Apocalypse-Ordinator Compatibility Patch for full integration."
+  ],
+  [
+    "True Directional Movement",
+    "Precision - Accurate Melee Collisions",
+    "load_after",
+    "Load Precision after TDM for proper hit detection."
+  ],
+  [
+    "Frostfall - Hypothermia Camping Survival",
+    "Campfire - Complete Camping System",
+    "requires",
+    "Frostfall requires Campfire as a framework."
+  ],
+  [
+    "SkyUI",
+    "Frostfall - Hypothermia Camping Survival",
+    "requires",
+    "Frostfall requires SkyUI for the MCM configuration menu."
+  ],
+  [
+    "Noble Skyrim Mod HD-2K",
+    "Skyland AIO",
+    "conflicts",
+    "Both are full texture packs. Choose one based on your preference."
+  ],
+  [
+    "MCO - Modern Combat Overhaul",
+    "Wildcat - Combat of Skyrim",
+    "conflicts",
+    "MCO replaces combat mechanics. Use one combat overhaul."
+  ],
+  [
+    "MCO - Modern Combat Overhaul",
+    "Valhalla Combat",
+    "conflicts",
+    "MCO replaces combat mechanics. Use one combat overhaul."
+  ],
+  [
+    "ELFX - Enhanced Lights and FX",
+    "Lux",
+    "conflicts",
+    "Both overhaul interior lighting. Choose one."
+  ],
+  [
+    "Mysticism - A Magic Overhaul",
+    "Odin - Skyrim Magic Overhaul",
+    "conflicts",
+    "Both overhaul vanilla spells. Choose one."
+  ],
+  [
+    "CC Survival Mode - Improved",
+    "Sunhelm Survival and Needs",
+    "conflicts",
+    "Both add survival needs. Choose one (CC Survival for AE, Sunhelm for SE)."
+  ],
+  [
+    "ENB Series - Rudy ENB",
+    "Community Shaders",
+    "conflicts",
+    "Both are shader frameworks. Choose ENB or Community Shaders."
+  ]
+]

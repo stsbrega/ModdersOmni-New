@@ -1,0 +1,32 @@
+[
+  [
+    "Horizon",
+    "Better Locational Damage",
+    "conflicts",
+    "Horizon includes its own damage system. Do not combine."
+  ],
+  [
+    "Sim Settlements 2",
+    "Workshop Framework",
+    "requires",
+    "Sim Settlements 2 requires Workshop Framework."
+  ],
+  [
+    "Sim Settlements 2",
+    "Place Everywhere",
+    "load_after",
+    "Load Place Everywhere after Sim Settlements 2."
+  ],
+  [
+    "Buffout 4",
+    "Buffout 4 NG",
+    "conflicts",
+    "Use Buffout 4 for classic or Buffout 4 NG for Next-Gen. Never both."
+  ],
+  [
+    "F4SE - Fallout 4 Script Extender",
+    "F4SE Next-Gen Compatible",
+    "conflicts",
+    "Use the F4SE version matching your game version."
+  ]
+]
